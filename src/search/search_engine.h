@@ -10,6 +10,7 @@
 
 #include <vector>
 
+class Group;
 class Heuristic;
 
 namespace options {
@@ -44,7 +45,8 @@ protected:
     virtual SearchStatus step() = 0;
 
     void set_plan(const Plan &plan);
-    bool check_goal_and_set_plan(const GlobalState &state);
+    bool check_goal_and_set_plan(const GlobalState &state,
+                                 Group *group = nullptr);
     int get_adjusted_cost(const GlobalOperator &op) const;
 public:
     SearchEngine(const options::Options &opts);

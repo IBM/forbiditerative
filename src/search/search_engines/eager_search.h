@@ -9,6 +9,7 @@
 #include <vector>
 
 class GlobalOperator;
+class Group;
 class Heuristic;
 class PruningMethod;
 class ScalarEvaluator;
@@ -21,9 +22,16 @@ namespace eager_search {
 class EagerSearch : public SearchEngine {
     const bool reopen_closed_nodes;
     const bool use_multi_path_dependence;
+    Group *group;
 
     std::unique_ptr<StateOpenList> open_list;
     ScalarEvaluator *f_evaluator;
+    /*
+      Note: orbit space search and duplicate pruning with dks does not work
+      with preferred operators and multi plath search.
+    */
+    bool use_oss() const;
+    bool use_dks() const;
 
     std::vector<Heuristic *> heuristics;
     std::vector<Heuristic *> preferred_operator_heuristics;
@@ -42,7 +50,7 @@ protected:
 
 public:
     explicit EagerSearch(const options::Options &opts);
-    virtual ~EagerSearch() = default;
+    virtual ~EagerSearch();
 
     virtual void print_statistics() const override;
 

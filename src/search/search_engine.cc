@@ -77,11 +77,12 @@ void SearchEngine::search() {
          << " [t=" << utils::g_timer << "]" << endl;
 }
 
-bool SearchEngine::check_goal_and_set_plan(const GlobalState &state) {
+bool SearchEngine::check_goal_and_set_plan(const GlobalState &state,
+                                           Group *group) {
     if (test_goal(state)) {
         cout << "Solution found!" << endl;
         Plan plan;
-        search_space.trace_path(state, plan);
+        search_space.trace_path(state, plan, group);
         set_plan(plan);
         return true;
     }

@@ -10,7 +10,7 @@
 
 class GlobalOperator;
 class GlobalState;
-
+class Group;
 
 class SearchNode {
     const StateRegistry &state_registry;
@@ -55,13 +55,17 @@ class SearchSpace {
 
     StateRegistry &state_registry;
     OperatorCost cost_type;
+
+    void trace_path_with_symmetries(const GlobalState &goal_state,
+                                    std::vector<const GlobalOperator *> &path,
+                                    Group *group) const;
 public:
     SearchSpace(StateRegistry &state_registry, OperatorCost cost_type);
 
     SearchNode get_node(const GlobalState &state);
     void trace_path(const GlobalState &goal_state,
-                    std::vector<const GlobalOperator *> &path) const;
-
+                    std::vector<const GlobalOperator *> &path,
+                    Group *group = nullptr) const;
     void dump() const;
     void print_statistics() const;
 };

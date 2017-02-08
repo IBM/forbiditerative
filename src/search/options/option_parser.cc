@@ -26,6 +26,7 @@ using namespace std;
 
 // TODO (post-issue586): Remove this once we no longer need it.
 class AbstractTask;
+class Group;
 class OpenListFactory;
 class PruningMethod;
 class SearchEngine;
@@ -108,6 +109,7 @@ static void get_help(string k) {
     get_help_templ<shared_ptr<pdbs::PatternCollectionGenerator>>(pt);
     get_help_templ<shared_ptr<pdbs::PatternGenerator>>(pt);
     get_help_templ<shared_ptr<PruningMethod>>(pt);
+    get_help_templ<Group *>(pt);
 }
 
 template<typename T>
@@ -141,6 +143,7 @@ static void get_full_help() {
     get_full_help_templ<shared_ptr<pdbs::PatternCollectionGenerator>>();
     get_full_help_templ<shared_ptr<pdbs::PatternGenerator>>();
     get_full_help_templ<shared_ptr<PruningMethod>>();
+    get_full_help_templ<Group *>();
 }
 
 
@@ -212,6 +215,23 @@ static void predefine_lmgraph(string s, bool dry_run) {
     if (definees.size() == 1) {
         Predefinitions<landmarks::LandmarkFactory *>::instance()->predefine(
             definees[0], op.start_parsing<landmarks::LandmarkFactory *>());
+    } else {
+        op.error("predefinition has invalid left side");
+    }
+}
+
+static void predefine_symmetries(std::string s, bool dry_run) {
+    //remove newlines so they don't mess anything up:
+    s.erase(std::remove(s.begin(), s.end(), '\n'), s.end());
+
+    size_t split = s.find("=");
+    std::string ls = s.substr(0, split);
+    std::vector<std::string> definees = to_list(ls);
+    std::string rs = s.substr(split + 1);
+    OptionParser op(rs, dry_run);
+    if (definees.size() == 1) {
+        Predefinitions<Group *>::instance()->predefine(
+            definees[0], op.start_parsing<Group *>());
     } else {
         op.error("predefinition has invalid left side");
     }
@@ -316,6 +336,12 @@ SearchEngine *OptionParser::parse_cmd_line_aux(
                 throw ArgError("missing argument after --landmarks");
             ++i;
             predefine_lmgraph(args[i], dry_run);
+
+        } else if (arg.compare("--symmetries") == 0) {
+            if (is_last)
+                throw ArgError("missing argument after --symmetries");
+            ++i;
+            predefine_symmetries(args[i], dry_run);
         } else if (arg.compare("--search") == 0) {
             if (is_last)
                 throw ArgError("missing argument after --search");
@@ -385,6 +411,9 @@ string OptionParser::usage(string progname) {
         "    Predefines a set of landmarks that can afterwards be referenced\n"
         "    by the name that is specified in the definition.\n"
         "--heuristic HEURISTIC_PREDEFINITION\n"
+        "    Predefines a structural symmetry group that can afterwards be\n"
+        "    referenced by the name that is specified in the definition.\n"
+        "--symmetries HEURISTIC_PREDEFINITION\n"
         "    Predefines a heuristic that can afterwards be referenced\n"
         "    by the name that is specified in the definition.\n"
         "--internal-plan-file FILENAME\n"

@@ -14,6 +14,8 @@
 
 #include "../open_lists/open_list_factory.h"
 
+#include "../structural_symmetries/group.h"
+
 #include <cassert>
 #include <cstdlib>
 #include <memory>
@@ -31,6 +33,33 @@ EagerSearch::EagerSearch(const Options &opts)
       f_evaluator(opts.get<ScalarEvaluator *>("f_eval", nullptr)),
       preferred_operator_heuristics(opts.get_list<Heuristic *>("preferred")),
       pruning_method(opts.get<shared_ptr<PruningMethod>>("pruning")) {
+    if (opts.contains("symmetries")) {
+        group = opts.get<Group *>("symmetries");
+        if (group && !group->is_initialized()) {
+            cout << "Initializing symmetries (eager search)" << endl;
+            group->compute_symmetries();
+        }
+
+        if (use_dks()) {
+            cout << "Setting group in registry for DKS search" << endl;
+            state_registry.set_group(group);
+        }
+    } else {
+        group = nullptr;
+    }
+}
+
+EagerSearch::~EagerSearch() {
+    delete group;
+    group = nullptr;
+}
+
+bool EagerSearch::use_oss() const {
+    return group && group->has_symmetries() && group->get_search_symmetries() == OSS;
+}
+
+bool EagerSearch::use_dks() const {
+    return group && group->has_symmetries() && group->get_search_symmetries() == DKS;
 }
 
 void EagerSearch::initialize() {
@@ -60,7 +89,16 @@ void EagerSearch::initialize() {
     heuristics.assign(hset.begin(), hset.end());
     assert(!heuristics.empty());
 
-    const GlobalState &initial_state = state_registry.get_initial_state();
+    if (use_oss() || use_dks()) {
+        assert(heuristics.size() == 1);
+    }
+    // Changed to copy the state to be able to reassign it.
+    GlobalState initial_state = state_registry.get_initial_state();
+    if (use_oss()) {
+        int *canonical_state = group->get_canonical_representative(initial_state);
+        initial_state = state_registry.register_state_buffer(canonical_state);
+        delete canonical_state;
+    }
     for (Heuristic *heuristic : heuristics) {
         heuristic->notify_initial_state(initial_state);
     }
@@ -108,7 +146,7 @@ SearchStatus EagerSearch::step() {
     SearchNode node = n.first;
 
     GlobalState s = node.get_state();
-    if (check_goal_and_set_plan(s))
+    if (check_goal_and_set_plan(s, group))
         return SOLVED;
 
     vector<const GlobalOperator *> applicable_ops;
@@ -128,8 +166,25 @@ SearchStatus EagerSearch::step() {
     for (const GlobalOperator *op : applicable_ops) {
         if ((node.get_real_g() + op->get_cost()) >= bound)
             continue;
-
-        GlobalState succ_state = state_registry.get_successor_state(s, *op);
+        /*
+          NOTE: In orbit search tmp_registry has to survive as long as
+                real_succ_state is used. This could be forever, but for
+                local incremental lmcut (and heuristics that do not store per
+                state information) it is ok to keep it only for this operator
+                application.
+                In regular search it is not actually needed, but I don't see a
+                way around having it there, too.
+        */
+        StateRegistry tmp_registry(*g_root_task(), *g_state_packer,
+                                   *g_axiom_evaluator, g_initial_state_data);
+        StateRegistry *successor_registry = use_oss() ? &tmp_registry : &state_registry;
+        GlobalState real_succ_state = successor_registry->get_successor_state(s, *op);
+        GlobalState succ_state = real_succ_state;
+        if (use_oss()) {
+            int *canonical_state = group->get_canonical_representative(real_succ_state);
+            succ_state = state_registry.register_state_buffer(canonical_state);
+            delete canonical_state;
+        }
         statistics.inc_generated();
         bool is_preferred = preferred_operators.contains(op);
 
@@ -146,6 +201,10 @@ SearchStatus EagerSearch::step() {
               don't break out of the for loop early.
             */
             for (Heuristic *heuristic : heuristics) {
+                /*
+                  Replaced succ_node by real_succ_state. Not safe anymore
+                  for heuristics that use additional information stored per search node.
+                 */
                 heuristic->notify_state_transition(s, *op, succ_state);
             }
         }
@@ -159,8 +218,12 @@ SearchStatus EagerSearch::step() {
             // TODO: Make this less fragile.
             int succ_g = node.get_g() + get_adjusted_cost(*op);
 
+            /*
+              Replaced succ_node.get_state() by real_succ_state. Not safe anymore
+              for heuristics that use additional information stored per search node.
+             */
             EvaluationContext eval_context(
-                succ_state, succ_g, is_preferred, &statistics);
+                real_succ_state, succ_g, is_preferred, &statistics);
             statistics.inc_evaluated_states();
 
             if (open_list->is_dead_end(eval_context)) {
@@ -380,10 +443,24 @@ static SearchEngine *_parse_astar(OptionParser &parser) {
 
     add_pruning_option(parser);
     SearchEngine::add_options_to_parser(parser);
+    parser.add_option<Group *>(
+        "symmetries",
+        "symmetries object to compute structural symmetries for pruning",
+        "nullptr");
+
     Options opts = parser.parse();
 
     EagerSearch *engine = nullptr;
     if (!parser.dry_run()) {
+        if (opts.contains("symmetries")) {
+            Group *group = opts.get<Group *>("symmetries");
+            if (group->get_search_symmetries() == NO_SEARCH_SYMMETRIES) {
+                cerr << "Symmetries passed to eager search, but no "
+                     << "search symmetries specified." << endl;
+                utils::exit_with(utils::ExitCode::INPUT_ERROR);
+            }
+        }
+
         auto temp = search_common::create_astar_open_list_factory_and_f_eval(opts);
         opts.set("open", temp.first);
         opts.set("f_eval", temp.second);
