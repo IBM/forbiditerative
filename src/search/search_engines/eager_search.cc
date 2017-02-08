@@ -446,7 +446,7 @@ static SearchEngine *_parse_astar(OptionParser &parser) {
     parser.add_option<Group *>(
         "symmetries",
         "symmetries object to compute structural symmetries for pruning",
-        "nullptr");
+        OptionParser::NONE);
 
     Options opts = parser.parse();
 
