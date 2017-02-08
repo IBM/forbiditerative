@@ -209,7 +209,7 @@ static Group *_parse(OptionParser &parser) {
         bool use_search_symmetries = opts.get_enum("search_symmetries");
         if (!use_search_symmetries) {
             cerr << "You have specified a symmetries option which does use "
-                    "search symmetries" << endl;
+                    "no search symmetries" << endl;
             exit_with(ExitCode::INPUT_ERROR);
         }
         return new Group(opts);
