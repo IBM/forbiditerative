@@ -286,10 +286,9 @@ int Permutation::get_var_by_index(int ind) {
 pair<int, int> Permutation::get_var_val_by_index(int ind) {
     assert(ind>=num_vars);
     int var =  var_by_val[ind-num_vars];
-	int val = ind - dom_sum_by_var[var];
-    assert(val >=0 && val<num_vars);
+    int val = ind - dom_sum_by_var[var];
 
-	return make_pair(var, val);
+    return make_pair(var, val);
 }
 
 int Permutation::get_index_by_var_val_pair(int var, int val) {
