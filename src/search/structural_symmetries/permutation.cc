@@ -19,7 +19,6 @@ vector<int> Permutation::dom_sum_by_var;
 int Permutation::num_vars;
 
 void Permutation::_allocate() {
-    borrowed_buffer = false;
     value = new int[length];
 //    inverse_value = new int[length];
     affected.assign(num_vars, false);
@@ -37,14 +36,14 @@ void Permutation::_deallocate() {
     }
 }
 
-void Permutation::_copy_value_from_permutation(const Permutation *perm) {
+void Permutation::_copy_value_from_permutation(const Permutation &perm) {
     for (int i = 0; i < length; i++)
-        set_value(i, perm->get_value(i));
+        set_value(i, perm.get_value(i));
 }
 
-void Permutation::_inverse_value_from_permutation(const Permutation *perm) {
+void Permutation::_inverse_value_from_permutation(const Permutation &perm) {
     for (int i = 0; i < length; i++)
-        set_value(perm->get_value(i), i);
+        set_value(perm.get_value(i), i);
 }
 
 Permutation &Permutation::operator=(const Permutation &other) {
@@ -57,7 +56,7 @@ Permutation &Permutation::operator=(const Permutation &other) {
             from_vars.assign(num_vars, -1);
             affected_vars_cycles.clear();
         }
-        _copy_value_from_permutation(&other);
+        _copy_value_from_permutation(other);
     }
     this->finalize();
     return *this;
@@ -79,7 +78,7 @@ Permutation::Permutation(const unsigned int* full_permutation){
 	finalize();
 }
 
-Permutation::Permutation(const Permutation *perm, bool invert){
+Permutation::Permutation(const Permutation &perm, bool invert){
     _allocate();
     if (invert) {
         _inverse_value_from_permutation(perm);
@@ -90,11 +89,11 @@ Permutation::Permutation(const Permutation *perm, bool invert){
 }
 
 //// New constructor to use instead of * operator
-Permutation::Permutation(const Permutation *perm1, const Permutation *perm2){
+Permutation::Permutation(const Permutation &perm1, const Permutation &perm2){
     _allocate();
 
     for (int i = 0; i < length; i++) {
-        set_value(i, perm2->get_value(perm1->get_value(i)));
+        set_value(i, perm2.get_value(perm1.get_value(i)));
     }
     finalize();
 }

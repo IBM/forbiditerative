@@ -9,8 +9,8 @@ class Permutation{
 public:
     Permutation();
     explicit Permutation(const unsigned int *full_perm);
-    Permutation(const Permutation *perm, bool invert=false);
-    Permutation(const Permutation *perm1, const Permutation *perm2);
+    Permutation(const Permutation &perm, bool invert=false);
+    Permutation(const Permutation &perm1, const Permutation &perm2);
     ~Permutation();
 
     Permutation& operator =(const Permutation&);
@@ -68,8 +68,8 @@ private:
     void finalize();
     void _allocate();
     void _deallocate();
-    void _copy_value_from_permutation(const Permutation *perm);
-    void _inverse_value_from_permutation(const Permutation *perm);
+    void _copy_value_from_permutation(const Permutation &perm);
+    void _inverse_value_from_permutation(const Permutation &perm);
 };
 
 #endif

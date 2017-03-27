@@ -209,7 +209,7 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
     Permutation *to_delete = temp_p;
     while (permutations.begin() != permutations.end()) {
         Permutation *p = permutations.back();
-        temp_p = new Permutation(p, temp_p);
+        temp_p = new Permutation(*p, *temp_p);
         if (to_delete) {
             delete to_delete;
             to_delete = 0;

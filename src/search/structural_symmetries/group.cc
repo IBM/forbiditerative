@@ -138,7 +138,7 @@ int *Group::get_canonical_representative(const GlobalState &state) const {
 Permutation *Group::compose_permutation(const Trace& perm_index) const {
     Permutation *new_perm = new Permutation();
     for (size_t i = 0; i < perm_index.size(); ++i) {
-        Permutation *tmp = new Permutation(new_perm, get_permutation(perm_index[i]));
+        Permutation *tmp = new Permutation(*new_perm, *get_permutation(perm_index[i]));
         delete new_perm;
         new_perm = tmp;
     }
@@ -173,10 +173,10 @@ Permutation *Group::create_permutation_from_state_to_state(
     get_trace(to_state, new_trace);
 
     Permutation *tmp = compose_permutation(new_trace);
-    Permutation *p1 = new Permutation(tmp, true);  //inverse
+    Permutation *p1 = new Permutation(*tmp, true);  //inverse
     delete tmp;
     Permutation *p2 = compose_permutation(curr_trace);
-    Permutation *result = new Permutation(p2, p1);
+    Permutation *result = new Permutation(*p2, *p1);
     delete p1;
     delete p2;
     return result;
