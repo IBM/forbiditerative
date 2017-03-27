@@ -36,8 +36,8 @@ void Group::delete_generators() {
     generators.clear();
 }
 
-const Permutation *Group::get_permutation(int index) const {
-    return generators[index];
+const Permutation &Group::get_permutation(int index) const {
+    return *generators[index];
 }
 
 void Group::compute_symmetries() {
@@ -81,8 +81,8 @@ void Group::dump_generators() const {
         return;
     for (int i = 0; i < get_num_generators(); i++) {
         cout << "Generator " << i << endl;
-        get_permutation(i)->print_cycle_notation();
-        get_permutation(i)->dump_var_vals();
+        get_permutation(i).print_cycle_notation();
+        get_permutation(i).dump_var_vals();
     }
 
     cout << "Extra group info:" << endl;
@@ -98,17 +98,12 @@ void Group::statistics() const {
     cout << "Number of generators: " << num_gen << endl;
     cout << "Order of generators: [";
     for (int gen_no = 0; gen_no < num_gen; ++gen_no) {
-        cout << get_permutation(gen_no)->get_order();
+        cout << get_permutation(gen_no).get_order();
         if (gen_no != num_gen - 1)
             cout << ", ";
     }
     cout << "]" << endl;
 }
-
-static PluginTypePlugin<Group> _type_plugin(
-    "Group",
-    // TODO: Replace empty string by synopsis for the wiki page.
-    "");
 
 // ===============================================================================
 // Methods related to OSS
@@ -138,7 +133,7 @@ int *Group::get_canonical_representative(const GlobalState &state) const {
 Permutation *Group::compose_permutation(const Trace& perm_index) const {
     Permutation *new_perm = new Permutation();
     for (size_t i = 0; i < perm_index.size(); ++i) {
-        Permutation *tmp = new Permutation(*new_perm, *get_permutation(perm_index[i]));
+        Permutation *tmp = new Permutation(*new_perm, get_permutation(perm_index[i]));
         delete new_perm;
         new_perm = tmp;
     }
@@ -215,5 +210,10 @@ static shared_ptr<Group> _parse(OptionParser &parser) {
         return make_shared<Group>(opts);
     }
 }
+
+static PluginTypePlugin<Group> _type_plugin(
+    "Group",
+    // TODO: Replace empty string by synopsis for the wiki page.
+    "");
 
 static PluginShared<Group> _plugin("structural_symmetries", _parse);
