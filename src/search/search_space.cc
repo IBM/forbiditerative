@@ -131,7 +131,7 @@ SearchNode SearchSpace::get_node(const GlobalState &state) {
 
 void SearchSpace::trace_path(const GlobalState &goal_state,
                              vector<const GlobalOperator *> &path,
-                             Group *group) const {
+                             const shared_ptr<Group> &group) const {
     if (group && group->has_symmetries()) {
         trace_path_with_symmetries(goal_state, path, group);
     } else {
@@ -154,7 +154,7 @@ void SearchSpace::trace_path(const GlobalState &goal_state,
 
 void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
                                              vector<const GlobalOperator *> &path,
-                                             Group *group) const {
+                                             const shared_ptr<Group> &group) const {
     cout << "trace path with symmetries" << endl;
     cout << "group contains generators: " << group->get_num_generators() << endl;
     vector<Permutation *> permutations;

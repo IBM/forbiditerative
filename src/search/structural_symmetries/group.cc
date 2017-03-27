@@ -105,6 +105,10 @@ void Group::statistics() const {
     cout << "]" << endl;
 }
 
+static PluginTypePlugin<Group> _type_plugin(
+    "Group",
+    // TODO: Replace empty string by synopsis for the wiki page.
+    "");
 
 // ===============================================================================
 // Methods related to OSS
@@ -178,7 +182,7 @@ Permutation *Group::create_permutation_from_state_to_state(
     return result;
 }
 
-static Group *_parse(OptionParser &parser) {
+static shared_ptr<Group> _parse(OptionParser &parser) {
     // General Bliss options
     parser.add_option<int>("time_bound",
                            "Stopping after the Bliss software reached the time bound",
@@ -192,7 +196,7 @@ static Group *_parse(OptionParser &parser) {
 
     // Type of search symmetries to be used
     vector<string> search_symmetries;
-    search_symmetries.push_back("NOSEARCHSYMMETRIES");
+    search_symmetries.push_back("NONE");
     search_symmetries.push_back("OSS");
     search_symmetries.push_back("DKS");
     parser.add_enum_option("search_symmetries",
@@ -201,21 +205,15 @@ static Group *_parse(OptionParser &parser) {
                            "should be used for pruning: OSS for orbit space "
                            "search or DKS for storing the canonical "
                            "representative of every state during search",
-                           "NOSEARCHSYMMETRIES");
+                           "NONE");
 
     Options opts = parser.parse();
 
-    if (!parser.dry_run()) {
-        bool use_search_symmetries = opts.get_enum("search_symmetries");
-        if (!use_search_symmetries) {
-            cerr << "You have specified a symmetries option which does use "
-                    "no search symmetries" << endl;
-            exit_with(ExitCode::INPUT_ERROR);
-        }
-        return new Group(opts);
+    if (parser.dry_run()) {
+        return nullptr;
     } else {
-        return 0;
+        return make_shared<Group>(opts);
     }
 }
 
-static Plugin<Group> _plugin("structural_symmetries", _parse);
+static PluginShared<Group> _plugin("structural_symmetries", _parse);

@@ -22,7 +22,7 @@ namespace eager_search {
 class EagerSearch : public SearchEngine {
     const bool reopen_closed_nodes;
     const bool use_multi_path_dependence;
-    Group *group;
+    std::shared_ptr<Group> group;
 
     std::unique_ptr<StateOpenList> open_list;
     ScalarEvaluator *f_evaluator;
@@ -50,7 +50,7 @@ protected:
 
 public:
     explicit EagerSearch(const options::Options &opts);
-    virtual ~EagerSearch();
+    virtual ~EagerSearch() = default;
 
     virtual void print_statistics() const override;
 

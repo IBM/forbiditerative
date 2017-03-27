@@ -13,8 +13,8 @@ namespace options {
 class Options;
 }
 
-enum SearchSymmetries {
-    NO_SEARCH_SYMMETRIES,
+enum class SearchSymmetries {
+    NONE,
     OSS,
     DKS
 };

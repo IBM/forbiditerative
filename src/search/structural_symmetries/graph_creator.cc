@@ -48,7 +48,7 @@ bool GraphCreator::compute_symmetries(Group *group) {
         cout << "Using Bliss to find group generators" << endl;
         bliss_graph.canonical_form(stats1,&(Group::add_permutation),group);
         cout << "Got " << group->get_num_generators()
-             << " group generators " << endl;
+             << " group generators" << endl;
 //        group->dump_generators();
         cout << "Done initializing symmetries: " << timer << endl;
         group->statistics();

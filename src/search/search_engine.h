@@ -46,7 +46,7 @@ protected:
 
     void set_plan(const Plan &plan);
     bool check_goal_and_set_plan(const GlobalState &state,
-                                 Group *group = nullptr);
+                                 const std::shared_ptr<Group> &group = nullptr);
     int get_adjusted_cost(const GlobalOperator &op) const;
 public:
     SearchEngine(const options::Options &opts);

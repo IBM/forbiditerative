@@ -34,7 +34,7 @@ EagerSearch::EagerSearch(const Options &opts)
       preferred_operator_heuristics(opts.get_list<Heuristic *>("preferred")),
       pruning_method(opts.get<shared_ptr<PruningMethod>>("pruning")) {
     if (opts.contains("symmetries")) {
-        group = opts.get<Group *>("symmetries");
+        group = opts.get<shared_ptr<Group>>("symmetries");
         if (group && !group->is_initialized()) {
             cout << "Initializing symmetries (eager search)" << endl;
             group->compute_symmetries();
@@ -49,17 +49,12 @@ EagerSearch::EagerSearch(const Options &opts)
     }
 }
 
-EagerSearch::~EagerSearch() {
-    delete group;
-    group = nullptr;
-}
-
 bool EagerSearch::use_oss() const {
-    return group && group->has_symmetries() && group->get_search_symmetries() == OSS;
+    return group && group->has_symmetries() && group->get_search_symmetries() == SearchSymmetries::OSS;
 }
 
 bool EagerSearch::use_dks() const {
-    return group && group->has_symmetries() && group->get_search_symmetries() == DKS;
+    return group && group->has_symmetries() && group->get_search_symmetries() == SearchSymmetries::DKS;
 }
 
 void EagerSearch::initialize() {
@@ -443,7 +438,7 @@ static SearchEngine *_parse_astar(OptionParser &parser) {
 
     add_pruning_option(parser);
     SearchEngine::add_options_to_parser(parser);
-    parser.add_option<Group *>(
+    parser.add_option<shared_ptr<Group>>(
         "symmetries",
         "symmetries object to compute structural symmetries for pruning",
         OptionParser::NONE);
@@ -453,10 +448,10 @@ static SearchEngine *_parse_astar(OptionParser &parser) {
     EagerSearch *engine = nullptr;
     if (!parser.dry_run()) {
         if (opts.contains("symmetries")) {
-            Group *group = opts.get<Group *>("symmetries");
-            if (group->get_search_symmetries() == NO_SEARCH_SYMMETRIES) {
-                cerr << "Symmetries passed to eager search, but no "
-                     << "search symmetries specified." << endl;
+            shared_ptr<Group> group = opts.get<shared_ptr<Group>>("symmetries");
+            if (group->get_search_symmetries() == SearchSymmetries::NONE) {
+                cerr << "Symmetries option passed to eager search, but no "
+                     << "search symmetries should be used." << endl;
                 utils::exit_with(utils::ExitCode::INPUT_ERROR);
             }
         }

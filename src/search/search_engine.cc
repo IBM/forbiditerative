@@ -78,7 +78,7 @@ void SearchEngine::search() {
 }
 
 bool SearchEngine::check_goal_and_set_plan(const GlobalState &state,
-                                           Group *group) {
+                                           const shared_ptr<Group> &group) {
     if (test_goal(state)) {
         cout << "Solution found!" << endl;
         Plan plan;

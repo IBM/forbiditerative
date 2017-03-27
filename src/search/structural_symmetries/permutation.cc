@@ -3,8 +3,6 @@
 #include "../global_state.h"
 #include "../globals.h"
 
-//#include "../utils/
-
 #include <algorithm>
 #include <cassert>
 #include <iomanip>
@@ -231,13 +229,13 @@ void Permutation::print_cycle_notation() const {
 void Permutation::dump_var_vals() const {
     for (int i = 0; i < num_vars; ++i) {
         for (int j = 0; j < g_variable_domain[i]; ++j) {
-            cout << i << "=" << j << "->";
             pair<int, int> var_val = get_new_var_val_by_old_var_val(i, j);
-            cout << var_val.first << "=" << var_val.second << ",";
+            cout << i << "=" << j << "->"
+                 << var_val.first << "=" << var_val.second << ",";
         }
         cout << endl;
     }
-    cout << endl;
+//    cout << endl;
 }
 
 void Permutation::dump() const {

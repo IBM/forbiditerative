@@ -166,7 +166,7 @@ class StateRegistry {
     // Used for DKS
     StateIDSet canonical_registered_states;
     // Used for DKS
-    Group *group;
+    std::shared_ptr<Group> group;
 
     GlobalState *cached_initial_state;
     mutable std::set<PerStateInformationBase *> subscribers;
@@ -182,7 +182,7 @@ public:
     ~StateRegistry();
 
     // Used for DKS
-    void set_group(Group *group_) {
+    void set_group(const std::shared_ptr<Group> &group_) {
         group = group_;
     }
 
@@ -239,7 +239,7 @@ public:
       Returns the number of states registered so far.
     */
     size_t size() const {
-        if (group && group->has_symmetries() && group->get_search_symmetries() == DKS)
+        if (group && group->has_symmetries() && group->get_search_symmetries() == SearchSymmetries::DKS)
             return canonical_registered_states.size();
         return registered_states.size();
     }

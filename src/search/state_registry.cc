@@ -40,7 +40,8 @@ StateRegistry::~StateRegistry() {
 }
 
 StateID StateRegistry::insert_id_or_pop_state() {
-    if (group && group->has_symmetries() && group->get_search_symmetries() == DKS)
+    if (group && group->has_symmetries() &&
+        group->get_search_symmetries() == SearchSymmetries::DKS)
         return insert_id_or_pop_state_dks();
     /*
       Attempt to insert a StateID for the last state of state_data_pool

@@ -58,14 +58,14 @@ class SearchSpace {
 
     void trace_path_with_symmetries(const GlobalState &goal_state,
                                     std::vector<const GlobalOperator *> &path,
-                                    Group *group) const;
+                                    const std::shared_ptr<Group> &group) const;
 public:
     SearchSpace(StateRegistry &state_registry, OperatorCost cost_type);
 
     SearchNode get_node(const GlobalState &state);
     void trace_path(const GlobalState &goal_state,
                     std::vector<const GlobalOperator *> &path,
-                    Group *group = nullptr) const;
+                    const std::shared_ptr<Group> &group = nullptr) const;
     void dump() const;
     void print_statistics() const;
 };
