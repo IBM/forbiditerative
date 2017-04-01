@@ -217,8 +217,13 @@ SearchStatus EagerSearch::step() {
               Replaced succ_node.get_state() by real_succ_state. Not safe anymore
               for heuristics that use additional information stored per search node.
              */
+            /*
+              Replaced back to succ_state, due to the way the nodes are entered
+              into an open list -- the EvaluationContext was initialized with
+              one state and the insertion was performed with another state.
+             */
             EvaluationContext eval_context(
-                real_succ_state, succ_g, is_preferred, &statistics);
+                succ_state, succ_g, is_preferred, &statistics);
             statistics.inc_evaluated_states();
 
             if (open_list->is_dead_end(eval_context)) {
