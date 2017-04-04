@@ -163,20 +163,18 @@ SearchStatus EagerSearch::step() {
             continue;
         /*
           NOTE: In orbit search tmp_registry has to survive as long as
-                real_succ_state is used. This could be forever, but for
-                local incremental lmcut (and heuristics that do not store per
-                state information) it is ok to keep it only for this operator
-                application.
-                In regular search it is not actually needed, but I don't see a
-                way around having it there, too.
+                succ_state is used. This could be forever, but for heuristics
+                that do not store per state information it is ok to keep it
+                only for this operator application. In regular search it is not
+                actually needed, but I don't see a way around having it there,
+                too.
         */
         StateRegistry tmp_registry(*g_root_task(), *g_state_packer,
                                    *g_axiom_evaluator, g_initial_state_data);
         StateRegistry *successor_registry = use_oss() ? &tmp_registry : &state_registry;
-        GlobalState real_succ_state = successor_registry->get_successor_state(s, *op);
-        GlobalState succ_state = real_succ_state;
+        GlobalState succ_state = successor_registry->get_successor_state(s, *op);
         if (use_oss()) {
-            int *canonical_state = group->get_canonical_representative(real_succ_state);
+            int *canonical_state = group->get_canonical_representative(succ_state);
             succ_state = state_registry.register_state_buffer(canonical_state);
             delete canonical_state;
         }
@@ -196,10 +194,6 @@ SearchStatus EagerSearch::step() {
               don't break out of the for loop early.
             */
             for (Heuristic *heuristic : heuristics) {
-                /*
-                  Replaced succ_node by real_succ_state. Not safe anymore
-                  for heuristics that use additional information stored per search node.
-                 */
                 heuristic->notify_state_transition(s, *op, succ_state);
             }
         }
@@ -214,13 +208,10 @@ SearchStatus EagerSearch::step() {
             int succ_g = node.get_g() + get_adjusted_cost(*op);
 
             /*
-              Replaced succ_node.get_state() by real_succ_state. Not safe anymore
-              for heuristics that use additional information stored per search node.
-             */
-            /*
-              Replaced back to succ_state, due to the way the nodes are entered
-              into an open list -- the EvaluationContext was initialized with
-              one state and the insertion was performed with another state.
+              NOTE: previous versions used the non-canocialized successor state
+              here, but this lead to problems because the EvaluationContext was
+              initialized with one state and the insertion was performed with
+              another state.
              */
             EvaluationContext eval_context(
                 succ_state, succ_g, is_preferred, &statistics);
