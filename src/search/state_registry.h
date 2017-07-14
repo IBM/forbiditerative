@@ -4,12 +4,11 @@
 #include "abstract_task.h"
 #include "axioms.h"
 #include "global_state.h"
-#include "int_packer.h"
-#include "segmented_vector.h"
 #include "state_id.h"
 
+#include "algorithms/int_packer.h"
+#include "algorithms/segmented_vector.h"
 #include "structural_symmetries/group.h"
-
 #include "utils/hash.h"
 
 #include <set>
@@ -30,7 +29,7 @@
   StateID
     StateIDs identify states within a state registry.
     If the registry is known, the ID is sufficient to look up the state, which
-    is why ids are intended for long term storage (e.g. in open lists).
+    is why IDs are intended for long term storage (e.g. in open lists).
     Internally, a StateID is just an integer, so it is cheap to store and copy.
 
   PackedStateBin (currently the same as unsigned int)
@@ -105,26 +104,30 @@ class PerStateInformationBase;
 
 class StateRegistry {
     struct StateIDSemanticHash {
-        const SegmentedArrayVector<PackedStateBin> &state_data_pool;
+        const segmented_vector::SegmentedArrayVector<PackedStateBin> &state_data_pool;
         int state_size;
         StateIDSemanticHash(
-            const SegmentedArrayVector<PackedStateBin> &state_data_pool,
+            const segmented_vector::SegmentedArrayVector<PackedStateBin> &state_data_pool,
             int state_size)
             : state_data_pool(state_data_pool),
               state_size(state_size) {
         }
 
         size_t operator()(StateID id) const {
-            return utils::hash_sequence(state_data_pool[id.value],
-                                        state_size);
+            const PackedStateBin *data = state_data_pool[id.value];
+            utils::HashState hash_state;
+            for (int i = 0; i < state_size; ++i) {
+                hash_state.feed(data[i]);
+            }
+            return hash_state.get_hash64();
         }
     };
 
     struct StateIDSemanticEqual {
-        const SegmentedArrayVector<PackedStateBin> &state_data_pool;
+        const segmented_vector::SegmentedArrayVector<PackedStateBin> &state_data_pool;
         int state_size;
         StateIDSemanticEqual(
-            const SegmentedArrayVector<PackedStateBin> &state_data_pool,
+            const segmented_vector::SegmentedArrayVector<PackedStateBin> &state_data_pool,
             int state_size)
             : state_data_pool(state_data_pool),
               state_size(state_size) {
@@ -142,9 +145,7 @@ class StateRegistry {
       this registry and find their IDs. States are compared/hashed semantically,
       i.e. the actual state data is compared, not the memory location.
     */
-    typedef std::unordered_set<StateID,
-                               StateIDSemanticHash,
-                               StateIDSemanticEqual> StateIDSet;
+    using StateIDSet = std::unordered_set<StateID, StateIDSemanticHash, StateIDSemanticEqual>;
 
     /* TODO: The state registry still doesn't use the task interface completely.
              Fixing this is part of issue509. */
@@ -154,14 +155,14 @@ class StateRegistry {
 
     /* TODO: When we switch StateRegistry to the task interface, the next three
              members should come from the task. */
-    const IntPacker &state_packer;
+    const int_packer::IntPacker &state_packer;
     AxiomEvaluator &axiom_evaluator;
     const std::vector<int> &initial_state_data;
     const int num_variables;
 
-    SegmentedArrayVector<PackedStateBin> state_data_pool;
+    segmented_vector::SegmentedArrayVector<PackedStateBin> state_data_pool;
     // Used for DKS
-    SegmentedArrayVector<PackedStateBin> canonical_state_data_pool;
+    segmented_vector::SegmentedArrayVector<PackedStateBin> canonical_state_data_pool;
     StateIDSet registered_states;
     // Used for DKS
     StateIDSet canonical_registered_states;
@@ -177,7 +178,7 @@ class StateRegistry {
     int get_bins_per_state() const;
 public:
     StateRegistry(
-        const AbstractTask &task, const IntPacker &state_packer,
+        const AbstractTask &task, const int_packer::IntPacker &state_packer,
         AxiomEvaluator &axiom_evaluator, const std::vector<int> &initial_state_data);
     ~StateRegistry();
 
@@ -254,6 +255,53 @@ public:
     */
     void subscribe(PerStateInformationBase *psi) const;
     void unsubscribe(PerStateInformationBase *psi) const;
+
+    class const_iterator : public std::iterator<
+                               std::forward_iterator_tag, StateID> {
+        /*
+          We intentionally omit parts of the forward iterator concept
+          (e.g. default construction, copy assignment, post-increment)
+          to reduce boilerplate. Supported compilers may complain about
+          this, in which case we will add the missing methods.
+        */
+
+        friend class StateRegistry;
+        const StateRegistry &registry;
+        StateID pos;
+
+        const_iterator(const StateRegistry &registry, size_t start)
+            : registry(registry), pos(start) {}
+public:
+        const_iterator &operator++() {
+            ++pos.value;
+            return *this;
+        }
+
+        bool operator==(const const_iterator &rhs) {
+            assert(&registry == &rhs.registry);
+            return pos == rhs.pos;
+        }
+
+        bool operator!=(const const_iterator &rhs) {
+            return !(*this == rhs);
+        }
+
+        StateID operator*() {
+            return pos;
+        }
+
+        StateID *operator->() {
+            return &pos;
+        }
+    };
+
+    const_iterator begin() const {
+        return const_iterator(*this, 0);
+    }
+
+    const_iterator end() const {
+        return const_iterator(*this, size());
+    }
 };
 
 #endif

@@ -1,18 +1,17 @@
 #ifndef SEARCH_ENGINES_EAGER_SEARCH_H
 #define SEARCH_ENGINES_EAGER_SEARCH_H
 
+#include "../open_list.h"
 #include "../search_engine.h"
-
-#include "../open_lists/open_list.h"
 
 #include <memory>
 #include <vector>
 
+class Evaluator;
 class GlobalOperator;
 class Group;
 class Heuristic;
 class PruningMethod;
-class ScalarEvaluator;
 
 namespace options {
 class Options;
@@ -25,7 +24,7 @@ class EagerSearch : public SearchEngine {
     std::shared_ptr<Group> group;
 
     std::unique_ptr<StateOpenList> open_list;
-    ScalarEvaluator *f_evaluator;
+    Evaluator *f_evaluator;
     /*
       Note: orbit space search and duplicate pruning with dks does not work
       with preferred operators and multi plath search.
