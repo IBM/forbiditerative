@@ -218,7 +218,7 @@ shared_ptr<SearchEngine> OptionParser::parse_cmd_line_aux(
                 throw ArgError("missing argument after --landmarks");
             ++i;
             predefine_lmgraph(args[i], dry_run);
-        } else if (arg.compare("--symmetries") == 0) {
+        } else if (arg == "--symmetries") {
             if (is_last)
                 throw ArgError("missing argument after --symmetries");
             ++i;
@@ -289,7 +289,7 @@ string OptionParser::usage(const string &progname) {
            "--heuristic HEURISTIC_PREDEFINITION\n"
            "    Predefines a heuristic that can afterwards be referenced\n"
            "    by the name that is specified in the definition.\n"
-           "--symmetries HEURISTIC_PREDEFINITION\n"
+           "--symmetries SYMMETRY_PREDEFINITION\n"
            "    Predefines a structural symmetry group that can afterwards be\n"
            "    referenced by the name that is specified in the definition.\n"
            "--internal-plan-file FILENAME\n"
