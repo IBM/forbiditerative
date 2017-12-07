@@ -13,16 +13,11 @@
 
 using namespace std;
 
-int Permutation::length;
-vector<int> Permutation::var_by_val;
-vector<int> Permutation::dom_sum_by_var;
-int Permutation::num_vars;
-
 void Permutation::_allocate() {
-    value = new int[length];
-    affected.assign(num_vars, false);
+    value = new int[get_length()];
+    affected.assign(get_num_vars(), false);
 	vars_affected.clear();
-    from_vars.assign(num_vars, -1);
+    from_vars.assign(get_num_vars(), -1);
 	affected_vars_cycles.clear();
 }
 
@@ -31,32 +26,32 @@ void Permutation::_deallocate() {
 }
 
 void Permutation::_copy_value_from_permutation(const Permutation &perm) {
-    for (int i = 0; i < length; i++)
+    for (int i = 0; i < get_length(); i++)
         set_value(i, perm.get_value(i));
 }
 
 void Permutation::_inverse_value_from_permutation(const Permutation &perm) {
-    for (int i = 0; i < length; i++)
+    for (int i = 0; i < get_length(); i++)
         set_value(perm.get_value(i), i);
 }
 
-Permutation::Permutation(){
+Permutation::Permutation(const Group* _group) : group(_group) {
     _allocate();
-    for (int i = 0; i < length; i++)
+    for (int i = 0; i < get_length(); i++)
         set_value(i,i);
     finalize();
 }
 
 
-Permutation::Permutation(const unsigned int* full_permutation){
+Permutation::Permutation(const Group* _group, const unsigned int* full_permutation) : group(_group) {
 	_allocate();
-	for (int i = 0; i < length; i++){
+	for (int i = 0; i < get_length(); i++){
     	set_value(i,full_permutation[i]);
 	}
 	finalize();
 }
 
-Permutation::Permutation(const Permutation &perm, bool invert){
+Permutation::Permutation(const Permutation &perm, bool invert) : group(perm.group) {
     _allocate();
     if (invert) {
         _inverse_value_from_permutation(perm);
@@ -67,11 +62,11 @@ Permutation::Permutation(const Permutation &perm, bool invert){
 }
 
 //// New constructor to use instead of * operator
-Permutation::Permutation(const Permutation &perm1, const Permutation &perm2){
+Permutation::Permutation(const Permutation *perm1, const Permutation *perm2) : group(perm1->group) {
     _allocate();
 
-    for (int i = 0; i < length; i++) {
-        set_value(i, perm2.get_value(perm1.get_value(i)));
+    for (int i = 0; i < get_length(); i++) {
+        set_value(i, perm2->get_value(perm1->get_value(i)));
     }
     finalize();
 }
@@ -108,7 +103,7 @@ void Permutation::finalize(){
     // finding cycles, computing the least common multiple of the cycles'
     // sizes to determine the permutation's order
 	vector<bool> marked;
-    marked.assign(length, false);
+    marked.assign(get_length(), false);
     order = 1;
     for (int var = 0; var < static_cast<int>(from_vars.size()); var++) {
         if (marked[var] || from_vars[var] == -1)
@@ -131,7 +126,7 @@ void Permutation::finalize(){
 
     // Go over all variables that are not part of a cycle and see if the
     // mapping of variable values increases the permutation's order
-    for (int i = num_vars; i < length; ++i) {
+    for (int i = get_num_vars(); i < get_length(); ++i) {
         int to_i = get_value(i);
         int var = get_var_by_index(i);
         int to_var = get_var_by_index(to_i);
@@ -156,7 +151,7 @@ bool Permutation::identity() const{
 
 void Permutation::print_cycle_notation() const {
 	vector<int> done;
-    for (int i = num_vars; i < length; i++){
+    for (int i = get_num_vars(); i < get_length(); i++){
 		if (find(done.begin(), done.end(), i) == done.end()){
 	        int current = i;
 	        if(get_value(i) == i) continue; //don't print cycles of size 1
@@ -183,6 +178,10 @@ void Permutation::print_cycle_notation() const {
 	cout << endl;
 
 	cout << "Affected variables by cycles: " << endl;
+	print_affected_variables_by_cycles();
+}
+
+void Permutation::print_affected_variables_by_cycles() const {
     for (size_t i=0; i < affected_vars_cycles.size(); i++) {
 		cout << "( " ;
         for (size_t j=0; j < affected_vars_cycles[i].size(); j++) {
@@ -194,7 +193,7 @@ void Permutation::print_cycle_notation() const {
 }
 
 void Permutation::dump_var_vals() const {
-    for (int i = 0; i < num_vars; ++i) {
+    for (int i = 0; i < get_num_vars(); ++i) {
         for (int j = 0; j < g_variable_domain[i]; ++j) {
             pair<int, int> var_val = get_new_var_val_by_old_var_val(i, j);
             cout << i << "=" << j << "->"
@@ -206,12 +205,12 @@ void Permutation::dump_var_vals() const {
 }
 
 void Permutation::dump() const {
-	for(int i = 0; i < length; i++){
+	for(int i = 0; i < get_length(); i++){
 		if (get_value(i) != i)
 			cout << setw(4) << i;
 	}
 	cout << endl;
-	for(int i = 0; i < length; i++){
+	for(int i = 0; i < get_length(); i++){
 		if (get_value(i) != i)
 			cout << setw(4) << get_value(i);
 	}
@@ -219,7 +218,7 @@ void Permutation::dump() const {
 }
 
 void Permutation::dump_fdr() const {
-    for(int i = num_vars; i < length; i++){
+    for(int i = get_num_vars(); i < get_length(); i++){
 		if (get_value(i) != i) {
             pair<int, int> varval = get_var_val_by_index(i);
 			cout << setw(10) <<  "[" << g_variable_name[varval.first] << "] -> "
@@ -227,7 +226,7 @@ void Permutation::dump_fdr() const {
 		}
 	}
 	cout << endl;
-    for(int i = num_vars; i < length; i++){
+    for(int i = get_num_vars(); i < get_length(); i++){
 		if (get_value(i) != i) {
             pair<int, int> varval = get_var_val_by_index(get_value(i));
 			cout << setw(10) <<  "[" << g_variable_name[varval.first] << "] -> "
@@ -238,28 +237,6 @@ void Permutation::dump_fdr() const {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Changes added by Michael on 30.1.12
-int Permutation::get_var_by_index(int ind) {
-    // In case of ind < num_vars, returns the index itself, as this is the variable part of the permutation.
-    if (ind < num_vars) {
-		cout << "=====> WARNING!!!! Check that this is done on purpose!" << endl;
-		return ind;
-	}
-    return var_by_val[ind-num_vars];
-}
-
-pair<int, int> Permutation::get_var_val_by_index(int ind) {
-    assert(ind>=num_vars);
-    int var =  var_by_val[ind-num_vars];
-    int val = ind - dom_sum_by_var[var];
-
-    return make_pair(var, val);
-}
-
-int Permutation::get_index_by_var_val_pair(int var, int val) {
-	return dom_sum_by_var[var] + val;
-}
-
 void Permutation::set_value(int ind, int val) {
 	value[ind] = val;
 	set_affected(ind, val);
@@ -267,7 +244,7 @@ void Permutation::set_value(int ind, int val) {
 
 void Permutation::set_affected(int ind, int val) {
 
-    if (ind < num_vars || ind == val)
+    if (ind < get_num_vars() || ind == val)
 		return;
 
 
@@ -287,8 +264,8 @@ void Permutation::set_affected(int ind, int val) {
 }
 
 
-pair<int, int> Permutation::get_new_var_val_by_old_var_val(const int var, const int val) const {
-	int old_ind = get_index_by_var_val_pair(var, val);
+std::pair<int, int> Permutation::get_new_var_val_by_old_var_val(const int var, const int val) const {
+	int old_ind = group->get_index_by_var_val_pair(var, val);
 	int new_ind = get_value(old_ind);
 	return get_var_val_by_index(new_ind);
 }

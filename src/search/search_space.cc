@@ -191,7 +191,8 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
         if (new_state.get_id() != current_state.get_id()){
             p = group->create_permutation_from_state_to_state(current_state, new_state);
         } else {
-            p = new Permutation();
+            //p = new Permutation();
+            p = group->new_identity_permutation();
         }
         permutations.push_back(p);
         if (op_no == -1)
@@ -200,14 +201,15 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
     }
     assert(state_trace.size() == permutations.size());
     vector<Permutation *> reverse_permutations;
-    Permutation *temp_p = new Permutation();
+//    Permutation *temp_p = new Permutation();
+    Permutation *temp_p = group->new_identity_permutation();
     // Store another pointer to the id permutation and delete it in the first
     // iteration below. All other temp_p permutations cannot be deleted
     // because they are kept in reverse_permutations.
     Permutation *to_delete = temp_p;
     while (permutations.begin() != permutations.end()) {
         Permutation *p = permutations.back();
-        temp_p = new Permutation(*p, *temp_p);
+        temp_p = new Permutation(p, temp_p);
         if (to_delete) {
             delete to_delete;
             to_delete = 0;
@@ -219,7 +221,7 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
     for (size_t i = 0; i < state_trace.size(); ++i){
         Permutation *permutation = reverse_permutations[state_trace.size() - i-1];
         state_trace[i] = successor_registry->permute_state(state_trace[i],
-                                                           *permutation);
+                                                           permutation);
         delete permutation;
         permutation = 0;
     }
