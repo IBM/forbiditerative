@@ -145,7 +145,6 @@ void GraphCreator::create_bliss_directed_graph(Group *group, bliss::Digraph &bli
 }
 
 //TODO: Use separate color for axioms
-//TODO: Change the order of vertices creation to support keeping actions in the permutation (no need for keeping conditional effect vertices).
 void GraphCreator::add_operator_directed_graph(Group *group, bliss::Digraph &bliss_graph,
                                                const GlobalOperator& op, int op_idx) const {
     const vector<GlobalCondition> &conditions = op.get_preconditions();
@@ -181,7 +180,7 @@ void GraphCreator::add_operator_directed_graph(Group *group, bliss::Digraph &bli
     for (size_t idx1 = 0; idx1 < prevails.size(); idx1++){
         int var = prevails[idx1].first;
         int val = prevails[idx1].second;
-        //int prv_idx = Permutation::dom_sum_by_var[var] + val;
+
         int prv_idx = group->get_index_by_var_val_pair(var, val);
         bliss_graph.add_edge(prv_idx, op_idx);
     }
@@ -190,14 +189,11 @@ void GraphCreator::add_operator_directed_graph(Group *group, bliss::Digraph &bli
         int pre_val = effects_pre_vals[idx1];
 
         if (pre_val!= -1){
-            //int pre_idx = Permutation::dom_sum_by_var[var] + pre_val;
             int pre_idx = group->get_index_by_var_val_pair(var, pre_val);
-
             bliss_graph.add_edge(pre_idx, op_idx);
         }
 
         int eff_val = effects[idx1].val;
-        //int eff_idx = Permutation::dom_sum_by_var[var] + eff_val;
         int eff_idx = group->get_index_by_var_val_pair(var, eff_val);
 
         if (effects[idx1].conditions.size() == 0) {
@@ -217,7 +213,6 @@ void GraphCreator::add_operator_directed_graph(Group *group, bliss::Digraph &bli
             for (size_t c = 0; c < effects[idx1].conditions.size(); c++){
                 int c_var = effects[idx1].conditions[c].var;
                 int c_val = effects[idx1].conditions[c].val;
-                //int c_idx = Permutation::dom_sum_by_var[c_var] + c_val;
                 int c_idx = group->get_index_by_var_val_pair(c_var, c_val);
 
                 bliss_graph.add_edge(c_idx, cond_op_idx); // Edge from condition to conditional effect
@@ -237,6 +232,8 @@ bool GraphCreator::effect_can_be_overwritten(int ind, const std::vector<GlobalEf
         return false;
 
     // Go over the next effects of the same variable, skipping the none_of_those
+    // Warning! It seems that we assume here that the variables in the effects are ordered by effect variables.
+    //          Should be changed!
     for (int i=ind+1; i < num_effects; i++) {
         if (var != effects[i].var) // Next variable
             return false;

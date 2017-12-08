@@ -21,7 +21,6 @@ class Options;
 
 class GraphCreator  {
     int time_bound;
-    //int generators_bound;
     bool stabilize_initial_state;
 
     void create_bliss_directed_graph(Group *group, bliss::Digraph &bliss_graph) const;

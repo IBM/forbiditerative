@@ -19,17 +19,12 @@ public:
     bool identity() const;
     void print_cycle_notation() const;
     void print_affected_variables_by_cycles() const;
-    int get_value(int ind) const {
-        return value[ind];
-    }
+    int get_value(int ind) const { return value[ind]; }
     void dump_var_vals() const;
     void dump() const;
     void dump_fdr() const;
 
-    int get_order() const {
-        return order;
-    }
-
+    int get_order() const { return order; }
     std::pair<int, int> get_new_var_val_by_old_var_val(const int var, const int val) const;
 
     bool replace_if_less(int*) const;
@@ -54,13 +49,6 @@ private:
     void _deallocate();
     void _copy_value_from_permutation(const Permutation &perm);
     void _inverse_value_from_permutation(const Permutation &perm);
-
-    int get_var_by_index(int val) const { return group->get_var_by_index(val); }
-    std::pair<int, int> get_var_val_by_index(const int ind) const { return group->get_var_val_by_index(ind); }
-
-
-    int get_length() const { return group->get_permutation_length(); }
-    int get_num_vars() const { return group->get_permutation_num_variables(); }
 };
 
 #endif
