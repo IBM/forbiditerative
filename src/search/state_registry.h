@@ -234,7 +234,7 @@ public:
       checking.
       Used for state tracing (OSS and DKS).
     */
-    GlobalState permute_state(const GlobalState &state, const Permutation *permutation);
+    GlobalState permute_state(const GlobalState &state, const Permutation &permutation);
 
     /*
       Returns the number of states registered so far.

@@ -62,11 +62,11 @@ Permutation::Permutation(const Permutation &perm, bool invert) : group(perm.grou
 }
 
 //// New constructor to use instead of * operator
-Permutation::Permutation(const Permutation *perm1, const Permutation *perm2) : group(perm1->group) {
+Permutation::Permutation(const Permutation &perm1, const Permutation &perm2) : group(perm1.group) {
     _allocate();
 
     for (int i = 0; i < group->get_permutation_length(); i++) {
-        set_value(i, perm2->get_value(perm1->get_value(i)));
+        set_value(i, perm2.get_value(perm1.get_value(i)));
     }
     finalize();
 }

@@ -180,7 +180,6 @@ void GraphCreator::add_operator_directed_graph(Group *group, bliss::Digraph &bli
     for (size_t idx1 = 0; idx1 < prevails.size(); idx1++){
         int var = prevails[idx1].first;
         int val = prevails[idx1].second;
-
         int prv_idx = group->get_index_by_var_val_pair(var, val);
         bliss_graph.add_edge(prv_idx, op_idx);
     }

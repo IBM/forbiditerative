@@ -39,8 +39,8 @@ void Group::delete_generators() {
     generators.clear();
 }
 
-const Permutation* Group::get_permutation(int index) const {
-    return generators[index];
+const Permutation &Group::get_permutation(int index) const {
+    return *generators[index];
 }
 
 void Group::compute_symmetries() {
@@ -63,7 +63,6 @@ void Group::compute_symmetries() {
  * The function will be called from bliss
  */
 void Group::add_permutation(void* param, unsigned int, const unsigned int * full_perm){
-
     Permutation *perm = new Permutation((Group*) param, full_perm);
     if (!perm->identity()){
         ((Group*) param)->add_generator(perm);
@@ -86,13 +85,13 @@ void Group::dump_generators() const {
         return;
 
     for (int i = 0; i < get_num_generators(); i++) {
-        get_permutation(i)->print_affected_variables_by_cycles();
+        get_permutation(i).print_affected_variables_by_cycles();
     }
 
     for (int i = 0; i < get_num_generators(); i++) {
         cout << "Generator " << i << endl;
-        get_permutation(i)->print_cycle_notation();
-        //get_permutation(i)->dump_var_vals();
+        get_permutation(i).print_cycle_notation();
+        //get_permutation(i).dump_var_vals();
     }
 
     cout << "Extra group info:" << endl;
@@ -116,7 +115,7 @@ void Group::dump_variables_equivalence_classes() const {
     while (change) {
     	change = false;
     	for (int i = 0; i < get_num_generators(); i++) {
-    		const std::vector<int>& affected = get_permutation(i)->get_affected_vars();
+    		const std::vector<int>& affected = get_permutation(i).get_affected_vars();
     		int min_ind = g_variable_domain.size();
     		for (int var : affected) {
     			if (min_ind > vars_mapping[var])
@@ -152,7 +151,7 @@ void Group::statistics() const {
     cout << "Number of generators: " << num_gen << endl;
     cout << "Order of generators: [";
     for (int gen_no = 0; gen_no < num_gen; ++gen_no) {
-        cout << get_permutation(gen_no)->get_order();
+        cout << get_permutation(gen_no).get_order();
         if (gen_no != num_gen - 1)
             cout << ", ";
     }
@@ -193,7 +192,7 @@ int *Group::get_canonical_representative(const GlobalState &state) const {
 Permutation *Group::compose_permutation(const Trace& perm_index) const {
     Permutation *new_perm = new Permutation(this);
     for (size_t i = 0; i < perm_index.size(); ++i) {
-        Permutation *tmp = new Permutation(new_perm, get_permutation(perm_index[i]));
+        Permutation *tmp = new Permutation(*new_perm, get_permutation(perm_index[i]));
         delete new_perm;
         new_perm = tmp;
     }
@@ -231,7 +230,7 @@ Permutation *Group::create_permutation_from_state_to_state(
     Permutation *p1 = new Permutation(*tmp, true);  //inverse
     delete tmp;
     Permutation *p2 = compose_permutation(curr_trace);
-    Permutation *result = new Permutation(p2, p1);
+    Permutation *result = new Permutation(*p2, *p1);
     delete p1;
     delete p2;
     return result;

@@ -141,11 +141,11 @@ GlobalState StateRegistry::register_state_buffer(const int *state) {
     return lookup_state(id);
 }
 
-GlobalState StateRegistry::permute_state(const GlobalState &state, const Permutation *permutation) {
+GlobalState StateRegistry::permute_state(const GlobalState &state, const Permutation &permutation) {
     PackedStateBin *buffer = new PackedStateBin[g_state_packer->get_num_bins()];
     fill_n(buffer, g_state_packer->get_num_bins(), 0);
     for (size_t i = 0; i < g_variable_domain.size(); ++i) {
-        pair<int, int> var_val = permutation->get_new_var_val_by_old_var_val(i, state[i]);
+        pair<int, int> var_val = permutation.get_new_var_val_by_old_var_val(i, state[i]);
         assert(var_val.second < g_variable_domain[var_val.first]);
         g_state_packer->set(buffer, var_val.first, var_val.second);
     }

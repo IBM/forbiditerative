@@ -41,7 +41,7 @@ class Group {
     int permutation_length;
 
 public:
-    const Permutation* get_permutation(int index) const;
+    const Permutation &get_permutation(int index) const;
 
     explicit Group(const options::Options &opts);
     ~Group();

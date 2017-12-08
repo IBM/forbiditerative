@@ -13,7 +13,7 @@ public:
     Permutation(const Group* group);
     explicit Permutation(const Group* group, const unsigned int *full_perm);
     Permutation(const Permutation &perm, bool invert=false);
-    Permutation(const Permutation *perm1, const Permutation *perm2);
+    Permutation(const Permutation &perm1, const Permutation &perm2);
     ~Permutation();
 
     bool identity() const;
