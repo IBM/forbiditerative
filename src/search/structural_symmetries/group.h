@@ -35,15 +35,13 @@ class Group {
     // Group creation
     bool initialized;
     GraphCreator *graph_creator;
-    std::vector<const Permutation *> generators;
+    std::vector<Permutation> generators;
     const Permutation &get_permutation(int index) const;
 
     // Methods for OSS
     typedef std::vector<short int> Trace;
     void get_trace(const GlobalState& state, Trace& full_trace) const;
     Permutation *compose_permutation(const Trace &) const;
-
-    void delete_generators();
 public:
     explicit Group(const options::Options &opts);
     ~Group();

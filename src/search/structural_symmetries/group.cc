@@ -29,19 +29,11 @@ Group::Group(const options::Options &opts)
 }
 
 Group::~Group() {
-    delete_generators();
     delete graph_creator;
 }
 
-void Group::delete_generators() {
-    for (size_t i = 0; i < generators.size(); ++i) {
-        delete generators[i];
-    }
-    generators.clear();
-}
-
 const Permutation &Group::get_permutation(int index) const {
-    return *generators[index];
+    return generators[index];
 }
 
 void Group::add_to_dom_sum_by_var(int summed_dom) {
@@ -59,21 +51,20 @@ void Group::compute_symmetries() {
         cerr << "Already computed symmetries" << endl;
         exit_with(ExitCode::CRITICAL_ERROR);
     }
-    if (!graph_creator->compute_symmetries(this)) {
-        // Computing symmetries ran out of memory
-        delete_generators();
+    bool success = graph_creator->compute_symmetries(this);
+    if (!success) {
+        generators.clear();
     }
     delete graph_creator;
     graph_creator = 0;
 }
 
 void Group::add_raw_generator(const unsigned int *generator) {
-    Permutation *permutation = new Permutation(this, generator);
-    if (permutation->identity()) {
+    Permutation permutation(this, generator);
+    if (permutation.identity()) {
         ++num_identity_generators;
-        delete permutation;
     } else {
-        generators.push_back(permutation);
+        generators.push_back(move(permutation));
     }
 }
 
@@ -182,7 +173,7 @@ int *Group::get_canonical_representative(const GlobalState &state) const {
     while (changed) {
         changed = false;
         for (int i=0; i < size; i++) {
-            if (generators[i]->replace_if_less(canonical_state)) {
+            if (generators[i].replace_if_less(canonical_state)) {
                 changed =  true;
             }
         }
@@ -212,7 +203,7 @@ void Group::get_trace(const GlobalState &state, Trace& full_trace) const {
     while (changed) {
         changed = false;
         for (int i=0; i < size; i++) {
-            if (generators[i]->replace_if_less(temp_state)) {
+            if (generators[i].replace_if_less(temp_state)) {
                 full_trace.push_back(i);
                 changed = true;
             }
