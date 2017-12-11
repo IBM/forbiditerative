@@ -33,6 +33,17 @@ GraphCreator::GraphCreator(const Options &opts)
 GraphCreator::~GraphCreator() {
 }
 
+// Function that is called from the graph automorphism tool.
+void add_permutation_to_group(void *group, unsigned int, const unsigned int *full_perm) {
+    Permutation *permumtation = new Permutation((Group*) group, full_perm);
+    if (!permumtation->identity()){
+        ((Group*) group)->add_generator(permumtation);
+    } else {
+        ((Group*) group)->increase_identity_generator_count();
+        delete permumtation;
+    }
+}
+
 bool GraphCreator::compute_symmetries(Group *group) {
     bool success = false;
     new_handler original_new_handler = set_new_handler(out_of_memory_handler);
@@ -46,7 +57,7 @@ bool GraphCreator::compute_symmetries(Group *group) {
 //        bliss_graph.set_generators_bound(generators_bound);
         bliss::Stats stats1;
         cout << "Using Bliss to find group generators" << endl;
-        bliss_graph.canonical_form(stats1,&(Group::add_permutation),group);
+        bliss_graph.canonical_form(stats1,&(add_permutation_to_group),group);
         cout << "Got " << group->get_num_generators()
              << " group generators" << endl;
 //        group->dump_generators();

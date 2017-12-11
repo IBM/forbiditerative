@@ -54,7 +54,6 @@ public:
 
     // Methods for creating the group
     void compute_symmetries();
-    static void add_permutation(void*, unsigned int, const unsigned int *);
     void add_generator(const Permutation *gen);
     void increase_identity_generator_count();
     void set_permutation_num_variables(int nvars) {

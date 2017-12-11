@@ -67,20 +67,6 @@ void Group::compute_symmetries() {
     graph_creator = 0;
 }
 
-/**
- * Add new permutation to the list of permutations
- * The function will be called from bliss
- */
-void Group::add_permutation(void* param, unsigned int, const unsigned int * full_perm){
-    Permutation *perm = new Permutation((Group*) param, full_perm);
-    if (!perm->identity()){
-        ((Group*) param)->add_generator(perm);
-    } else {
-        ((Group*) param)->increase_identity_generator_count();
-        delete perm;
-    }
-}
-
 void Group::add_generator(const Permutation *gen) {
     generators.push_back(gen);
 }
