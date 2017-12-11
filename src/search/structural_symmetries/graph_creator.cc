@@ -198,7 +198,7 @@ void GraphCreator::add_operator_directed_graph(Group *group, bliss::Digraph &bli
         if (effects[idx1].conditions.size() == 0) {
             bliss_graph.add_edge(op_idx, eff_idx);
         } else {
-//            	cout << "Adding a node for conditional effect" << endl;
+//                cout << "Adding a node for conditional effect" << endl;
             // Adding a node for each condition. An edge from op to node, an edge from node to eff,
             // for each cond, an edge from cond to node.
             color_t effect_color = CONDITIONAL_EFFECT_VERTEX;

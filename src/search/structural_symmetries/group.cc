@@ -121,37 +121,37 @@ void Group::dump_variables_equivalence_classes() const {
 
     vector<int> vars_mapping;
     for (size_t i=0; i < g_variable_domain.size(); ++i)
-    	vars_mapping.push_back(i);
+        vars_mapping.push_back(i);
 
     bool change = true;
     while (change) {
-    	change = false;
-    	for (int i = 0; i < get_num_generators(); i++) {
-    		const std::vector<int>& affected = get_permutation(i).get_affected_vars();
-    		int min_ind = g_variable_domain.size();
-    		for (int var : affected) {
-    			if (min_ind > vars_mapping[var])
-    				min_ind = vars_mapping[var];
-    		}
-    		for (int var : affected) {
-    			if (vars_mapping[var] > min_ind)
-    				change = true;
-    			vars_mapping[var] = min_ind;
-    		}
-    	}
+        change = false;
+        for (int i = 0; i < get_num_generators(); i++) {
+            const std::vector<int>& affected = get_permutation(i).get_affected_vars();
+            int min_ind = g_variable_domain.size();
+            for (int var : affected) {
+                if (min_ind > vars_mapping[var])
+                    min_ind = vars_mapping[var];
+            }
+            for (int var : affected) {
+                if (vars_mapping[var] > min_ind)
+                    change = true;
+                vars_mapping[var] = min_ind;
+            }
+        }
     }
     cout << "Equivalence relation:" << endl;
     int num_vars = g_variable_domain.size();
     for (int i=0; i < num_vars; ++i) {
-    	vector<int> eqiv_class;
+        vector<int> eqiv_class;
         for (size_t j=0; j < g_variable_domain.size(); ++j)
-        	if (vars_mapping[j] == i)
-        		eqiv_class.push_back(j);
+            if (vars_mapping[j] == i)
+                eqiv_class.push_back(j);
         if (eqiv_class.size() <= 1)
-        	continue;
+            continue;
         cout << "[";
         for (int var : eqiv_class)
-        	cout << " " << g_fact_names[var][0];
+            cout << " " << g_fact_names[var][0];
         cout << " ]" << endl;
     }
 }
@@ -170,8 +170,8 @@ void Group::statistics() const {
     cout << "]" << endl;
 
     if (dump) {
-    	dump_generators();
-    	dump_variables_equivalence_classes();
+        dump_generators();
+        dump_variables_equivalence_classes();
     }
 
 }
@@ -251,9 +251,9 @@ Permutation *Group::create_permutation_from_state_to_state(
 int Group::get_var_by_index(int ind) const {
     // In case of ind < num_vars, returns the index itself, as this is the variable part of the permutation.
     if (ind < num_vars) {
-		cout << "=====> WARNING!!!! Check that this is done on purpose!" << endl;
-		return ind;
-	}
+        cout << "=====> WARNING!!!! Check that this is done on purpose!" << endl;
+        return ind;
+    }
     return var_by_val[ind-num_vars];
 }
 
@@ -266,11 +266,11 @@ std::pair<int, int> Group::get_var_val_by_index(const int ind) const {
 }
 
 int Group::get_index_by_var_val_pair(const int var, const int val) const {
-	return dom_sum_by_var[var] + val;
+    return dom_sum_by_var[var] + val;
 }
 
 Permutation*  Group::new_identity_permutation() const {
-	return new Permutation(this);
+    return new Permutation(this);
 }
 
 
