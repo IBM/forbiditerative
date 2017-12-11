@@ -50,7 +50,7 @@ bool GraphCreator::compute_symmetries(Group *group) {
         cout << "Got " << group->get_num_generators()
              << " group generators" << endl;
 //        group->dump_generators();
-        cout << "Got " << group->num_identity_generators
+        cout << "Got " << group->get_num_dentity_generators()
              << " additional group generators that are identity on states (but not on operators)" << endl;
         cout << "Done initializing symmetries: " << timer << endl;
         group->statistics();
@@ -70,10 +70,10 @@ void GraphCreator::create_bliss_directed_graph(Group *group, bliss::Digraph &bli
     int num_vars = g_variable_domain.size();
     int num_of_vertex = num_vars;
     for (int num_of_variable = 0; num_of_variable < num_vars; num_of_variable++){
-        group->dom_sum_by_var.push_back(num_of_vertex);
+        group->add_to_dom_sum_by_var(num_of_vertex);
         num_of_vertex+=g_variable_domain[num_of_variable];
         for(int num_of_value = 0; num_of_value < g_variable_domain[num_of_variable]; num_of_value++){
-        	group->var_by_val.push_back(num_of_variable);
+            group->add_to_var_by_val(num_of_variable);
         }
     }
 

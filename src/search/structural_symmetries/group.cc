@@ -43,6 +43,14 @@ const Permutation &Group::get_permutation(int index) const {
     return *generators[index];
 }
 
+void Group::add_to_dom_sum_by_var(int summed_dom) {
+    dom_sum_by_var.push_back(summed_dom);
+}
+
+void Group::add_to_var_by_val(int var) {
+    var_by_val.push_back(var);
+}
+
 void Group::compute_symmetries() {
     assert(!initialized);
     initialized = true;
@@ -67,13 +75,17 @@ void Group::add_permutation(void* param, unsigned int, const unsigned int * full
     if (!perm->identity()){
         ((Group*) param)->add_generator(perm);
     } else {
-    	((Group*) param)->num_identity_generators++;
+        ((Group*) param)->increase_identity_generator_count();
         delete perm;
     }
 }
 
 void Group::add_generator(const Permutation *gen) {
     generators.push_back(gen);
+}
+
+void Group::increase_identity_generator_count() {
+    ++num_identity_generators;
 }
 
 int Group::get_num_generators() const {
