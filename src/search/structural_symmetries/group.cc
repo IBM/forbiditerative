@@ -20,11 +20,12 @@ using namespace utils;
 Group::Group(const options::Options &opts)
     : stabilize_initial_state(opts.get<bool>("stabilize_initial_state")),
       search_symmetries(SearchSymmetries(opts.get_enum("search_symmetries"))),
+      dump_permutations(opts.get<bool>("dump_permutations")),
+      num_vars(0),
+      permutation_length(0),
+      num_identity_generators(0),
       initialized(false) {
     graph_creator = new GraphCreator(opts);
-    num_identity_generators = 0;
-    permutation_length = 0;
-    num_vars = 0;
 }
 
 Group::~Group() {
@@ -169,7 +170,7 @@ void Group::statistics() const {
     }
     cout << "]" << endl;
 
-    if (dump) {
+    if (dump_permutations) {
         dump_generators();
         dump_variables_equivalence_classes();
     }
@@ -299,7 +300,7 @@ static shared_ptr<Group> _parse(OptionParser &parser) {
                            "representative of every state during search",
                            "NONE");
 
-    parser.add_option<bool>("dump",
+    parser.add_option<bool>("dump_permutations",
                            "Dump the generators",
                            "false");
 

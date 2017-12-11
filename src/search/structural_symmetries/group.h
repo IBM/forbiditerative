@@ -23,7 +23,7 @@ class Group {
     // Options for the type of symmetries used
     bool stabilize_initial_state;
     SearchSymmetries search_symmetries;
-    bool dump;
+    bool dump_permutations;
 
     // Group properties
     int num_vars;
