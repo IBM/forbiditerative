@@ -67,12 +67,14 @@ void Group::compute_symmetries() {
     graph_creator = 0;
 }
 
-void Group::add_generator(const Permutation *gen) {
-    generators.push_back(gen);
-}
-
-void Group::increase_identity_generator_count() {
-    ++num_identity_generators;
+void Group::add_raw_generator(const unsigned int *generator) {
+    Permutation *permutation = new Permutation(this, generator);
+    if (permutation->identity()) {
+        ++num_identity_generators;
+        delete permutation;
+    } else {
+        generators.push_back(permutation);
+    }
 }
 
 int Group::get_num_generators() const {

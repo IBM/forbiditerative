@@ -34,14 +34,8 @@ GraphCreator::~GraphCreator() {
 }
 
 // Function that is called from the graph automorphism tool.
-void add_permutation_to_group(void *group, unsigned int, const unsigned int *full_perm) {
-    Permutation *permumtation = new Permutation((Group*) group, full_perm);
-    if (!permumtation->identity()){
-        ((Group*) group)->add_generator(permumtation);
-    } else {
-        ((Group*) group)->increase_identity_generator_count();
-        delete permumtation;
-    }
+void add_permutation_to_group(void *group, unsigned int, const unsigned int *permutation) {
+    ((Group*) group)->add_raw_generator(permutation);
 }
 
 bool GraphCreator::compute_symmetries(Group *group) {
