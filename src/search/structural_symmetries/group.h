@@ -57,10 +57,18 @@ public:
     static void add_permutation(void*, unsigned int, const unsigned int *);
     void add_generator(const Permutation *gen);
     void increase_identity_generator_count();
-    void set_permutation_num_variables(int nvars) { num_vars = nvars; }
-    int get_permutation_num_variables() const { return num_vars; }
-    void set_permutation_length(int length) { permutation_length = length; }
-    int get_permutation_length() const { return permutation_length; }
+    void set_permutation_num_variables(int nvars) {
+        num_vars = nvars;
+    }
+    int get_permutation_num_variables() const {
+        return num_vars;
+    }
+    void set_permutation_length(int length) {
+        permutation_length = length;
+    }
+    int get_permutation_length() const {
+        return permutation_length;
+    }
     int get_var_by_index(int val) const;
     std::pair<int, int> get_var_val_by_index(const int ind) const;
     int get_index_by_var_val_pair(const int var, const int val) const;

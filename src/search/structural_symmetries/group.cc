@@ -103,7 +103,7 @@ void Group::dump_generators() const {
     for (int i = 0; i < get_num_generators(); i++) {
         cout << "Generator " << i << endl;
         get_permutation(i).print_cycle_notation();
-        //get_permutation(i).dump_var_vals();
+        get_permutation(i).dump_var_vals();
     }
 
     cout << "Extra group info:" << endl;
