@@ -33,6 +33,11 @@ GraphCreator::GraphCreator(const Options &opts)
 GraphCreator::~GraphCreator() {
 }
 
+// Function that is called from the graph automorphism tool.
+void add_permutation_to_group(void *group, unsigned int, const unsigned int *permutation) {
+    ((Group*) group)->add_raw_generator(permutation);
+}
+
 bool GraphCreator::compute_symmetries(Group *group) {
     bool success = false;
     new_handler original_new_handler = set_new_handler(out_of_memory_handler);
@@ -40,16 +45,18 @@ bool GraphCreator::compute_symmetries(Group *group) {
         utils::Timer timer;
         cout << "Initializing symmetry " << endl;
         bliss::Digraph bliss_graph = bliss::Digraph();
-        create_bliss_directed_graph(bliss_graph);
+        create_bliss_directed_graph(group, bliss_graph);
         bliss_graph.set_splitting_heuristic(bliss::Digraph::shs_flm);
         bliss_graph.set_time_limit(time_bound);
 //        bliss_graph.set_generators_bound(generators_bound);
         bliss::Stats stats1;
         cout << "Using Bliss to find group generators" << endl;
-        bliss_graph.canonical_form(stats1,&(Group::add_permutation),group);
+        bliss_graph.canonical_form(stats1,&(add_permutation_to_group),group);
         cout << "Got " << group->get_num_generators()
              << " group generators" << endl;
 //        group->dump_generators();
+        cout << "Got " << group->get_num_dentity_generators()
+             << " additional group generators that are identity on states (but not on operators)" << endl;
         cout << "Done initializing symmetries: " << timer << endl;
         group->statistics();
         success = true;
@@ -60,7 +67,7 @@ bool GraphCreator::compute_symmetries(Group *group) {
     return success;
 }
 
-void GraphCreator::create_bliss_directed_graph(bliss::Digraph &bliss_graph) const {
+void GraphCreator::create_bliss_directed_graph(Group *group, bliss::Digraph &bliss_graph) const {
     // Differ from create_bliss_graph() in (a) having one node per action (incoming arcs from pre, outgoing to eff),
     //                                 and (b) not having a node for goal, recoloring the respective values.
    // initialization
@@ -68,15 +75,15 @@ void GraphCreator::create_bliss_directed_graph(bliss::Digraph &bliss_graph) cons
     int num_vars = g_variable_domain.size();
     int num_of_vertex = num_vars;
     for (int num_of_variable = 0; num_of_variable < num_vars; num_of_variable++){
-        Permutation::dom_sum_by_var.push_back(num_of_vertex);
+        group->add_to_dom_sum_by_var(num_of_vertex);
         num_of_vertex+=g_variable_domain[num_of_variable];
         for(int num_of_value = 0; num_of_value < g_variable_domain[num_of_variable]; num_of_value++){
-            Permutation::var_by_val.push_back(num_of_variable);
+            group->add_to_var_by_val(num_of_variable);
         }
     }
 
-    Permutation::num_vars = num_vars;
-    Permutation::length = num_of_vertex;
+    group->set_permutation_num_variables(num_vars);
+    group->set_permutation_length(num_of_vertex);
 
     int idx = 0;
     // add vertex for each varaible
@@ -105,14 +112,14 @@ void GraphCreator::create_bliss_directed_graph(bliss::Digraph &bliss_graph) cons
 
     for (size_t i = 0; i < g_operators.size(); i++){
         const GlobalOperator& op = g_operators[i];
-        int op_idx = Permutation::length + i;
-        add_operator_directed_graph(bliss_graph, op, op_idx);
+        int op_idx = group->get_permutation_length() + i;
+        add_operator_directed_graph(group, bliss_graph, op, op_idx);
     }
 
     for (size_t i = 0; i < g_axioms.size(); i++){
         const GlobalOperator& op = g_axioms[i];
-        int op_idx = Permutation::length + g_operators.size() + i;
-        add_operator_directed_graph(bliss_graph, op, op_idx);
+        int op_idx = group->get_permutation_length() + g_operators.size() + i;
+        add_operator_directed_graph(group, bliss_graph, op, op_idx);
     }
 
     if (stabilize_initial_state) {
@@ -124,9 +131,9 @@ void GraphCreator::create_bliss_directed_graph(bliss::Digraph &bliss_graph) cons
           state, depending on the order of coloring.
         */
         idx = bliss_graph.add_vertex(INIT_VERTEX);
-        for (int var = 0; var < Permutation::num_vars; ++var) {
+        for (int var = 0; var < group->get_permutation_num_variables(); ++var) {
             int val = g_initial_state_data[var];
-            int init_idx = Permutation::get_index_by_var_val_pair(var, val);
+            int init_idx = group->get_index_by_var_val_pair(var, val);
             bliss_graph.add_edge(idx, init_idx);
         }
     }
@@ -135,7 +142,7 @@ void GraphCreator::create_bliss_directed_graph(bliss::Digraph &bliss_graph) cons
     for (size_t i = 0; i < g_goal.size(); i++){
         int var = g_goal[i].first;
         int val = g_goal[i].second;
-        int goal_idx = Permutation::get_index_by_var_val_pair(var, val);
+        int goal_idx = group->get_index_by_var_val_pair(var, val);
         bliss_graph.change_color(goal_idx, GOAL_VERTEX);
     }
 
@@ -143,8 +150,7 @@ void GraphCreator::create_bliss_directed_graph(bliss::Digraph &bliss_graph) cons
 }
 
 //TODO: Use separate color for axioms
-//TODO: Change the order of vertices creation to support keeping actions in the permutation (no need for keeping conditional effect vertices).
-void GraphCreator::add_operator_directed_graph(bliss::Digraph &bliss_graph,
+void GraphCreator::add_operator_directed_graph(Group *group, bliss::Digraph &bliss_graph,
                                                const GlobalOperator& op, int op_idx) const {
     const vector<GlobalCondition> &conditions = op.get_preconditions();
     const vector<GlobalEffect> &effects = op.get_effects();
@@ -179,7 +185,7 @@ void GraphCreator::add_operator_directed_graph(bliss::Digraph &bliss_graph,
     for (size_t idx1 = 0; idx1 < prevails.size(); idx1++){
         int var = prevails[idx1].first;
         int val = prevails[idx1].second;
-        int prv_idx = Permutation::dom_sum_by_var[var] + val;
+        int prv_idx = group->get_index_by_var_val_pair(var, val);
         bliss_graph.add_edge(prv_idx, op_idx);
     }
     for (size_t idx1 = 0; idx1 < effects.size(); idx1++){
@@ -187,17 +193,17 @@ void GraphCreator::add_operator_directed_graph(bliss::Digraph &bliss_graph,
         int pre_val = effects_pre_vals[idx1];
 
         if (pre_val!= -1){
-            int pre_idx = Permutation::dom_sum_by_var[var] + pre_val;
+            int pre_idx = group->get_index_by_var_val_pair(var, pre_val);
             bliss_graph.add_edge(pre_idx, op_idx);
         }
 
         int eff_val = effects[idx1].val;
-        int eff_idx = Permutation::dom_sum_by_var[var] + eff_val;
+        int eff_idx = group->get_index_by_var_val_pair(var, eff_val);
 
         if (effects[idx1].conditions.size() == 0) {
             bliss_graph.add_edge(op_idx, eff_idx);
         } else {
-//            	cout << "Adding a node for conditional effect" << endl;
+//                cout << "Adding a node for conditional effect" << endl;
             // Adding a node for each condition. An edge from op to node, an edge from node to eff,
             // for each cond, an edge from cond to node.
             color_t effect_color = CONDITIONAL_EFFECT_VERTEX;
@@ -211,7 +217,7 @@ void GraphCreator::add_operator_directed_graph(bliss::Digraph &bliss_graph,
             for (size_t c = 0; c < effects[idx1].conditions.size(); c++){
                 int c_var = effects[idx1].conditions[c].var;
                 int c_val = effects[idx1].conditions[c].val;
-                int c_idx = Permutation::dom_sum_by_var[c_var] + c_val;
+                int c_idx = group->get_index_by_var_val_pair(c_var, c_val);
 
                 bliss_graph.add_edge(c_idx, cond_op_idx); // Edge from condition to conditional effect
             }
@@ -230,6 +236,8 @@ bool GraphCreator::effect_can_be_overwritten(int ind, const std::vector<GlobalEf
         return false;
 
     // Go over the next effects of the same variable, skipping the none_of_those
+    // Warning! It seems that we assume here that the variables in the effects are ordered by effect variables.
+    //          Should be changed!
     for (int i=ind+1; i < num_effects; i++) {
         if (var != effects[i].var) // Next variable
             return false;

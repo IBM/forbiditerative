@@ -4,6 +4,8 @@
 #include "../option_parser.h"
 #include "../plugin.h"
 
+#include "../structural_symmetries/group.h"
+
 using namespace std;
 
 namespace plugin_astar {

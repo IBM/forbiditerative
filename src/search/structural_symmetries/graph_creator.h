@@ -1,5 +1,5 @@
-#ifndef SYMMETRIES_GRAPH_CREATOR_H
-#define SYMMETRIES_GRAPH_CREATOR_H
+#ifndef STRUCTURAL_SYMMETRIES_GRAPH_CREATOR_H
+#define STRUCTURAL_SYMMETRIES_GRAPH_CREATOR_H
 
 #include <vector>
 
@@ -21,11 +21,10 @@ class Options;
 
 class GraphCreator  {
     int time_bound;
-    //int generators_bound;
     bool stabilize_initial_state;
 
-    void create_bliss_directed_graph(bliss::Digraph &bliss_graph) const;
-    void add_operator_directed_graph(bliss::Digraph &bliss_graph,
+    void create_bliss_directed_graph(Group *group, bliss::Digraph &bliss_graph) const;
+    void add_operator_directed_graph(Group *group, bliss::Digraph &bliss_graph,
                                      const GlobalOperator& op, int op_idx) const;
     bool effect_can_be_overwritten(int ind, const std::vector<GlobalEffect>& effects) const;
 public:

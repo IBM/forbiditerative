@@ -191,7 +191,7 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
         if (new_state.get_id() != current_state.get_id()){
             p = group->create_permutation_from_state_to_state(current_state, new_state);
         } else {
-            p = new Permutation();
+            p = group->new_identity_permutation();
         }
         permutations.push_back(p);
         if (op_no == -1)
@@ -200,7 +200,7 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
     }
     assert(state_trace.size() == permutations.size());
     vector<Permutation *> reverse_permutations;
-    Permutation *temp_p = new Permutation();
+    Permutation *temp_p = group->new_identity_permutation();
     // Store another pointer to the id permutation and delete it in the first
     // iteration below. All other temp_p permutations cannot be deleted
     // because they are kept in reverse_permutations.
