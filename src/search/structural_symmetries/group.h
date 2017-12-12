@@ -34,17 +34,16 @@ class Group {
 
     // Group creation
     bool initialized;
-    GraphCreator *graph_creator;
+    std::unique_ptr<GraphCreator> graph_creator;
     std::vector<Permutation> generators;
     const Permutation &get_permutation(int index) const;
 
-    // Methods for OSS
-    typedef std::vector<short int> Trace;
-    void get_trace(const GlobalState& state, Trace& full_trace) const;
-    Permutation *compose_permutation(const Trace &) const;
+    // Path tracing
+    std::vector<int> compute_permutation_trace_to_canonical_representative(const GlobalState& state) const;
+    Permutation *compose_permutation(const std::vector<int> &permutation_trace) const;
 public:
     explicit Group(const options::Options &opts);
-    ~Group();
+    virtual ~Group() = default;
 
     // Graph creator
     void add_to_dom_sum_by_var(int summed_dom);

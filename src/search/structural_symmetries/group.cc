@@ -8,6 +8,7 @@
 #include "../per_state_information.h"
 #include "../plugin.h"
 #include "../state_registry.h"
+#include "../utils/memory.h"
 
 #include <algorithm>
 #include <iostream>
@@ -25,11 +26,7 @@ Group::Group(const options::Options &opts)
       permutation_length(0),
       num_identity_generators(0),
       initialized(false) {
-    graph_creator = new GraphCreator(opts);
-}
-
-Group::~Group() {
-    delete graph_creator;
+    graph_creator = utils::make_unique_ptr<GraphCreator>(opts);
 }
 
 const Permutation &Group::get_permutation(int index) const {
@@ -55,8 +52,7 @@ void Group::compute_symmetries() {
     if (!success) {
         generators.clear();
     }
-    delete graph_creator;
-    graph_creator = 0;
+    graph_creator = nullptr;
 }
 
 void Group::add_raw_generator(const unsigned int *generator) {
@@ -156,9 +152,6 @@ void Group::statistics() const {
 
 }
 
-// ===============================================================================
-// Methods related to OSS
-
 int *Group::get_canonical_representative(const GlobalState &state) const {
     int *canonical_state = new int[g_variable_domain.size()];
     for (size_t i = 0; i < g_variable_domain.size(); ++i) {
@@ -182,21 +175,22 @@ int *Group::get_canonical_representative(const GlobalState &state) const {
     return canonical_state;
 }
 
-Permutation *Group::compose_permutation(const Trace& perm_index) const {
+Permutation *Group::compose_permutation(const vector<int>& permutation_trace) const {
+    assert(has_symmetries());
     Permutation *new_perm = new_identity_permutation();
-    for (size_t i = 0; i < perm_index.size(); ++i) {
-        Permutation *tmp = new Permutation(*new_perm, get_permutation(perm_index[i]));
+    for (size_t i = 0; i < permutation_trace.size(); ++i) {
+        Permutation *tmp = new Permutation(*new_perm, get_permutation(permutation_trace[i]));
         delete new_perm;
         new_perm = tmp;
     }
     return new_perm;
 }
 
-void Group::get_trace(const GlobalState &state, Trace& full_trace) const {
+vector<int> Group::compute_permutation_trace_to_canonical_representative(const GlobalState &state) const {
+    assert(has_symmetries());
+    // TODO: duplicate code with get_canonical_representative
+    vector<int> permutation_trace;
     int size = get_num_generators();
-    if (size == 0)
-        return;
-
     int *temp_state = new int[g_variable_domain.size()];
     for(size_t i = 0; i < g_variable_domain.size(); ++i)
         temp_state[i] = state[i];
@@ -205,29 +199,29 @@ void Group::get_trace(const GlobalState &state, Trace& full_trace) const {
         changed = false;
         for (int i=0; i < size; i++) {
             if (generators[i].replace_if_less(temp_state)) {
-                full_trace.push_back(i);
+                permutation_trace.push_back(i);
                 changed = true;
             }
         }
     }
     delete[] temp_state;
+    return permutation_trace;
 }
 
 Permutation *Group::create_permutation_from_state_to_state(
         const GlobalState& from_state, const GlobalState& to_state) const {
-    Trace new_trace;
-    Trace curr_trace;
-    get_trace(from_state, curr_trace);
-    get_trace(to_state, new_trace);
+    assert(has_symmetries());
+    vector<int> from_state_permutation_trace = compute_permutation_trace_to_canonical_representative(from_state);
+    vector<int> to_state_permutation_trace = compute_permutation_trace_to_canonical_representative(to_state);
 
-    Permutation *tmp = compose_permutation(new_trace);
-    Permutation *p1 = new Permutation(*tmp, true);  //inverse
-    delete tmp;
-    Permutation *p2 = compose_permutation(curr_trace);
-    Permutation *result = new Permutation(*p2, *p1);
-    delete p1;
-    delete p2;
-    return result;
+    Permutation *to_state_to_canonical_permutation = compose_permutation(to_state_permutation_trace);
+    Permutation *canonical_to_to_state_permutation = new Permutation(*to_state_to_canonical_permutation, true);  //inverse
+    delete to_state_to_canonical_permutation;
+    Permutation *from_state_to_canonical_permutation = compose_permutation(from_state_permutation_trace);
+    Permutation *from_state_to_to_state_permutation = new Permutation(*from_state_to_canonical_permutation, *canonical_to_to_state_permutation);
+    delete canonical_to_to_state_permutation;
+    delete from_state_to_canonical_permutation;
+    return from_state_to_to_state_permutation;
 }
 
 int Group::get_var_by_index(int ind) const {
