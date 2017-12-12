@@ -51,6 +51,14 @@ Permutation::Permutation(const Group &_group, const unsigned int* full_permutati
     finalize();
 }
 
+Permutation::Permutation(const Group &_group, const vector<int> &full_permutation) : group(_group) {
+    _allocate();
+    for (int i = 0; i < group.get_permutation_length(); i++){
+        set_value(i,full_permutation[i]);
+    }
+    finalize();
+}
+
 Permutation::Permutation(const Permutation &perm, bool invert) : group(perm.group) {
     _allocate();
     if (invert) {

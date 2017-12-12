@@ -12,6 +12,7 @@ class Permutation{
 public:
     explicit Permutation(const Group &group);
     Permutation(const Group &group, const unsigned int *full_perm);
+    Permutation(const Group &group, const std::vector<int> &full_perm);
     Permutation(const Permutation &perm, bool invert=false);
     Permutation(const Permutation &perm1, const Permutation &perm2);
     ~Permutation();

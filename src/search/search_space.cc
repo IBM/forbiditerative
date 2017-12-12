@@ -155,9 +155,8 @@ void SearchSpace::trace_path(const GlobalState &goal_state,
 void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
                                              vector<const GlobalOperator *> &path,
                                              const shared_ptr<Group> &group) const {
-    vector<Permutation *> permutations;
-    vector<GlobalState> state_trace;
-    GlobalState current_state = goal_state;
+    assert(path.empty());
+
     /*
       For DKS, we need to use a separate registry to generate successor states
       to avoid generating the symmetrical successor state, which could equal
@@ -173,8 +172,10 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
         group->get_search_symmetries() == SearchSymmetries::DKS ?
                 &dks_successor_state_registry : &state_registry;
 
-    assert(path.empty());
-    for (;;) {
+    vector<RawPermutation> permutations;
+    vector<GlobalState> state_trace;
+    GlobalState current_state = goal_state;
+    while (true) {
         const SearchNodeInfo &info = search_node_infos[current_state];
         assert(info.status != SearchNodeInfo::NEW);
         int op_no = info.creating_operator;
@@ -187,42 +188,32 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
             const GlobalOperator *op = &g_operators[op_no];
             new_state = successor_registry->get_successor_state(parent_state, *op);
         }
-        Permutation *p;
+        RawPermutation p;
         if (new_state.get_id() != current_state.get_id()){
             p = group->create_permutation_from_state_to_state(current_state, new_state);
         } else {
-            p = group->new_identity_permutation();
+            p = group->new_identity_raw_permutation();
         }
-        permutations.push_back(p);
+        permutations.push_back(move(p));
         if (op_no == -1)
             break;
         current_state = parent_state;
     }
     assert(state_trace.size() == permutations.size());
-    vector<Permutation *> reverse_permutations;
-    Permutation *temp_p = group->new_identity_permutation();
-    // Store another pointer to the id permutation and delete it in the first
-    // iteration below. All other temp_p permutations cannot be deleted
-    // because they are kept in reverse_permutations.
-    Permutation *to_delete = temp_p;
+    vector<RawPermutation> reverse_permutations;
+    RawPermutation temp_p = group->new_identity_raw_permutation();
     while (permutations.begin() != permutations.end()) {
-        Permutation *p = permutations.back();
-        temp_p = new Permutation(*p, *temp_p);
-        if (to_delete) {
-            delete to_delete;
-            to_delete = 0;
-        }
+        const RawPermutation &p = permutations.back();
+        temp_p = group->compose_permutations(p, temp_p);
         reverse_permutations.push_back(temp_p);
         permutations.pop_back();
-        delete p;
     }
     for (size_t i = 0; i < state_trace.size(); ++i){
-        Permutation *permutation = reverse_permutations[state_trace.size() - i-1];
+        const RawPermutation &permutation = reverse_permutations[state_trace.size() - i-1];
         state_trace[i] = successor_registry->permute_state(state_trace[i],
-                                                           *permutation);
-        delete permutation;
-        permutation = 0;
+                                                           Permutation(*group, permutation));
     }
+    reverse_permutations.clear();
     for (int i = state_trace.size() - 1; i > 0; i--) {
         vector<OperatorID> applicable_ops;
         g_successor_generator->generate_applicable_ops(state_trace[i], applicable_ops);

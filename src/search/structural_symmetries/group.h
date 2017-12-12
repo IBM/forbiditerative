@@ -19,6 +19,8 @@ enum class SearchSymmetries {
     DKS
 };
 
+using RawPermutation = std::vector<int>;
+
 class Group {
     // Options for the type of symmetries used
     bool stabilize_initial_state;
@@ -39,8 +41,9 @@ class Group {
     const Permutation &get_permutation(int index) const;
 
     // Path tracing
-    std::vector<int> compute_permutation_trace_to_canonical_representative(const GlobalState& state) const;
-    Permutation *compose_permutation(const std::vector<int> &permutation_trace) const;
+    RawPermutation compute_permutation_from_trace(const RawPermutation &permutation_trace) const;
+    RawPermutation compute_permutation_trace_to_canonical_representative(const GlobalState& state) const;
+    RawPermutation compute_inverse_permutation(const RawPermutation &permutation) const;
 public:
     explicit Group(const options::Options &opts);
     virtual ~Group() = default;
@@ -91,10 +94,12 @@ public:
 
     // Used for OSS
     int *get_canonical_representative(const GlobalState &state) const;
-    // Used for path tracing (OSS and DKS)
-    Permutation *create_permutation_from_state_to_state(
+    // Following methods: used for path tracing (OSS and DKS)
+    RawPermutation new_identity_raw_permutation() const;
+    RawPermutation compose_permutations(
+        const RawPermutation &permutation1, const RawPermutation & permutation2) const;
+    RawPermutation create_permutation_from_state_to_state(
         const GlobalState &from_state, const GlobalState &to_state) const;
-    Permutation *new_identity_permutation() const;
 };
 
 #endif

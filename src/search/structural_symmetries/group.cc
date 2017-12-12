@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <numeric>
 #include <queue>
 
 
@@ -175,21 +176,24 @@ int *Group::get_canonical_representative(const GlobalState &state) const {
     return canonical_state;
 }
 
-Permutation *Group::compose_permutation(const vector<int>& permutation_trace) const {
+RawPermutation Group::compute_permutation_from_trace(const RawPermutation& permutation_trace) const {
     assert(has_symmetries());
-    Permutation *new_perm = new_identity_permutation();
-    for (size_t i = 0; i < permutation_trace.size(); ++i) {
-        Permutation *tmp = new Permutation(*new_perm, get_permutation(permutation_trace[i]));
-        delete new_perm;
-        new_perm = tmp;
+    RawPermutation new_perm = new_identity_raw_permutation();
+    for (int permutation_index : permutation_trace) {
+        const Permutation &permutation = generators[permutation_index];
+        RawPermutation temp_perm(permutation_length);
+        for (int i = 0; i < permutation_length; i++) {
+           temp_perm[i] = permutation.get_value(new_perm[i]);
+        }
+        new_perm.swap(temp_perm);
     }
     return new_perm;
 }
 
-vector<int> Group::compute_permutation_trace_to_canonical_representative(const GlobalState &state) const {
+RawPermutation Group::compute_permutation_trace_to_canonical_representative(const GlobalState &state) const {
     assert(has_symmetries());
     // TODO: duplicate code with get_canonical_representative
-    vector<int> permutation_trace;
+    RawPermutation permutation_trace;
     int size = get_num_generators();
     int *temp_state = new int[g_variable_domain.size()];
     for(size_t i = 0; i < g_variable_domain.size(); ++i)
@@ -208,20 +212,38 @@ vector<int> Group::compute_permutation_trace_to_canonical_representative(const G
     return permutation_trace;
 }
 
-Permutation *Group::create_permutation_from_state_to_state(
+RawPermutation Group::compute_inverse_permutation(const RawPermutation &permutation) const {
+    RawPermutation result(permutation_length);
+    for (int i = 0; i < permutation_length; ++i) {
+        result[permutation[i]] = i;
+    }
+    return result;
+}
+
+RawPermutation Group::new_identity_raw_permutation() const {
+    RawPermutation result(permutation_length);
+    iota(result.begin(), result.end(), 0);
+    return result;
+}
+
+RawPermutation Group::compose_permutations(
+    const RawPermutation &permutation1, const RawPermutation & permutation2) const {
+    RawPermutation result(permutation_length);
+    for (int i = 0; i < permutation_length; i++) {
+       result[i] = permutation2[permutation1[i]];
+    }
+    return result;
+}
+
+RawPermutation Group::create_permutation_from_state_to_state(
         const GlobalState& from_state, const GlobalState& to_state) const {
     assert(has_symmetries());
-    vector<int> from_state_permutation_trace = compute_permutation_trace_to_canonical_representative(from_state);
-    vector<int> to_state_permutation_trace = compute_permutation_trace_to_canonical_representative(to_state);
+    RawPermutation from_state_permutation_trace = compute_permutation_trace_to_canonical_representative(from_state);
+    RawPermutation to_state_permutation_trace = compute_permutation_trace_to_canonical_representative(to_state);
 
-    Permutation *to_state_to_canonical_permutation = compose_permutation(to_state_permutation_trace);
-    Permutation *canonical_to_to_state_permutation = new Permutation(*to_state_to_canonical_permutation, true);  //inverse
-    delete to_state_to_canonical_permutation;
-    Permutation *from_state_to_canonical_permutation = compose_permutation(from_state_permutation_trace);
-    Permutation *from_state_to_to_state_permutation = new Permutation(*from_state_to_canonical_permutation, *canonical_to_to_state_permutation);
-    delete canonical_to_to_state_permutation;
-    delete from_state_to_canonical_permutation;
-    return from_state_to_to_state_permutation;
+    RawPermutation canonical_to_to_state_permutation = compute_inverse_permutation(compute_permutation_from_trace(to_state_permutation_trace));
+    RawPermutation from_state_to_canonical_permutation = compute_permutation_from_trace(from_state_permutation_trace);
+    return compose_permutations(from_state_to_canonical_permutation, canonical_to_to_state_permutation);
 }
 
 int Group::get_var_by_index(int ind) const {
@@ -243,10 +265,6 @@ std::pair<int, int> Group::get_var_val_by_index(const int ind) const {
 
 int Group::get_index_by_var_val_pair(const int var, const int val) const {
     return dom_sum_by_var[var] + val;
-}
-
-Permutation *Group::new_identity_permutation() const {
-    return new Permutation(*this);
 }
 
 
