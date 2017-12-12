@@ -47,8 +47,9 @@ void StateRegistry::set_group(const shared_ptr<Group> &group_) {
 }
 
 StateID StateRegistry::insert_id_or_pop_state() {
-    if (has_symmetries_and_uses_dks)
+    if (has_symmetries_and_uses_dks) {
         return insert_id_or_pop_state_dks();
+    }
     /*
       Attempt to insert a StateID for the last state of state_data_pool
       if none is present yet. If this fails (another entry for this state

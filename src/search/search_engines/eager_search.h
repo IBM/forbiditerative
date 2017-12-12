@@ -27,7 +27,7 @@ class EagerSearch : public SearchEngine {
     Evaluator *f_evaluator;
     /*
       Note: orbit space search and duplicate pruning with dks does not work
-      with preferred operators and multi plath search.
+      with preferred operators and multi path search.
     */
     bool use_oss() const;
     bool use_dks() const;
