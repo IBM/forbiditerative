@@ -6,6 +6,7 @@
 #include "../open_list_factory.h"
 #include "../option_parser.h"
 #include "../pruning_method.h"
+#include "../task_proxy.h"
 
 #include "../algorithms/ordered_set.h"
 #include "../task_utils/successor_generator.h"
@@ -33,7 +34,7 @@ EagerSearch::EagerSearch(const Options &opts)
         group = opts.get<shared_ptr<Group>>("symmetries");
         if (group && !group->is_initialized()) {
             cout << "Initializing symmetries (eager search)" << endl;
-            group->compute_symmetries();
+            group->compute_symmetries(TaskProxy(*g_root_task()));
         }
 
         if (use_dks()) {

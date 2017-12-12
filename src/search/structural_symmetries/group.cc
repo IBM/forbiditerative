@@ -8,6 +8,7 @@
 #include "../per_state_information.h"
 #include "../plugin.h"
 #include "../state_registry.h"
+#include "../task_proxy.h"
 #include "../utils/memory.h"
 
 #include <algorithm>
@@ -42,13 +43,13 @@ void Group::add_to_var_by_val(int var) {
     var_by_val.push_back(var);
 }
 
-void Group::compute_symmetries() {
+void Group::compute_symmetries(const TaskProxy &task_proxy) {
     if (initialized || !generators.empty()) {
         cerr << "Already computed symmetries" << endl;
         exit_with(ExitCode::CRITICAL_ERROR);
     }
     GraphCreator graph_creator;
-    bool success = graph_creator.compute_symmetries(stabilize_initial_state, time_bound, this);
+    bool success = graph_creator.compute_symmetries(task_proxy, stabilize_initial_state, time_bound, this);
     if (!success) {
         generators.clear();
     }

@@ -6,9 +6,10 @@
 namespace bliss {
     class Digraph;
 }
-class GlobalEffect;
-class GlobalOperator;
+class EffectsProxy;
 class Group;
+class OperatorProxy;
+class TaskProxy;
 
 /**
  * This class will create a bliss graph which will be used to find the
@@ -17,17 +18,24 @@ class Group;
 
 class GraphCreator  {
     void create_bliss_directed_graph(
-        bool stabilize_initial_state, Group *group, bliss::Digraph &bliss_graph) const;
-    void add_operator_directed_graph(
+        const TaskProxy &task_proxy,
+        bool stabilize_initial_state,
         Group *group,
+        bliss::Digraph &bliss_graph) const;
+    void add_operator_directed_graph(Group *group,
         bliss::Digraph &bliss_graph,
-        const GlobalOperator& op,
+        const OperatorProxy &op,
         int op_idx) const;
-    bool effect_can_be_overwritten(int ind, const std::vector<GlobalEffect>& effects) const;
+    bool effect_can_be_overwritten(int ind,
+        const EffectsProxy &effects) const;
 public:
     GraphCreator() = default;
     virtual ~GraphCreator() = default;
-    bool compute_symmetries(bool stabilize_initial_state, int time_bound, Group *group);
+    bool compute_symmetries(
+        const TaskProxy &task_proxy,
+        bool stabilize_initial_state,
+        int time_bound,
+        Group *group);
 };
 
 #endif

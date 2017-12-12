@@ -7,6 +7,7 @@
 class GlobalState;
 class Permutation;
 class StateRegistry;
+class TaskProxy;
 
 namespace options {
 class Options;
@@ -52,7 +53,7 @@ public:
     void add_to_var_by_val(int var);
 
     // Methods for creating the group
-    void compute_symmetries();
+    void compute_symmetries(const TaskProxy &task_proxy);
     void add_raw_generator(const unsigned int *generator);
     void set_permutation_num_variables(int nvars) {
         num_vars = nvars;
