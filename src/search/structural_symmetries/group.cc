@@ -178,6 +178,7 @@ int *Group::get_canonical_representative(const GlobalState &state) const {
             }
         }
     }
+    // Ensure it is deleted after use
     return canonical_state;
 }
 
@@ -209,6 +210,7 @@ void Group::get_trace(const GlobalState &state, Trace& full_trace) const {
             }
         }
     }
+    delete[] temp_state;
 }
 
 Permutation *Group::create_permutation_from_state_to_state(
