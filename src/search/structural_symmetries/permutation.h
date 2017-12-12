@@ -10,8 +10,8 @@ class GlobalState;
 
 class Permutation{
 public:
-    Permutation(const Group* group);
-    explicit Permutation(const Group* group, const unsigned int *full_perm);
+    explicit Permutation(const Group &group);
+    Permutation(const Group &group, const unsigned int *full_perm);
     Permutation(const Permutation &perm, bool invert=false);
     Permutation(const Permutation &perm1, const Permutation &perm2);
     ~Permutation();
@@ -37,7 +37,7 @@ public:
         return vars_affected; 
     }
 private:
-    const Group* group;
+    const Group &group;
     int* value;
     std::vector<int> vars_affected;
     std::vector<bool> affected;

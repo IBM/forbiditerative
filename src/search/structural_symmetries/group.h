@@ -95,7 +95,7 @@ public:
     // Used for path tracing (OSS and DKS)
     Permutation *create_permutation_from_state_to_state(
         const GlobalState &from_state, const GlobalState &to_state) const;
-    Permutation* new_identity_permutation() const;
+    Permutation *new_identity_permutation() const;
 };
 
 #endif

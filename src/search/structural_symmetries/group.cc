@@ -60,7 +60,7 @@ void Group::compute_symmetries() {
 }
 
 void Group::add_raw_generator(const unsigned int *generator) {
-    Permutation permutation(this, generator);
+    Permutation permutation(*this, generator);
     if (permutation.identity()) {
         ++num_identity_generators;
     } else {
@@ -182,7 +182,7 @@ int *Group::get_canonical_representative(const GlobalState &state) const {
 }
 
 Permutation *Group::compose_permutation(const Trace& perm_index) const {
-    Permutation *new_perm = new Permutation(this);
+    Permutation *new_perm = new_identity_permutation();
     for (size_t i = 0; i < perm_index.size(); ++i) {
         Permutation *tmp = new Permutation(*new_perm, get_permutation(perm_index[i]));
         delete new_perm;
@@ -249,8 +249,8 @@ int Group::get_index_by_var_val_pair(const int var, const int val) const {
     return dom_sum_by_var[var] + val;
 }
 
-Permutation*  Group::new_identity_permutation() const {
-    return new Permutation(this);
+Permutation *Group::new_identity_permutation() const {
+    return new Permutation(*this);
 }
 
 

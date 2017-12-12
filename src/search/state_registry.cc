@@ -27,6 +27,7 @@ StateRegistry::StateRegistry(
           StateIDSemanticHash(canonical_state_data_pool, get_bins_per_state()),
           StateIDSemanticEqual(canonical_state_data_pool, get_bins_per_state())),
       group(0),
+      has_symmetries_and_uses_dks(false),
       cached_initial_state(0) {
 }
 
@@ -39,9 +40,14 @@ StateRegistry::~StateRegistry() {
     delete cached_initial_state;
 }
 
+void StateRegistry::set_group(const shared_ptr<Group> &group_) {
+    // Group is only set from eager_search if it has symmetries and uses DKS.
+    group = group_;
+    has_symmetries_and_uses_dks = true;
+}
+
 StateID StateRegistry::insert_id_or_pop_state() {
-    if (group && group->has_symmetries() &&
-        group->get_search_symmetries() == SearchSymmetries::DKS)
+    if (has_symmetries_and_uses_dks)
         return insert_id_or_pop_state_dks();
     /*
       Attempt to insert a StateID for the last state of state_data_pool
