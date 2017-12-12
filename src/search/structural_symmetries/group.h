@@ -5,7 +5,6 @@
 #include <vector>
 
 class GlobalState;
-class GraphCreator;
 class Permutation;
 class StateRegistry;
 
@@ -22,8 +21,9 @@ enum class SearchSymmetries {
 using RawPermutation = std::vector<int>;
 
 class Group {
-    // Options for the type of symmetries used
+    // Options for Bliss and the type of symmetries used
     bool stabilize_initial_state;
+    int time_bound;
     SearchSymmetries search_symmetries;
     bool dump_permutations;
 
@@ -36,7 +36,6 @@ class Group {
 
     // Group creation
     bool initialized;
-    std::unique_ptr<GraphCreator> graph_creator;
     std::vector<Permutation> generators;
     const Permutation &get_permutation(int index) const;
 

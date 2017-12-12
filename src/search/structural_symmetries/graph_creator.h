@@ -10,27 +10,24 @@ class GlobalEffect;
 class GlobalOperator;
 class Group;
 
-namespace options {
-class Options;
-}
-
 /**
  * This class will create a bliss graph which will be used to find the
  * automorphism groups
  */
 
 class GraphCreator  {
-    int time_bound;
-    bool stabilize_initial_state;
-
-    void create_bliss_directed_graph(Group *group, bliss::Digraph &bliss_graph) const;
-    void add_operator_directed_graph(Group *group, bliss::Digraph &bliss_graph,
-                                     const GlobalOperator& op, int op_idx) const;
+    void create_bliss_directed_graph(
+        bool stabilize_initial_state, Group *group, bliss::Digraph &bliss_graph) const;
+    void add_operator_directed_graph(
+        Group *group,
+        bliss::Digraph &bliss_graph,
+        const GlobalOperator& op,
+        int op_idx) const;
     bool effect_can_be_overwritten(int ind, const std::vector<GlobalEffect>& effects) const;
 public:
-    explicit GraphCreator(const options::Options &opts);
-    ~GraphCreator();
-    bool compute_symmetries(Group *group);
+    GraphCreator() = default;
+    virtual ~GraphCreator() = default;
+    bool compute_symmetries(bool stabilize_initial_state, int time_bound, Group *group);
 };
 
 #endif

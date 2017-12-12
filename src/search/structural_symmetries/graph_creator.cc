@@ -24,28 +24,19 @@ static void out_of_memory_handler() {
     throw bliss::BlissMemoryOut();
 }
 
-GraphCreator::GraphCreator(const Options &opts)
-    : time_bound(opts.get<int>("time_bound")),
-//      generators_bound(opts.get<int>("generators_bound")),
-      stabilize_initial_state(opts.get<bool>("stabilize_initial_state")) {
-}
-
-GraphCreator::~GraphCreator() {
-}
-
 // Function that is called from the graph automorphism tool.
 void add_permutation_to_group(void *group, unsigned int, const unsigned int *permutation) {
     ((Group*) group)->add_raw_generator(permutation);
 }
 
-bool GraphCreator::compute_symmetries(Group *group) {
+bool GraphCreator::compute_symmetries(bool stabilize_initial_state, int time_bound, Group *group) {
     bool success = false;
     new_handler original_new_handler = set_new_handler(out_of_memory_handler);
     try {
         utils::Timer timer;
         cout << "Initializing symmetry " << endl;
         bliss::Digraph bliss_graph = bliss::Digraph();
-        create_bliss_directed_graph(group, bliss_graph);
+        create_bliss_directed_graph(stabilize_initial_state, group, bliss_graph);
         bliss_graph.set_splitting_heuristic(bliss::Digraph::shs_flm);
         bliss_graph.set_time_limit(time_bound);
 //        bliss_graph.set_generators_bound(generators_bound);
@@ -67,7 +58,7 @@ bool GraphCreator::compute_symmetries(Group *group) {
     return success;
 }
 
-void GraphCreator::create_bliss_directed_graph(Group *group, bliss::Digraph &bliss_graph) const {
+void GraphCreator::create_bliss_directed_graph(bool stabilize_initial_state, Group *group, bliss::Digraph &bliss_graph) const {
     // Differ from create_bliss_graph() in (a) having one node per action (incoming arcs from pre, outgoing to eff),
     //                                 and (b) not having a node for goal, recoloring the respective values.
    // initialization

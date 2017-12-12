@@ -21,13 +21,13 @@ using namespace utils;
 
 Group::Group(const options::Options &opts)
     : stabilize_initial_state(opts.get<bool>("stabilize_initial_state")),
+      time_bound(opts.get<int>("time_bound")),
       search_symmetries(SearchSymmetries(opts.get_enum("search_symmetries"))),
       dump_permutations(opts.get<bool>("dump_permutations")),
       num_vars(0),
       permutation_length(0),
       num_identity_generators(0),
       initialized(false) {
-    graph_creator = utils::make_unique_ptr<GraphCreator>(opts);
 }
 
 const Permutation &Group::get_permutation(int index) const {
@@ -43,17 +43,19 @@ void Group::add_to_var_by_val(int var) {
 }
 
 void Group::compute_symmetries() {
-    assert(!initialized);
-    initialized = true;
-    if (!generators.empty() || !graph_creator) {
+    if (initialized || !generators.empty()) {
         cerr << "Already computed symmetries" << endl;
         exit_with(ExitCode::CRITICAL_ERROR);
     }
-    bool success = graph_creator->compute_symmetries(this);
+    GraphCreator graph_creator;
+    bool success = graph_creator.compute_symmetries(stabilize_initial_state, time_bound, this);
     if (!success) {
         generators.clear();
     }
-    graph_creator = nullptr;
+    // Set initialized to true regardless of whether symmetries have been
+    // found or not to avoid future attempts at computing symmetries if
+    // none can be found.
+    initialized = true;
 }
 
 void Group::add_raw_generator(const unsigned int *generator) {
@@ -273,9 +275,6 @@ static shared_ptr<Group> _parse(OptionParser &parser) {
     parser.add_option<int>("time_bound",
                            "Stopping after the Bliss software reached the time bound",
                            "0");
-//    parser.add_option<int>("generators_bound",
-//                           "Number of found generators after which Bliss is stopped",
-//                           "0");
     parser.add_option<bool>("stabilize_initial_state",
                             "Compute symmetries stabilizing the initial state",
                             "false");
