@@ -6,6 +6,7 @@
 namespace bliss {
     class Digraph;
 }
+class DotGraph;
 class EffectsProxy;
 class Group;
 class OperatorProxy;
@@ -27,6 +28,7 @@ class GraphCreator  {
         const bool dump_symmetry_graph,
         Group *group,
         bliss::Digraph &bliss_graph,
+        DotGraph &dot_graph,
         const OperatorProxy &op,
         int op_idx) const;
     bool effect_can_be_overwritten(int ind,

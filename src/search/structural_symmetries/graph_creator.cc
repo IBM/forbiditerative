@@ -10,6 +10,7 @@
 
 #include "../bliss/graph.h"
 
+#include <fstream>
 #include <map>
 
 
@@ -49,13 +50,12 @@ bool GraphCreator::compute_symmetries(
     new_handler original_new_handler = set_new_handler(out_of_memory_handler);
     try {
         utils::Timer timer;
-        cout << "Initializing symmetry " << endl;
+        cout << "Initializing symmetries" << endl;
         bliss::Digraph bliss_graph = bliss::Digraph();
         create_bliss_directed_graph(
             task_proxy, stabilize_initial_state, dump_symmetry_graph, group, bliss_graph);
         bliss_graph.set_splitting_heuristic(bliss::Digraph::shs_flm);
         bliss_graph.set_time_limit(time_bound);
-//        bliss_graph.set_generators_bound(generators_bound);
         bliss::Stats stats1;
         cout << "Using Bliss to find group generators" << endl;
         bliss_graph.canonical_form(stats1,&(add_permutation_to_group),group);
@@ -78,8 +78,8 @@ struct DotNode {
         : index(index), label(label), color(color) {
     }
 
-    void print() const {
-        cout << "    node" << index << " [shape=circle, label="
+    void write(ofstream &file) const {
+        file << "    node" << index << " [shape=circle, label="
              << label << ", style=filled, colorscheme=\"X11\", fillcolor=\""
              << color << "\"];" << endl;
     }
@@ -108,22 +108,23 @@ struct DotGraph {
         neighbors[from].push_back(to);
     }
 
-    void print() const {
-        cout << "digraph symmetry_graph {" << endl;
+    void write() const {
+        ofstream file;
+        file.open ("symmetry-graph.dot");
+        file << "digraph symmetry_graph {" << endl;
         for (const DotNode &node : nodes) {
-            node.print();
+            node.write(file);
         }
         for (size_t node_index = 0; node_index < neighbors.size(); ++node_index) {
             const vector<int> &node_neighbors = neighbors[node_index];
             for (int neighbor : node_neighbors) {
-                cout << "    node" << node_index << " -> node" << neighbor << endl;
+                file << "    node" << node_index << " -> node" << neighbor << endl;
             }
         }
-        cout << "}" << endl;
+        file << "}" << endl;
+        file.close();
     }
 };
-
-static DotGraph dot_graph;
 
 void GraphCreator::create_bliss_directed_graph(
     const TaskProxy &task_proxy,
@@ -150,6 +151,7 @@ void GraphCreator::create_bliss_directed_graph(
     group->set_permutation_num_variables(num_vars);
     group->set_permutation_length(num_of_vertex);
 
+    DotGraph dot_graph;
     int idx = 0;
     // add vertex for each variable
     for (int i = 0; i < num_vars; i++) {
@@ -185,7 +187,7 @@ void GraphCreator::create_bliss_directed_graph(
                 dot_colors[MAX_VALUE]);
         }
 
-        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, op, idx);
+        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, dot_graph, op, idx);
     }
 
     // now add vertices for axioms
@@ -200,7 +202,7 @@ void GraphCreator::create_bliss_directed_graph(
                 dot_colors[MAX_VALUE]);
         }
 
-        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, ax, idx);
+        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, dot_graph, ax, idx);
     }
 
     if (stabilize_initial_state) {
@@ -230,7 +232,8 @@ void GraphCreator::create_bliss_directed_graph(
 
     // Recoloring the goal values
     for (FactProxy goal_fact : task_proxy.get_goals()) {
-        int goal_idx = group->get_index_by_var_val_pair(goal_fact.get_variable().get_id(), goal_fact.get_value());
+        int goal_idx = group->get_index_by_var_val_pair(
+            goal_fact.get_variable().get_id(), goal_fact.get_value());
         bliss_graph.change_color(goal_idx, GOAL_VERTEX);
 
         if (dump_symmetry_graph) {
@@ -239,14 +242,16 @@ void GraphCreator::create_bliss_directed_graph(
     }
 
     if (dump_symmetry_graph) {
-        dot_graph.print();
+        dot_graph.write();
     }
 }
 
 //TODO: Use separate color for axioms
 void GraphCreator::add_operator_directed_graph(
     const bool dump_symmetry_graph,
-    Group *group, bliss::Digraph &bliss_graph,
+    Group *group,
+    bliss::Digraph &bliss_graph,
+    DotGraph &dot_graph,
     const OperatorProxy& op,
     int op_idx) const {
     PreconditionsProxy preconditions = op.get_preconditions();
