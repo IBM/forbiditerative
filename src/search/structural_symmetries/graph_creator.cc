@@ -181,16 +181,17 @@ void GraphCreator::create_bliss_directed_graph(
         if (dump_symmetry_graph) {
             dot_graph.add_node(
                 idx,
-                // TODO: see below: also change to get_id()?
-                "op" + to_string(op.get_global_operator_id().get_index()),
+                "op" + to_string(op.get_id()),
                 dot_colors[MAX_VALUE]);
         }
+
+        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, op, idx);
     }
 
     // now add vertices for axioms
     for (OperatorProxy ax : task_proxy.get_axioms()) {
         int color = MAX_VALUE + ax.get_cost();
-        bliss_graph.add_vertex(color);
+        idx = bliss_graph.add_vertex(color);
 
         if (dump_symmetry_graph) {
             dot_graph.add_node(
@@ -198,18 +199,8 @@ void GraphCreator::create_bliss_directed_graph(
                 "ax" + to_string(ax.get_id()),
                 dot_colors[MAX_VALUE]);
         }
-    }
 
-    for (OperatorProxy op : task_proxy.get_operators()) {
-        // TODO: can we use op.get_id() instead? What does the index stand for?
-        int op_idx = group->get_permutation_length() + op.get_global_operator_id().get_index();
-        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, op, op_idx);
-    }
-
-    for (size_t i = 0; i < task_proxy.get_axioms().size(); i++) {
-        OperatorProxy ax = task_proxy.get_axioms()[i];
-        int op_idx = group->get_permutation_length() + task_proxy.get_operators().size() + i;
-        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, ax, op_idx);
+        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, ax, idx);
     }
 
     if (stabilize_initial_state) {
