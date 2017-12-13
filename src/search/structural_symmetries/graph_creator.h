@@ -31,7 +31,8 @@ class GraphCreator  {
         DotGraph &dot_graph,
         const OperatorProxy &op,
         int op_vertex) const;
-    bool effect_can_be_overwritten(int effect_id,
+    bool effect_can_be_overwritten(
+        int effect_id,
         const EffectsProxy &effects) const;
 public:
     GraphCreator() = default;
