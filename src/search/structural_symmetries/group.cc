@@ -23,6 +23,7 @@ using namespace utils;
 Group::Group(const options::Options &opts)
     : stabilize_initial_state(opts.get<bool>("stabilize_initial_state")),
       time_bound(opts.get<int>("time_bound")),
+      dump_symmetry_graph(opts.get<bool>("dump_symmetry_graph")),
       search_symmetries(SearchSymmetries(opts.get_enum("search_symmetries"))),
       dump_permutations(opts.get<bool>("dump_permutations")),
       num_vars(0),
@@ -49,7 +50,8 @@ void Group::compute_symmetries(const TaskProxy &task_proxy) {
         exit_with(ExitCode::CRITICAL_ERROR);
     }
     GraphCreator graph_creator;
-    bool success = graph_creator.compute_symmetries(task_proxy, stabilize_initial_state, time_bound, this);
+    bool success = graph_creator.compute_symmetries(
+        task_proxy, stabilize_initial_state, time_bound, dump_symmetry_graph, this);
     if (!success) {
         generators.clear();
     }
@@ -275,13 +277,16 @@ int Group::get_index_by_var_val_pair(const int var, const int val) const {
 
 
 static shared_ptr<Group> _parse(OptionParser &parser) {
-    // General Bliss options
+    // General Bliss options and options for GraphCreator
     parser.add_option<int>("time_bound",
                            "Stopping after the Bliss software reached the time bound",
                            "0");
     parser.add_option<bool>("stabilize_initial_state",
                             "Compute symmetries stabilizing the initial state",
                             "false");
+    parser.add_option<bool>("dump_symmetry_graph",
+                           "Dump symmetry graph in dot format",
+                           "false");
 
     // Type of search symmetries to be used
     vector<string> search_symmetries;

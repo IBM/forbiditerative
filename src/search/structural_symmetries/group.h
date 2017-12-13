@@ -23,10 +23,11 @@ using RawPermutation = std::vector<int>;
 
 class Group {
     // Options for Bliss and the type of symmetries used
-    bool stabilize_initial_state;
-    int time_bound;
-    SearchSymmetries search_symmetries;
-    bool dump_permutations;
+    const bool stabilize_initial_state;
+    const int time_bound;
+    const bool dump_symmetry_graph;
+    const SearchSymmetries search_symmetries;
+    const bool dump_permutations;
 
     // Group properties
     int num_vars;

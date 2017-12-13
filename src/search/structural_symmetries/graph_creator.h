@@ -19,10 +19,13 @@ class TaskProxy;
 class GraphCreator  {
     void create_bliss_directed_graph(
         const TaskProxy &task_proxy,
-        bool stabilize_initial_state,
+        const bool stabilize_initial_state,
+        const bool dump_symmetry_graph,
         Group *group,
         bliss::Digraph &bliss_graph) const;
-    void add_operator_directed_graph(Group *group,
+    void add_operator_directed_graph(
+        const bool dump_symmetry_graph,
+        Group *group,
         bliss::Digraph &bliss_graph,
         const OperatorProxy &op,
         int op_idx) const;
@@ -33,8 +36,9 @@ public:
     virtual ~GraphCreator() = default;
     bool compute_symmetries(
         const TaskProxy &task_proxy,
-        bool stabilize_initial_state,
-        int time_bound,
+        const bool stabilize_initial_state,
+        const int time_bound,
+        const bool dump_symmetry_graph,
         Group *group);
 };
 
