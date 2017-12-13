@@ -152,26 +152,26 @@ void GraphCreator::create_bliss_directed_graph(
     group->set_permutation_length(num_of_vertex);
 
     DotGraph dot_graph;
-    int idx = 0;
+    int vertex = 0;
     // add vertex for each variable
     for (int i = 0; i < num_vars; i++) {
-       idx = bliss_graph.add_vertex(VARIABLE_VERTEX);
+       vertex = bliss_graph.add_vertex(VARIABLE_VERTEX);
 
        if (dump_symmetry_graph) {
-           dot_graph.add_node(idx, "var" + to_string(i), dot_colors[VARIABLE_VERTEX]);
+           dot_graph.add_node(vertex, "var" + to_string(i), dot_colors[VARIABLE_VERTEX]);
        }
     }
 
     // now add values vertices for each predicate
     for (VariableProxy var : vars) {
         int var_id = var.get_id();
-        for (int i = 0; i < var.get_domain_size(); i++){
-            idx = bliss_graph.add_vertex(VALUE_VERTEX);
-            bliss_graph.add_edge(idx, var_id);
+        for (int value = 0; value < var.get_domain_size(); value++){
+            vertex = bliss_graph.add_vertex(VALUE_VERTEX);
+            bliss_graph.add_edge(vertex, var_id);
 
             if (dump_symmetry_graph) {
-                dot_graph.add_node(idx, "val" + to_string(i), dot_colors[VALUE_VERTEX]);
-                dot_graph.add_edge(idx, var_id);
+                dot_graph.add_node(vertex, "val" + to_string(value), dot_colors[VALUE_VERTEX]);
+                dot_graph.add_edge(vertex, var_id);
             }
         }
     }
@@ -179,31 +179,31 @@ void GraphCreator::create_bliss_directed_graph(
     // now add vertices for operators
     for (OperatorProxy op : task_proxy.get_operators()) {
         int color = MAX_VALUE + op.get_cost();
-        idx = bliss_graph.add_vertex(color);
+        vertex = bliss_graph.add_vertex(color);
 
         if (dump_symmetry_graph) {
             dot_graph.add_node(
-                idx,
+                vertex,
                 "op" + to_string(op.get_id()),
                 dot_colors[MAX_VALUE]);
         }
 
-        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, dot_graph, op, idx);
+        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, dot_graph, op, vertex);
     }
 
     // now add vertices for axioms
     for (OperatorProxy ax : task_proxy.get_axioms()) {
         int color = MAX_VALUE + ax.get_cost();
-        idx = bliss_graph.add_vertex(color);
+        vertex = bliss_graph.add_vertex(color);
 
         if (dump_symmetry_graph) {
             dot_graph.add_node(
-                idx,
+                vertex,
                 "ax" + to_string(ax.get_id()),
                 dot_colors[MAX_VALUE]);
         }
 
-        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, dot_graph, ax, idx);
+        add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, dot_graph, ax, vertex);
     }
 
     if (stabilize_initial_state) {
@@ -214,31 +214,31 @@ void GraphCreator::create_bliss_directed_graph(
           the vertex and either not stabilizing the initial state or the goal
           state, depending on the order of coloring.
         */
-        idx = bliss_graph.add_vertex(INIT_VERTEX);
+        vertex = bliss_graph.add_vertex(INIT_VERTEX);
 
         if (dump_symmetry_graph) {
-            dot_graph.add_node(idx, "init", dot_colors[INIT_VERTEX]);
+            dot_graph.add_node(vertex, "init", dot_colors[INIT_VERTEX]);
         }
 
         for (FactProxy init_fact : task_proxy.get_initial_state()) {
-            int init_idx = group->get_index_by_var_val_pair(
+            int init_vertex = group->get_index_by_var_val_pair(
                 init_fact.get_variable().get_id(), init_fact.get_value());
-            bliss_graph.add_edge(idx, init_idx);
+            bliss_graph.add_edge(vertex, init_vertex);
 
             if (dump_symmetry_graph) {
-                dot_graph.add_edge(idx, init_idx);
+                dot_graph.add_edge(vertex, init_vertex);
             }
         }
     }
 
     // Recoloring the goal values
     for (FactProxy goal_fact : task_proxy.get_goals()) {
-        int goal_idx = group->get_index_by_var_val_pair(
+        int goal_vertex = group->get_index_by_var_val_pair(
             goal_fact.get_variable().get_id(), goal_fact.get_value());
-        bliss_graph.change_color(goal_idx, GOAL_VERTEX);
+        bliss_graph.change_color(goal_vertex, GOAL_VERTEX);
 
         if (dump_symmetry_graph) {
-            dot_graph.change_node_color(goal_idx, dot_colors[GOAL_VERTEX]);
+            dot_graph.change_node_color(goal_vertex, dot_colors[GOAL_VERTEX]);
         }
     }
 
@@ -254,17 +254,17 @@ void GraphCreator::add_operator_directed_graph(
     bliss::Digraph &bliss_graph,
     DotGraph &dot_graph,
     const OperatorProxy& op,
-    int op_idx) const {
+    int op_vertex) const {
     PreconditionsProxy preconditions = op.get_preconditions();
     for (FactProxy prec_fact : preconditions) {
         int var_id = prec_fact.get_pair().var;
         int value = prec_fact.get_pair().value;
         if (value != -1) {
-            int index = group->get_index_by_var_val_pair(var_id, value);
-            bliss_graph.add_edge(index, op_idx);
+            int fact_vertex = group->get_index_by_var_val_pair(var_id, value);
+            bliss_graph.add_edge(fact_vertex, op_vertex);
 
             if (dump_symmetry_graph) {
-                dot_graph.add_edge(index, op_idx);
+                dot_graph.add_edge(fact_vertex, op_vertex);
             }
         }
     }
@@ -276,12 +276,12 @@ void GraphCreator::add_operator_directed_graph(
 
         int effect_var_id = effect.get_fact().get_pair().var;
         int effect_value = effect.get_fact().get_pair().value;
-        int effect_index = group->get_index_by_var_val_pair(effect_var_id, effect_value);
+        int effect_vertex = group->get_index_by_var_val_pair(effect_var_id, effect_value);
         if (effect_condition.empty()) {
-            bliss_graph.add_edge(op_idx, effect_index);
+            bliss_graph.add_edge(op_vertex, effect_vertex);
 
             if (dump_symmetry_graph) {
-                dot_graph.add_edge(op_idx, effect_index);
+                dot_graph.add_edge(op_vertex, effect_vertex);
             }
         } else {
             // Adding a node for each condition. An edge from op to node, an edge from node to eff,
@@ -290,39 +290,39 @@ void GraphCreator::add_operator_directed_graph(
             if (effect_can_be_overwritten(effect_id, effects)) {
                 effect_color = CONDITIONAL_DELETE_EFFECT_VERTEX;
             }
-            int cond_op_idx = bliss_graph.add_vertex(effect_color);
-            bliss_graph.add_edge(op_idx, cond_op_idx); // Edge from operator to conditional effect
-            bliss_graph.add_edge(cond_op_idx, effect_index); // Edge from conditional effect to effect
+            int cond_op_vertex = bliss_graph.add_vertex(effect_color);
+            bliss_graph.add_edge(op_vertex, cond_op_vertex); // Edge from operator to conditional effect
+            bliss_graph.add_edge(cond_op_vertex, effect_vertex); // Edge from conditional effect to effect
 
             if (dump_symmetry_graph) {
                 dot_graph.add_node(
-                    cond_op_idx, "effect" + to_string(effect_id), dot_colors[effect_color]);
-                dot_graph.add_edge(op_idx, cond_op_idx);
-                dot_graph.add_edge(cond_op_idx, effect_index);
+                    cond_op_vertex, "effect" + to_string(effect_id), dot_colors[effect_color]);
+                dot_graph.add_edge(op_vertex, cond_op_vertex);
+                dot_graph.add_edge(cond_op_vertex, effect_vertex);
             }
 
             // Adding edges for conds
             for (FactProxy prec_fact : effects[effect_id].get_conditions()) {
-                int c_idx = group->get_index_by_var_val_pair(
+                int c_vertex = group->get_index_by_var_val_pair(
                     prec_fact.get_variable().get_id(), prec_fact.get_value());
 
                 // Edge from condition to conditional effect
-                bliss_graph.add_edge(c_idx, cond_op_idx);
+                bliss_graph.add_edge(c_vertex, cond_op_vertex);
 
                 if (dump_symmetry_graph) {
-                    dot_graph.add_edge(c_idx, cond_op_idx);
+                    dot_graph.add_edge(c_vertex, cond_op_vertex);
                 }
             }
         }
     }
 }
 
-bool GraphCreator::effect_can_be_overwritten(int ind, const EffectsProxy &effects) const {
+bool GraphCreator::effect_can_be_overwritten(int effect_id, const EffectsProxy &effects) const {
     // Checking whether the effect is a delete effect that can be overwritten by an add effect
     int num_effects = effects.size();
 
-    assert(ind < num_effects);
-    FactProxy effect_fact = effects[ind].get_fact();
+    assert(effect_id < num_effects);
+    FactProxy effect_fact = effects[effect_id].get_fact();
     VariableProxy effect_var = effect_fact.get_variable();
     int eff_val = effect_fact.get_value();
     if (eff_val != effect_fact.get_variable().get_domain_size() - 1) // the value is not none_of_those
@@ -331,7 +331,7 @@ bool GraphCreator::effect_can_be_overwritten(int ind, const EffectsProxy &effect
     // Go over the next effects of the same variable, skipping the none_of_those
     // Warning! It seems that we assume here that the variables in the effects are ordered by effect variables.
     //          Should be changed!
-    for (int i=ind+1; i < num_effects; i++) {
+    for (int i=effect_id+1; i < num_effects; i++) {
         if (effect_var != effects[i].get_fact().get_variable()) // Next variable
             return false;
         if (effects[i].get_fact().get_value() == effect_fact.get_variable().get_domain_size() - 1)

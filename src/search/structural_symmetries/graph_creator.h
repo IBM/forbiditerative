@@ -30,8 +30,8 @@ class GraphCreator  {
         bliss::Digraph &bliss_graph,
         DotGraph &dot_graph,
         const OperatorProxy &op,
-        int op_idx) const;
-    bool effect_can_be_overwritten(int ind,
+        int op_vertex) const;
+    bool effect_can_be_overwritten(int effect_id,
         const EffectsProxy &effects) const;
 public:
     GraphCreator() = default;
