@@ -5,6 +5,7 @@
 
 #include "../task_proxy.h"
 
+#include "../utils/collections.h"
 #include "../utils/timer.h"
 
 #include "../bliss/graph.h"
@@ -20,13 +21,13 @@ enum color_t {VARIABLE_VERTEX, VALUE_VERTEX, GOAL_VERTEX, INIT_VERTEX,
               MAX_VALUE};
 
 static map<color_t, string> dot_colors = {
-    {VARIABLE_VERTEX, "darkgreen"},
+    {VARIABLE_VERTEX, "green"},
     {VALUE_VERTEX, "gold"},
-    {GOAL_VERTEX, "chartreuse"},
+    {GOAL_VERTEX, "red"},
     {INIT_VERTEX, "orange"},
     {CONDITIONAL_EFFECT_VERTEX, "dodgerblue"},
     {CONDITIONAL_DELETE_EFFECT_VERTEX, "navyblue"},
-    {MAX_VALUE, "blue"},
+    {MAX_VALUE, "lightskyblue"},
 };
 
 static void out_of_memory_handler() {
@@ -68,11 +69,61 @@ bool GraphCreator::compute_symmetries(
     return success;
 }
 
-void print_dot_node(int index, string label, string color) {
-    cout << "    node" << index << " [shape=circle, label="
-         << label << ", style=filled, colorscheme=\"X11\", fillcolor=\""
-         << color << "\"];" << endl;
-}
+struct DotNode {
+    int index;
+    string label;
+    string color;
+
+    DotNode(int index, string label, string color)
+        : index(index), label(label), color(color) {
+    }
+
+    void print() const {
+        cout << "    node" << index << " [shape=circle, label="
+             << label << ", style=filled, colorscheme=\"X11\", fillcolor=\""
+             << color << "\"];" << endl;
+    }
+};
+
+struct DotGraph {
+    vector<DotNode> nodes;
+    vector<vector<int>> neighbors;
+
+    void add_node(int index, string label, string color) {
+        nodes.emplace_back(index, label, color);
+        neighbors.push_back(vector<int>());
+    }
+
+    void change_node_color(int index, string color) {
+        assert(utils::in_bounds(index, nodes));
+        DotNode &node = nodes[index];
+        assert(node.index == index);
+        node.color = color;
+    }
+
+    void add_edge(int from, int to) {
+        assert(utils::in_bounds(from, neighbors));
+        assert(utils::in_bounds(from, nodes));
+        assert(utils::in_bounds(to, nodes));
+        neighbors[from].push_back(to);
+    }
+
+    void print() const {
+        cout << "digraph symmetry_graph {" << endl;
+        for (const DotNode &node : nodes) {
+            node.print();
+        }
+        for (size_t node_index = 0; node_index < neighbors.size(); ++node_index) {
+            const vector<int> &node_neighbors = neighbors[node_index];
+            for (int neighbor : node_neighbors) {
+                cout << "    node" << node_index << " -> node" << neighbor << endl;
+            }
+        }
+        cout << "}" << endl;
+    }
+};
+
+static DotGraph dot_graph;
 
 void GraphCreator::create_bliss_directed_graph(
     const TaskProxy &task_proxy,
@@ -99,18 +150,13 @@ void GraphCreator::create_bliss_directed_graph(
     group->set_permutation_num_variables(num_vars);
     group->set_permutation_length(num_of_vertex);
 
-    if (dump_symmetry_graph) {
-        cout << "digraph symmetry_graph";
-        cout << " {" << endl;
-    }
-
     int idx = 0;
     // add vertex for each variable
     for (int i = 0; i < num_vars; i++) {
        idx = bliss_graph.add_vertex(VARIABLE_VERTEX);
 
        if (dump_symmetry_graph) {
-           print_dot_node(idx, "var" + to_string(i), dot_colors[VARIABLE_VERTEX]);
+           dot_graph.add_node(idx, "var" + to_string(i), dot_colors[VARIABLE_VERTEX]);
        }
     }
     // now add values vertices for each predicate
@@ -121,8 +167,8 @@ void GraphCreator::create_bliss_directed_graph(
             bliss_graph.add_edge(idx, var_id);
 
             if (dump_symmetry_graph) {
-                print_dot_node(idx, "val" + to_string(i), dot_colors[VALUE_VERTEX]);
-                cout << "    node" << idx << " -> node" << var_id << endl;
+                dot_graph.add_node(idx, "val" + to_string(i), dot_colors[VALUE_VERTEX]);
+                dot_graph.add_edge(idx, var_id);
             }
         }
     }
@@ -133,7 +179,7 @@ void GraphCreator::create_bliss_directed_graph(
         idx = bliss_graph.add_vertex(color);
 
         if (dump_symmetry_graph) {
-            print_dot_node(
+            dot_graph.add_node(
                 idx,
                 // TODO: see below: also change to get_id()?
                 "op" + to_string(op.get_global_operator_id().get_index()),
@@ -147,7 +193,7 @@ void GraphCreator::create_bliss_directed_graph(
         bliss_graph.add_vertex(color);
 
         if (dump_symmetry_graph) {
-            print_dot_node(
+            dot_graph.add_node(
                 idx,
                 "ax" + to_string(ax.get_id()),
                 dot_colors[MAX_VALUE]);
@@ -177,11 +223,7 @@ void GraphCreator::create_bliss_directed_graph(
         idx = bliss_graph.add_vertex(INIT_VERTEX);
 
         if (dump_symmetry_graph) {
-            cout << "    node" << idx << " [shape=circle, label=init"
-                 << "]; // color: "
-                 << INIT_VERTEX
-                 << endl;
-            print_dot_node(idx, "init", dot_colors[INIT_VERTEX]);
+            dot_graph.add_node(idx, "init", dot_colors[INIT_VERTEX]);
         }
 
         for (FactProxy init_fact : task_proxy.get_initial_state()) {
@@ -190,7 +232,7 @@ void GraphCreator::create_bliss_directed_graph(
             bliss_graph.add_edge(idx, init_idx);
 
             if (dump_symmetry_graph) {
-                cout << "    node" << idx << " -> node" << init_idx << endl;
+                dot_graph.add_edge(idx, init_idx);
             }
         }
     }
@@ -200,11 +242,13 @@ void GraphCreator::create_bliss_directed_graph(
         int goal_idx = group->get_index_by_var_val_pair(goal_fact.get_variable().get_id(), goal_fact.get_value());
         bliss_graph.change_color(goal_idx, GOAL_VERTEX);
 
-        // TODO: would need to change the previous dot output for goal vertices!
+        if (dump_symmetry_graph) {
+            dot_graph.change_node_color(goal_idx, dot_colors[GOAL_VERTEX]);
+        }
     }
 
     if (dump_symmetry_graph) {
-        cout << "}" << endl;
+        dot_graph.print();
     }
 }
 
@@ -252,7 +296,7 @@ void GraphCreator::add_operator_directed_graph(
         bliss_graph.add_edge(prv_idx, op_idx);
 
         if (dump_symmetry_graph) {
-            cout << "    node" << prv_idx << " -> node" << op_idx << endl;
+            dot_graph.add_edge(prv_idx, op_idx);
         }
     }
 
@@ -265,7 +309,7 @@ void GraphCreator::add_operator_directed_graph(
             bliss_graph.add_edge(pre_idx, op_idx);
 
             if (dump_symmetry_graph) {
-                cout << "    node" << pre_idx << " -> node" << op_idx << endl;
+                dot_graph.add_edge(pre_idx, op_idx);
             }
         }
 
@@ -276,7 +320,7 @@ void GraphCreator::add_operator_directed_graph(
             bliss_graph.add_edge(op_idx, eff_idx);
 
             if (dump_symmetry_graph) {
-                cout << "    node" << op_idx << " -> node" << eff_idx << endl;
+                dot_graph.add_edge(op_idx, eff_idx);
             }
         } else {
 //                cout << "Adding a node for conditional effect" << endl;
@@ -291,19 +335,22 @@ void GraphCreator::add_operator_directed_graph(
             bliss_graph.add_edge(cond_op_idx, eff_idx); // Edge from conditional effect to effect
 
             if (dump_symmetry_graph) {
-                print_dot_node(cond_op_idx, "effect" + to_string(idx1), dot_colors[effect_color]);
-                cout << "    node" << op_idx << " -> node" << cond_op_idx << endl;
-                cout << "    node" << cond_op_idx << " -> node" << eff_idx << endl;
+                dot_graph.add_node(
+                    cond_op_idx, "effect" + to_string(idx1), dot_colors[effect_color]);
+                dot_graph.add_edge(op_idx, cond_op_idx);
+                dot_graph.add_edge(cond_op_idx, eff_idx);
             }
 
             // Adding edges for conds
             for (FactProxy prec_fact : effects[idx1].get_conditions()) {
-                int c_idx = group->get_index_by_var_val_pair(prec_fact.get_variable().get_id(), prec_fact.get_value());
+                int c_idx = group->get_index_by_var_val_pair(
+                    prec_fact.get_variable().get_id(), prec_fact.get_value());
 
-                bliss_graph.add_edge(c_idx, cond_op_idx); // Edge from condition to conditional effect
+                // Edge from condition to conditional effect
+                bliss_graph.add_edge(c_idx, cond_op_idx);
 
                 if (dump_symmetry_graph) {
-                    cout << "    node" << c_idx << " -> node" << cond_op_idx << endl;
+                    dot_graph.add_edge(c_idx, cond_op_idx);
                 }
             }
         }
