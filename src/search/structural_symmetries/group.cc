@@ -140,7 +140,10 @@ void Group::dump_variables_equivalence_classes() const {
 
 void Group::statistics() const {
     int num_gen = get_num_generators();
-    cout << "Number of generators: " << num_gen << endl;
+    cout << "Got " << num_gen << " group generators" << endl;
+    cout << "Got " << get_num_dentity_generators()
+         << " additional group generators that are identity on states "
+            "(but not on operators)" << endl;
     cout << "Order of generators: [";
     for (int gen_no = 0; gen_no < num_gen; ++gen_no) {
         cout << get_permutation(gen_no).get_order();
