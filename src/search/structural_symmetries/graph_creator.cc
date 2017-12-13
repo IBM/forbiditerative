@@ -13,9 +13,9 @@
 using namespace std;
 
 //TODO: Add vertex for axioms.
-enum color_t {PREDICATE_VERTEX, VALUE_VERTEX, PRECOND_VERTEX, EFFECT_VERTEX,
-              GOAL_VERTEX, INIT_VERTEX, CONDITIONAL_EFFECT_VERTEX,
-              CONDITIONAL_DELETE_EFFECT_VERTEX, MAX_VALUE};
+enum color_t {VARIABLE_VERTEX, VALUE_VERTEX, GOAL_VERTEX, INIT_VERTEX,
+              CONDITIONAL_EFFECT_VERTEX, CONDITIONAL_DELETE_EFFECT_VERTEX,
+              MAX_VALUE};
 
 static void out_of_memory_handler() {
     throw bliss::BlissMemoryOut();
@@ -81,7 +81,7 @@ void GraphCreator::create_bliss_directed_graph(
     int idx = 0;
     // add vertex for each variable
     for (int i = 0; i < num_vars; i++) {
-       idx = bliss_graph.add_vertex(PREDICATE_VERTEX);
+       idx = bliss_graph.add_vertex(VARIABLE_VERTEX);
     }
     // now add values vertices for each predicate
     for (VariableProxy var : vars) {
