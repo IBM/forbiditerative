@@ -18,8 +18,7 @@ using namespace std;
 
 //TODO: Add vertex for axioms.
 enum color_t {VARIABLE_VERTEX, VALUE_VERTEX, GOAL_VERTEX, INIT_VERTEX,
-              CONDITIONAL_EFFECT_VERTEX, CONDITIONAL_DELETE_EFFECT_VERTEX,
-              MAX_VALUE};
+              CONDITIONAL_EFFECT_VERTEX, CONDITIONAL_DELETE_EFFECT_VERTEX, AXIOM_VERTEX, OPERATOR_VERTEX};
 
 static map<color_t, string> dot_colors = {
     {VARIABLE_VERTEX, "green"},
@@ -28,7 +27,8 @@ static map<color_t, string> dot_colors = {
     {INIT_VERTEX, "orange"},
     {CONDITIONAL_EFFECT_VERTEX, "dodgerblue"},
     {CONDITIONAL_DELETE_EFFECT_VERTEX, "navyblue"},
-    {MAX_VALUE, "lightskyblue"},
+    {AXIOM_VERTEX, "lightskyblue"},
+    {OPERATOR_VERTEX, "lightskyblue"},
 };
 
 static void out_of_memory_handler() {
@@ -137,24 +137,23 @@ void GraphCreator::create_bliss_directed_graph(
 
     // initialization
     VariablesProxy vars = task_proxy.get_variables();
-    int num_vars = vars.size();
-    int num_of_vertex = num_vars;
+    int num_vertices_so_far = vars.size();
     for (VariableProxy var : vars) {
         int var_id = var.get_id();
-        group->add_to_dom_sum_by_var(num_of_vertex);
-        num_of_vertex += var.get_domain_size();
+        group->add_to_dom_sum_by_var(num_vertices_so_far);
+        num_vertices_so_far += var.get_domain_size();
         for(int num_of_value = 0; num_of_value < var.get_domain_size(); num_of_value++){
             group->add_to_var_by_val(var_id);
         }
     }
 
-    group->set_permutation_num_variables(num_vars);
-    group->set_permutation_length(num_of_vertex);
+    group->set_permutation_num_variables(vars.size());
+    group->set_permutation_length(num_vertices_so_far);
 
     DotGraph dot_graph;
     int vertex = 0;
     // add vertex for each variable
-    for (int i = 0; i < num_vars; i++) {
+    for (size_t i = 0; i < vars.size(); ++i) {
        vertex = bliss_graph.add_vertex(VARIABLE_VERTEX);
 
        if (dump_symmetry_graph) {
@@ -178,14 +177,14 @@ void GraphCreator::create_bliss_directed_graph(
 
     // now add vertices for operators
     for (OperatorProxy op : task_proxy.get_operators()) {
-        int color = MAX_VALUE + op.get_cost();
+        int color = OPERATOR_VERTEX + op.get_cost();
         vertex = bliss_graph.add_vertex(color);
 
         if (dump_symmetry_graph) {
             dot_graph.add_node(
                 vertex,
                 "op" + to_string(op.get_id()),
-                dot_colors[MAX_VALUE]);
+                dot_colors[OPERATOR_VERTEX]);
         }
 
         add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, dot_graph, op, vertex);
@@ -193,14 +192,14 @@ void GraphCreator::create_bliss_directed_graph(
 
     // now add vertices for axioms
     for (OperatorProxy ax : task_proxy.get_axioms()) {
-        int color = MAX_VALUE + ax.get_cost();
+        int color = AXIOM_VERTEX;  //Assuming 0 cost for axioms
         vertex = bliss_graph.add_vertex(color);
 
         if (dump_symmetry_graph) {
             dot_graph.add_node(
                 vertex,
                 "ax" + to_string(ax.get_id()),
-                dot_colors[MAX_VALUE]);
+                dot_colors[AXIOM_VERTEX]);
         }
 
         add_operator_directed_graph(dump_symmetry_graph, group, bliss_graph, dot_graph, ax, vertex);
@@ -247,7 +246,6 @@ void GraphCreator::create_bliss_directed_graph(
     }
 }
 
-//TODO: Use separate color for axioms
 void GraphCreator::add_operator_directed_graph(
     const bool dump_symmetry_graph,
     Group *group,
@@ -319,6 +317,12 @@ void GraphCreator::add_operator_directed_graph(
 
 bool GraphCreator::effect_can_be_overwritten(int effect_id, const EffectsProxy &effects) const {
     // Checking whether the effect is a delete effect that can be overwritten by an add effect
+	// Assumptions:
+	//  (1) This can happen only to the none_of_those values, and these can be
+	//      overwritten only by a non none_of_those value that comes after it.
+	//  (2) none_of_those is the last value of a variable
+	//  (3) The variables in the effects are ordered by effect variables
+	//TODO: verify that the assumptions above hold
     int num_effects = effects.size();
 
     assert(effect_id < num_effects);
@@ -329,8 +333,6 @@ bool GraphCreator::effect_can_be_overwritten(int effect_id, const EffectsProxy &
         return false;
 
     // Go over the next effects of the same variable, skipping the none_of_those
-    // Warning! It seems that we assume here that the variables in the effects are ordered by effect variables.
-    //          Should be changed!
     for (int i=effect_id+1; i < num_effects; i++) {
         if (effect_var != effects[i].get_fact().get_variable()) // Next variable
             return false;

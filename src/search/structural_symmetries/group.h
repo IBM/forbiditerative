@@ -19,6 +19,9 @@ enum class SearchSymmetries {
     DKS
 };
 
+//TODO: RawPermutation is used in two meanings (below), and should be separated:
+//   (1) Vector of generator indexes, stands for a permutation composed of these generators
+//   (2) Mapping of bliss graph nodes.
 using RawPermutation = std::vector<int>;
 
 class Group {
