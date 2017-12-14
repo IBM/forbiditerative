@@ -184,7 +184,7 @@ int *Group::get_canonical_representative(const GlobalState &state) const {
     return canonical_state;
 }
 
-RawPermutation Group::compute_permutation_from_trace(const RawPermutation& permutation_trace) const {
+RawPermutation Group::compute_permutation_from_trace(const vector<int> &permutation_trace) const {
     assert(has_symmetries());
     RawPermutation new_perm = new_identity_raw_permutation();
     for (int permutation_index : permutation_trace) {
@@ -198,10 +198,10 @@ RawPermutation Group::compute_permutation_from_trace(const RawPermutation& permu
     return new_perm;
 }
 
-RawPermutation Group::compute_permutation_trace_to_canonical_representative(const GlobalState &state) const {
+vector<int> Group::compute_permutation_trace_to_canonical_representative(const GlobalState &state) const {
     assert(has_symmetries());
     // TODO: duplicate code with get_canonical_representative
-    RawPermutation permutation_trace;
+    vector<int> permutation_trace;
     int size = get_num_generators();
     int *temp_state = new int[g_variable_domain.size()];
     for(size_t i = 0; i < g_variable_domain.size(); ++i)
@@ -246,8 +246,8 @@ RawPermutation Group::compose_permutations(
 RawPermutation Group::create_permutation_from_state_to_state(
         const GlobalState& from_state, const GlobalState& to_state) const {
     assert(has_symmetries());
-    RawPermutation from_state_permutation_trace = compute_permutation_trace_to_canonical_representative(from_state);
-    RawPermutation to_state_permutation_trace = compute_permutation_trace_to_canonical_representative(to_state);
+    vector<int> from_state_permutation_trace = compute_permutation_trace_to_canonical_representative(from_state);
+    vector<int> to_state_permutation_trace = compute_permutation_trace_to_canonical_representative(to_state);
 
     RawPermutation canonical_to_to_state_permutation = compute_inverse_permutation(compute_permutation_from_trace(to_state_permutation_trace));
     RawPermutation from_state_to_canonical_permutation = compute_permutation_from_trace(from_state_permutation_trace);
