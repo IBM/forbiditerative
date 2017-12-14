@@ -36,7 +36,7 @@ class GraphCreator  {
         const EffectsProxy &effects) const;
 public:
     GraphCreator() = default;
-    virtual ~GraphCreator() = default;
+    ~GraphCreator() = default;
     bool compute_symmetries(
         const TaskProxy &task_proxy,
         const bool stabilize_initial_state,

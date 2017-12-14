@@ -48,7 +48,7 @@ class Group {
     RawPermutation compute_inverse_permutation(const RawPermutation &permutation) const;
 public:
     explicit Group(const options::Options &opts);
-    virtual ~Group() = default;
+    ~Group() = default;
 
     // Graph creator
     void add_to_dom_sum_by_var(int summed_dom);
