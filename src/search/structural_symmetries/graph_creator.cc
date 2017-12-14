@@ -316,12 +316,12 @@ void GraphCreator::add_operator_directed_graph(
 
 bool GraphCreator::effect_can_be_overwritten(int effect_id, const EffectsProxy &effects) const {
     // Checking whether the effect is a delete effect that can be overwritten by an add effect
-	// Assumptions:
-	//  (1) This can happen only to the none_of_those values, and these can be
-	//      overwritten only by a non none_of_those value that comes after it.
-	//  (2) none_of_those is the last value of a variable
-	//  (3) The variables in the effects are ordered by effect variables
-	//TODO: verify that the assumptions above hold
+    // Assumptions:
+    //  (1) This can happen only to the none_of_those values, and these can be
+    //      overwritten only by a non none_of_those value that comes after it.
+    //  (2) none_of_those is the last value of a variable
+    //  (3) The variables in the effects are ordered by effect variables
+    //TODO: verify that the assumptions above hold
     int num_effects = effects.size();
 
     assert(effect_id < num_effects);
