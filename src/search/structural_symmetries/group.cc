@@ -184,20 +184,6 @@ int *Group::get_canonical_representative(const GlobalState &state) const {
     return canonical_state;
 }
 
-RawPermutation Group::compute_permutation_from_trace(const vector<int> &permutation_trace) const {
-    assert(has_symmetries());
-    RawPermutation new_perm = new_identity_raw_permutation();
-    for (int permutation_index : permutation_trace) {
-        const Permutation &permutation = generators[permutation_index];
-        RawPermutation temp_perm(permutation_length);
-        for (int i = 0; i < permutation_length; i++) {
-           temp_perm[i] = permutation.get_value(new_perm[i]);
-        }
-        new_perm.swap(temp_perm);
-    }
-    return new_perm;
-}
-
 vector<int> Group::compute_permutation_trace_to_canonical_representative(const GlobalState &state) const {
     assert(has_symmetries());
     // TODO: duplicate code with get_canonical_representative
@@ -218,6 +204,20 @@ vector<int> Group::compute_permutation_trace_to_canonical_representative(const G
     }
     delete[] temp_state;
     return permutation_trace;
+}
+
+RawPermutation Group::compute_permutation_from_trace(const vector<int> &permutation_trace) const {
+    assert(has_symmetries());
+    RawPermutation new_perm = new_identity_raw_permutation();
+    for (int permutation_index : permutation_trace) {
+        const Permutation &permutation = generators[permutation_index];
+        RawPermutation temp_perm(permutation_length);
+        for (int i = 0; i < permutation_length; i++) {
+           temp_perm[i] = permutation.get_value(new_perm[i]);
+        }
+        new_perm.swap(temp_perm);
+    }
+    return new_perm;
 }
 
 RawPermutation Group::compute_inverse_permutation(const RawPermutation &permutation) const {
