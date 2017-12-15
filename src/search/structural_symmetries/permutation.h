@@ -41,16 +41,12 @@ private:
     const Group &group;
     int* value;
     std::vector<int> vars_affected;
-    std::vector<bool> affected;
 
     // Need to keep the connection between affected vars, ie which var goes into which.
     std::vector<int> from_vars;
     // Affected vars by cycles
     std::vector<std::vector<int> > affected_vars_cycles;
     int order;
-
-    void set_value(int ind, int val);
-    void set_affected(int ind, int val);
 
     void finalize();
     void _allocate();

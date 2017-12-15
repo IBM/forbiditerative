@@ -15,10 +15,6 @@ using namespace std;
 
 void Permutation::_allocate() {
     value = new int[group.get_permutation_length()];
-    affected.assign(group.get_permutation_num_variables(), false);
-    vars_affected.clear();
-    from_vars.assign(group.get_permutation_num_variables(), -1);
-    affected_vars_cycles.clear();
 }
 
 void Permutation::_deallocate() {
@@ -26,35 +22,37 @@ void Permutation::_deallocate() {
 }
 
 void Permutation::_copy_value_from_permutation(const Permutation &perm) {
-    for (int i = 0; i < group.get_permutation_length(); i++)
-        set_value(i, perm.get_value(i));
+    for (int i = 0; i < group.get_permutation_length(); i++) {
+        value[i] = perm.get_value(i);
+    }
 }
 
 void Permutation::_inverse_value_from_permutation(const Permutation &perm) {
-    for (int i = 0; i < group.get_permutation_length(); i++)
-        set_value(perm.get_value(i), i);
+    for (int i = 0; i < group.get_permutation_length(); i++) {
+        value[perm.get_value(i)] = i;
+    }
 }
 
 Permutation::Permutation(const Group &_group) : group(_group) {
     _allocate();
-    for (int i = 0; i < group.get_permutation_length(); i++)
-        set_value(i,i);
+    for (int i = 0; i < group.get_permutation_length(); i++) {
+        value[i] = i;
+    }
     finalize();
 }
 
-
 Permutation::Permutation(const Group &_group, const unsigned int* full_permutation) : group(_group) {
     _allocate();
-    for (int i = 0; i < group.get_permutation_length(); i++){
-        set_value(i,full_permutation[i]);
+    for (int i = 0; i < group.get_permutation_length(); i++) {
+        value[i] = full_permutation[i];
     }
     finalize();
 }
 
 Permutation::Permutation(const Group &_group, const vector<int> &full_permutation) : group(_group) {
     _allocate();
-    for (int i = 0; i < group.get_permutation_length(); i++){
-        set_value(i,full_permutation[i]);
+    for (int i = 0; i < group.get_permutation_length(); i++) {
+        value[i] = full_permutation[i];
     }
     finalize();
 }
@@ -69,17 +67,14 @@ Permutation::Permutation(const Permutation &perm, bool invert) : group(perm.grou
     finalize();
 }
 
-//// New constructor to use instead of * operator
 Permutation::Permutation(const Permutation &perm1, const Permutation &perm2) : group(perm1.group) {
     _allocate();
 
     for (int i = 0; i < group.get_permutation_length(); i++) {
-        set_value(i, perm2.get_value(perm1.get_value(i)));
+        value[i] = perm2.get_value(perm1.get_value(i));
     }
     finalize();
 }
-
-
 
 Permutation::~Permutation(){
     _deallocate();
@@ -104,8 +99,31 @@ int lcm(int a, int b) {
 }
 
 void Permutation::finalize(){
-    // Sorting the vector of affected variables
-    ::sort(vars_affected.begin(), vars_affected.end());
+    int num_vars = group.get_permutation_num_variables();
+    // Compute and sort affected variables, set from_vars.
+    from_vars.assign(num_vars, -1);
+    vector<bool> affected(num_vars, false);
+    for (int ind = num_vars; ind < group.get_permutation_length(); ++ind) {
+        int val = value[ind];
+        if (ind == val) {
+            continue;
+        }
+
+        int var = group.get_var_by_index(ind);
+        int to_var = group.get_var_by_index(val);
+
+        if (!affected[var]) {
+            vars_affected.push_back(var);
+            affected[var] = true;
+        }
+        if (!affected[to_var]) {
+            vars_affected.push_back(to_var);
+            affected[to_var] = true;
+        }
+        // Keeping the orig. var for each var.
+        from_vars[to_var] = var;
+    }
+    sort(vars_affected.begin(), vars_affected.end());
 
     // Going over the vector from_vars of the mappings of the variables and
     // finding cycles, computing the least common multiple of the cycles'
@@ -113,7 +131,7 @@ void Permutation::finalize(){
     vector<bool> marked;
     marked.assign(group.get_permutation_length(), false);
     order = 1;
-    for (int var = 0; var < static_cast<int>(from_vars.size()); var++) {
+    for (int var = 0; var < num_vars; var++) {
         if (marked[var] || from_vars[var] == -1)
             continue;
 
@@ -134,14 +152,14 @@ void Permutation::finalize(){
 
     // Go over all variables that are not part of a cycle and see if the
     // mapping of variable values increases the permutation's order
-    for (int i = group.get_permutation_num_variables(); i < group.get_permutation_length(); ++i) {
-        int to_i = get_value(i);
-        int var = group.get_var_by_index(i);
+    for (int ind = num_vars; ind < group.get_permutation_length(); ++ind) {
+        int to_i = get_value(ind);
+        int var = group.get_var_by_index(ind);
         int to_var = group.get_var_by_index(to_i);
-        if (!marked[i] && var == to_var && to_i != i) {
-            int start = i;
+        if (!marked[ind] && var == to_var && to_i != ind) {
+            int start = ind;
             marked[start] = true;
-            int current = i;
+            int current = ind;
             int cycle_size = 1;
             while (get_value(current) != start) {
                 current = get_value(current);
@@ -243,34 +261,6 @@ void Permutation::dump_fdr() const {
     }
     cout << endl;
 }
-
-///////////////////////////////////////////////////////////////////////////////
-void Permutation::set_value(int ind, int val) {
-    value[ind] = val;
-    set_affected(ind, val);
-}
-
-void Permutation::set_affected(int ind, int val) {
-
-    if (ind < group.get_permutation_num_variables() || ind == val)
-        return;
-
-
-    int var = group.get_var_by_index(ind);
-    int to_var = group.get_var_by_index(val);
-
-    if (!affected[var]) {
-        vars_affected.push_back(var);
-        affected[var] = true;
-    }
-    if (!affected[to_var]) {
-        vars_affected.push_back(to_var);
-        affected[to_var] = true;
-    }
-    // Keeping the orig. var for each var.
-    from_vars[to_var] = var;
-}
-
 
 std::pair<int, int> Permutation::get_new_var_val_by_old_var_val(const int var, const int val) const {
     int old_ind = group.get_index_by_var_val_pair(var, val);
