@@ -14,11 +14,7 @@
 using namespace std;
 
 void Permutation::_allocate() {
-    value = new int[group.get_permutation_length()];
-}
-
-void Permutation::_deallocate() {
-    delete[] value;
+    value.resize(group.get_permutation_length());
 }
 
 void Permutation::_copy_value_from_permutation(const Permutation &perm) {
@@ -35,13 +31,12 @@ void Permutation::_inverse_value_from_permutation(const Permutation &perm) {
 
 Permutation::Permutation(const Group &_group) : group(_group) {
     _allocate();
-    for (int i = 0; i < group.get_permutation_length(); i++) {
-        value[i] = i;
-    }
+    iota(value.begin(), value.end(), 0);
     finalize();
 }
 
-Permutation::Permutation(const Group &_group, const unsigned int* full_permutation) : group(_group) {
+Permutation::Permutation(const Group &_group, const unsigned int* full_permutation)
+    : group(_group) {
     _allocate();
     for (int i = 0; i < group.get_permutation_length(); i++) {
         value[i] = full_permutation[i];
@@ -49,35 +44,30 @@ Permutation::Permutation(const Group &_group, const unsigned int* full_permutati
     finalize();
 }
 
-Permutation::Permutation(const Group &_group, const vector<int> &full_permutation) : group(_group) {
-    _allocate();
-    for (int i = 0; i < group.get_permutation_length(); i++) {
-        value[i] = full_permutation[i];
-    }
+Permutation::Permutation(const Group &_group, const vector<int> &full_permutation)
+    : group(_group), value(full_permutation) {
     finalize();
 }
 
-Permutation::Permutation(const Permutation &perm, bool invert) : group(perm.group) {
+Permutation::Permutation(const Permutation &perm, bool invert)
+    : group(perm.group) {
     _allocate();
     if (invert) {
         _inverse_value_from_permutation(perm);
     } else {
+        // TODO: we could use a real, default copy constructor here.
         _copy_value_from_permutation(perm);
     }
     finalize();
 }
 
-Permutation::Permutation(const Permutation &perm1, const Permutation &perm2) : group(perm1.group) {
+Permutation::Permutation(const Permutation &perm1, const Permutation &perm2)
+    : group(perm1.group) {
     _allocate();
-
     for (int i = 0; i < group.get_permutation_length(); i++) {
         value[i] = perm2.get_value(perm1.get_value(i));
     }
     finalize();
-}
-
-Permutation::~Permutation(){
-    _deallocate();
 }
 
 int gcd(int m, int n) {

@@ -2,11 +2,8 @@
 #define STRUCTURAL_SYMMETRIES_PERMUTATION_H
 
 #include <vector>
-#include <memory>
 
 #include "group.h"
-
-class GlobalState;
 
 class Permutation{
 public:
@@ -15,7 +12,7 @@ public:
     Permutation(const Group &group, const std::vector<int> &full_perm);
     Permutation(const Permutation &perm, bool invert=false);
     Permutation(const Permutation &perm1, const Permutation &perm2);
-    ~Permutation();
+    ~Permutation() = default;
 
     bool identity() const;
     void print_cycle_notation() const;
@@ -39,7 +36,7 @@ public:
     }
 private:
     const Group &group;
-    int* value;
+    std::vector<int> value;
     std::vector<int> vars_affected;
 
     // Need to keep the connection between affected vars, ie which var goes into which.
@@ -50,7 +47,6 @@ private:
 
     void finalize();
     void _allocate();
-    void _deallocate();
     void _copy_value_from_permutation(const Permutation &perm);
     void _inverse_value_from_permutation(const Permutation &perm);
 };
