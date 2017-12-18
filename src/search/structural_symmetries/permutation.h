@@ -30,7 +30,7 @@ public:
 
     std::pair<int, int> get_new_var_val_by_old_var_val(const int var, const int val) const;
 
-    bool replace_if_less(int*) const;
+    bool replace_if_less(std::vector<int> &state) const;
     const std::vector<int>& get_affected_vars() const { 
         return vars_affected; 
     }

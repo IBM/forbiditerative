@@ -225,7 +225,7 @@ public:
       This is an expensive operation as it includes duplicate checking.
       Used for OSS.
     */
-    GlobalState register_state_buffer(const int *state);
+    GlobalState register_state_buffer(const std::vector<int> &state);
 
     /*
       Creates the permutation of the given state (which can be registered

@@ -75,7 +75,7 @@ StateID StateRegistry::insert_id_or_pop_state_dks() {
     */
     StateID id(state_data_pool.size() - 1);
     // Adding an entry for the canonical state to the canonical_state_data_pool
-    int *canonical_state =
+    vector<int> canonical_state =
         group->get_canonical_representative(
             GlobalState(state_data_pool[state_data_pool.size() - 1], *this, id));
     PackedStateBin *canonical_buffer = new PackedStateBin[g_state_packer->get_num_bins()];
@@ -83,7 +83,6 @@ StateID StateRegistry::insert_id_or_pop_state_dks() {
     for (size_t i = 0; i < g_variable_domain.size(); ++i) {
         g_state_packer->set(canonical_buffer, i, canonical_state[i]);
     }
-    delete[] canonical_state;
     canonical_state_data_pool.push_back(canonical_buffer);
     delete[] canonical_buffer;
 
@@ -136,7 +135,7 @@ GlobalState StateRegistry::get_successor_state(const GlobalState &predecessor, c
     return lookup_state(id);
 }
 
-GlobalState StateRegistry::register_state_buffer(const int *state) {
+GlobalState StateRegistry::register_state_buffer(const vector<int> &state) {
     PackedStateBin *buffer = new PackedStateBin[g_state_packer->get_num_bins()];
     fill_n(buffer, g_state_packer->get_num_bins(), 0);
     for (size_t i = 0; i < g_variable_domain.size(); ++i) {

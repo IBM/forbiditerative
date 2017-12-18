@@ -160,48 +160,44 @@ void Group::statistics() const {
 
 }
 
-int *Group::get_canonical_representative(const GlobalState &state) const {
-    int *canonical_state = new int[g_variable_domain.size()];
+vector<int> Group::get_canonical_representative(const GlobalState &state) const {
+    assert(has_symmetries());
+    vector<int> canonical_state(g_variable_domain.size());
     for (size_t i = 0; i < g_variable_domain.size(); ++i) {
         canonical_state[i] = state[i];
     }
 
-    int size = get_num_generators();
-    if (size == 0)
-        return canonical_state;
-
     bool changed = true;
     while (changed) {
         changed = false;
-        for (int i=0; i < size; i++) {
+        for (int i=0; i < get_num_generators(); i++) {
             if (generators[i].replace_if_less(canonical_state)) {
                 changed =  true;
             }
         }
     }
-    // Ensure it is deleted after use
     return canonical_state;
 }
 
 vector<int> Group::compute_permutation_trace_to_canonical_representative(const GlobalState &state) const {
-    assert(has_symmetries());
     // TODO: duplicate code with get_canonical_representative
+    assert(has_symmetries());
+    vector<int> canonical_state(g_variable_domain.size());
+    for(size_t i = 0; i < g_variable_domain.size(); ++i) {
+        canonical_state[i] = state[i];
+    }
+
     vector<int> permutation_trace;
-    int size = get_num_generators();
-    int *temp_state = new int[g_variable_domain.size()];
-    for(size_t i = 0; i < g_variable_domain.size(); ++i)
-        temp_state[i] = state[i];
     bool changed = true;
     while (changed) {
         changed = false;
-        for (int i=0; i < size; i++) {
-            if (generators[i].replace_if_less(temp_state)) {
+        for (int i=0; i < get_num_generators(); i++) {
+            if (generators[i].replace_if_less(canonical_state)) {
                 permutation_trace.push_back(i);
                 changed = true;
             }
         }
     }
-    delete[] temp_state;
     return permutation_trace;
 }
 

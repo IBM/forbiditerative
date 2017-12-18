@@ -261,7 +261,7 @@ std::pair<int, int> Permutation::get_new_var_val_by_old_var_val(const int var, c
 // This method compares the state to the state resulting from permuting it.
 // If the original state is bigger than the resulted one, it is rewritten with the latter and true is returned.
 ////////////////////  New version - no extra buffer is needed, faster copy ///////////////
-bool Permutation::replace_if_less(int* state) const {
+bool Permutation::replace_if_less(vector<int> &state) const {
     if (identity())
         return false;
 

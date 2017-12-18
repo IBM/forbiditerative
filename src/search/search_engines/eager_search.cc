@@ -87,9 +87,8 @@ void EagerSearch::initialize() {
     // Changed to copy the state to be able to reassign it.
     GlobalState initial_state = state_registry.get_initial_state();
     if (use_oss()) {
-        int *canonical_state = group->get_canonical_representative(initial_state);
+        vector<int> canonical_state = group->get_canonical_representative(initial_state);
         initial_state = state_registry.register_state_buffer(canonical_state);
-        delete canonical_state;
     }
     for (Heuristic *heuristic : heuristics) {
         heuristic->notify_initial_state(initial_state);
@@ -172,9 +171,8 @@ SearchStatus EagerSearch::step() {
         StateRegistry *successor_registry = use_oss() ? &tmp_registry : &state_registry;
         GlobalState succ_state = successor_registry->get_successor_state(s, *op);
         if (use_oss()) {
-            int *canonical_state = group->get_canonical_representative(succ_state);
+            vector<int> canonical_state = group->get_canonical_representative(succ_state);
             succ_state = state_registry.register_state_buffer(canonical_state);
-            delete canonical_state;
         }
         statistics.inc_generated();
         bool is_preferred = preferred_operators.contains(op_id);

@@ -95,7 +95,7 @@ public:
     }
 
     // Used for OSS
-    int *get_canonical_representative(const GlobalState &state) const;
+    std::vector<int> get_canonical_representative(const GlobalState &state) const;
     // Following methods: used for path tracing (OSS and DKS)
     RawPermutation new_identity_raw_permutation() const;
     RawPermutation compose_permutations(
