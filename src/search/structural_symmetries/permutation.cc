@@ -6,9 +6,8 @@
 #include <algorithm>
 #include <cassert>
 #include <iomanip>
-#include <iostream>
-#include <sstream>
 #include <vector>
+#include <numeric>
 
 
 using namespace std;
