@@ -8,9 +8,11 @@
 
 #include <vector>
 
-class GlobalOperator;
 class GlobalState;
 class Group;
+class OperatorProxy;
+class TaskProxy;
+
 
 class SearchNode {
     const StateRegistry &state_registry;
@@ -38,15 +40,15 @@ public:
 
     void open_initial();
     void open(const SearchNode &parent_node,
-              const GlobalOperator *parent_op);
+              const OperatorProxy &parent_op);
     void reopen(const SearchNode &parent_node,
-                const GlobalOperator *parent_op);
+                const OperatorProxy &parent_op);
     void update_parent(const SearchNode &parent_node,
-                       const GlobalOperator *parent_op);
+                       const OperatorProxy &parent_op);
     void close();
     void mark_as_dead_end();
 
-    void dump() const;
+    void dump(const TaskProxy &task_proxy) const;
 };
 
 
@@ -57,16 +59,19 @@ class SearchSpace {
     OperatorCost cost_type;
 
     void trace_path_with_symmetries(const GlobalState &goal_state,
-                                    std::vector<const GlobalOperator *> &path,
+                                    std::vector<OperatorID> &path,
+                                    const TaskProxy &task_proxy,
                                     const std::shared_ptr<Group> &group) const;
 public:
     SearchSpace(StateRegistry &state_registry, OperatorCost cost_type);
 
     SearchNode get_node(const GlobalState &state);
     void trace_path(const GlobalState &goal_state,
-                    std::vector<const GlobalOperator *> &path,
+                    std::vector<OperatorID> &path,
+                    const TaskProxy &task_proxy,
                     const std::shared_ptr<Group> &group = nullptr) const;
-    void dump() const;
+
+    void dump(const TaskProxy &task_proxy) const;
     void print_statistics() const;
 };
 
