@@ -42,6 +42,7 @@ void add_permutation_to_group(void *group, unsigned int, const unsigned int *per
 bool GraphCreator::compute_symmetries(
     const TaskProxy &task_proxy,
     const bool stabilize_initial_state,
+    const bool stabilize_goal,
     const int time_bound,
     const bool dump_symmetry_graph,
     Group *group) {
@@ -52,7 +53,12 @@ bool GraphCreator::compute_symmetries(
         cout << "Initializing symmetries" << endl;
         bliss::Digraph bliss_graph = bliss::Digraph();
         create_bliss_directed_graph(
-            task_proxy, stabilize_initial_state, dump_symmetry_graph, group, bliss_graph);
+            task_proxy,
+            stabilize_initial_state,
+            stabilize_goal,
+            dump_symmetry_graph,
+            group,
+            bliss_graph);
         bliss_graph.set_splitting_heuristic(bliss::Digraph::shs_flm);
         bliss_graph.set_time_limit(time_bound);
         bliss::Stats stats1;
@@ -128,6 +134,7 @@ struct DotGraph {
 void GraphCreator::create_bliss_directed_graph(
     const TaskProxy &task_proxy,
     const bool stabilize_initial_state,
+    const bool stabilize_goal,
     const bool dump_symmetry_graph,
     Group *group,
     bliss::Digraph &bliss_graph) const {
@@ -229,14 +236,16 @@ void GraphCreator::create_bliss_directed_graph(
         }
     }
 
-    // Recoloring the goal values
-    for (FactProxy goal_fact : task_proxy.get_goals()) {
-        int goal_vertex = group->get_index_by_var_val_pair(
-            goal_fact.get_variable().get_id(), goal_fact.get_value());
-        bliss_graph.change_color(goal_vertex, GOAL_VERTEX);
+    if (stabilize_goal) {
+        // Recoloring the goal values
+        for (FactProxy goal_fact : task_proxy.get_goals()) {
+            int goal_vertex = group->get_index_by_var_val_pair(
+                goal_fact.get_variable().get_id(), goal_fact.get_value());
+            bliss_graph.change_color(goal_vertex, GOAL_VERTEX);
 
-        if (dump_symmetry_graph) {
-            dot_graph.change_node_color(goal_vertex, dot_colors[GOAL_VERTEX]);
+            if (dump_symmetry_graph) {
+                dot_graph.change_node_color(goal_vertex, dot_colors[GOAL_VERTEX]);
+            }
         }
     }
 

@@ -21,6 +21,7 @@ class GraphCreator  {
     void create_bliss_directed_graph(
         const TaskProxy &task_proxy,
         const bool stabilize_initial_state,
+        const bool stabilize_goal,
         const bool dump_symmetry_graph,
         Group *group,
         bliss::Digraph &bliss_graph) const;
@@ -40,6 +41,7 @@ public:
     bool compute_symmetries(
         const TaskProxy &task_proxy,
         const bool stabilize_initial_state,
+        const bool stabilize_goal,
         const int time_bound,
         const bool dump_symmetry_graph,
         Group *group);
