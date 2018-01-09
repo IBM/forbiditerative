@@ -75,7 +75,7 @@ public:
 
     // Using the group
     int get_num_generators() const;
-    int get_num_dentity_generators() const {
+    int get_num_identity_generators() const {
         return num_identity_generators;
     }
     void dump_generators() const;
@@ -99,7 +99,7 @@ public:
     // Following methods: used for path tracing (OSS and DKS)
     RawPermutation new_identity_raw_permutation() const;
     RawPermutation compose_permutations(
-        const RawPermutation &permutation1, const RawPermutation & permutation2) const;
+        const RawPermutation &permutation1, const RawPermutation &permutation2) const;
     RawPermutation create_permutation_from_state_to_state(
         const GlobalState &from_state, const GlobalState &to_state) const;
 };
