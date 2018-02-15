@@ -6,7 +6,7 @@
 namespace bliss {
     class Digraph;
 }
-class DotGraph;
+struct DotGraph;
 class EffectsProxy;
 class Group;
 class OperatorProxy;
