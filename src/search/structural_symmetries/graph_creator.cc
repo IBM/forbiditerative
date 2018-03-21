@@ -53,6 +53,7 @@ bool GraphCreator::compute_symmetries(
         bliss::Digraph bliss_graph = bliss::Digraph();
         create_bliss_directed_graph(
             task_proxy, stabilize_initial_state, dump_symmetry_graph, group, bliss_graph);
+        cout << "Size of the grounded symmetry graph: " << bliss_graph.get_nof_vertices() << endl;
         bliss_graph.set_splitting_heuristic(bliss::Digraph::shs_flm);
         bliss_graph.set_time_limit(time_bound);
         bliss::Stats stats1;
