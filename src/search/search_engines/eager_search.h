@@ -31,7 +31,7 @@ class EagerSearch : public SearchEngine {
     bool use_oss() const;
     bool use_dks() const;
 
-    std::vector<Heuristic *> heuristics;
+    std::vector<Evaluator *> path_dependent_evaluators;
     std::vector<Heuristic *> preferred_operator_heuristics;
 
     std::shared_ptr<PruningMethod> pruning_method;
