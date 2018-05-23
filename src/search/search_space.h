@@ -60,7 +60,7 @@ class SearchSpace {
 
     void trace_path_with_symmetries(const GlobalState &goal_state,
                                     std::vector<OperatorID> &path,
-                                    const TaskProxy &task_proxy,
+                                    const std::shared_ptr<AbstractTask> &task,
                                     const std::shared_ptr<Group> &group) const;
 public:
     SearchSpace(StateRegistry &state_registry, OperatorCost cost_type);
@@ -68,7 +68,7 @@ public:
     SearchNode get_node(const GlobalState &state);
     void trace_path(const GlobalState &goal_state,
                     std::vector<OperatorID> &path,
-                    const TaskProxy &task_proxy,
+                    const std::shared_ptr<AbstractTask> &task,
                     const std::shared_ptr<Group> &group = nullptr) const;
 
     void dump(const TaskProxy &task_proxy) const;

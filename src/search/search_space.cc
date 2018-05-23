@@ -8,7 +8,6 @@
 #include "structural_symmetries/permutation.h"
 
 #include "task_utils/successor_generator.h"
-#include "tasks/root_task.h"
 
 #include <cassert>
 #include "search_node_info.h"
@@ -135,10 +134,10 @@ SearchNode SearchSpace::get_node(const GlobalState &state) {
 
 void SearchSpace::trace_path(const GlobalState &goal_state,
                              vector<OperatorID> &path,
-                             const TaskProxy &task_proxy,
+                             const shared_ptr<AbstractTask> &task,
                              const shared_ptr<Group> &group) const {
     if (group && group->has_symmetries()) {
-        trace_path_with_symmetries(goal_state, path, task_proxy, group);
+        trace_path_with_symmetries(goal_state, path, task, group);
         return;
     }
     GlobalState current_state = goal_state;
@@ -157,9 +156,10 @@ void SearchSpace::trace_path(const GlobalState &goal_state,
 
 void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
                                              vector<OperatorID> &path,
-                                             const TaskProxy &task_proxy,
+                                             const shared_ptr<AbstractTask> &task,
                                              const shared_ptr<Group> &group) const {
     assert(path.empty());
+    TaskProxy task_proxy(*task);
     OperatorsProxy operators = task_proxy.get_operators();
 
     /*
@@ -171,7 +171,7 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
       canonical representatives.
     */
     StateRegistry dks_successor_state_registry(
-        *tasks::g_root_task, *g_state_packer, *g_axiom_evaluator, g_initial_state_data);
+        *task, *g_state_packer, *g_axiom_evaluator, task->get_initial_state_values());
 
     StateRegistry *successor_registry =
         group->get_search_symmetries() == SearchSymmetries::DKS ?

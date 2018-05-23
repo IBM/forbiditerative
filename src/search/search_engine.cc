@@ -89,7 +89,7 @@ bool SearchEngine::check_goal_and_set_plan(
     if (task_properties::is_goal_state(task_proxy, state)) {
         cout << "Solution found!" << endl;
         Plan plan;
-        search_space.trace_path(state, plan, task_proxy, group);
+        search_space.trace_path(state, plan, task, group);
         set_plan(plan);
         return true;
     }
