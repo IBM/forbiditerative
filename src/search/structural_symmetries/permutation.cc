@@ -1,7 +1,6 @@
 #include "permutation.h"
 
-#include "../global_state.h"
-#include "../globals.h"
+#include "../tasks/root_task.h"
 
 #include <algorithm>
 #include <cassert>
@@ -172,14 +171,14 @@ void Permutation::print_cycle_notation() const {
             if(get_value(i) == i) continue; //don't print cycles of size 1
 
             pair<int, int> varval = group.get_var_val_by_index(i);
-            cout<<"("<< g_fact_names[varval.first][(int) varval.second]  <<" ";
+            cout<<"("<< tasks::g_root_task->get_fact_name(FactPair(varval.first, varval.second))  <<" ";
 
             while(get_value(current) != i){
                 done.push_back(current);
                 current = get_value(current);
 
                 pair<int, int> currvarval = group.get_var_val_by_index(current);
-                cout<< g_fact_names[currvarval.first][(int) currvarval.second] <<" ";
+                cout<< tasks::g_root_task->get_fact_name(FactPair(currvarval.first, currvarval.second)) <<" ";
             }
             done.push_back(current);
             cout<<") ";
@@ -209,7 +208,7 @@ void Permutation::print_affected_variables_by_cycles() const {
 
 void Permutation::dump_var_vals() const {
     for (int i = 0; i < group.get_permutation_num_variables(); ++i) {
-        for (int j = 0; j < g_variable_domain[i]; ++j) {
+        for (int j = 0; j < tasks::g_root_task->get_variable_domain_size(i); ++j) {
             pair<int, int> var_val = get_new_var_val_by_old_var_val(i, j);
             cout << i << "=" << j << "->"
                  << var_val.first << "=" << var_val.second << ",";
@@ -236,7 +235,7 @@ void Permutation::dump_fdr() const {
     for(int i = group.get_permutation_num_variables(); i < group.get_permutation_length(); i++){
         if (get_value(i) != i) {
             pair<int, int> varval = group.get_var_val_by_index(i);
-            cout << setw(10) <<  "[" << g_variable_name[varval.first] << "] -> "
+            cout << setw(10) <<  "[" << tasks::g_root_task->get_variable_name(varval.first) << "] -> "
                      << static_cast<int>(varval.second);
         }
     }
@@ -244,7 +243,7 @@ void Permutation::dump_fdr() const {
     for(int i = group.get_permutation_num_variables(); i < group.get_permutation_length(); i++){
         if (get_value(i) != i) {
             pair<int, int> varval = group.get_var_val_by_index(get_value(i));
-            cout << setw(10) <<  "[" << g_variable_name[varval.first] << "] -> "
+            cout << setw(10) <<  "[" << tasks::g_root_task->get_variable_name(varval.first) << "] -> "
                      << static_cast<int>(varval.second);
         }
     }

@@ -6,7 +6,9 @@
 
 #include "structural_symmetries/group.h"
 #include "structural_symmetries/permutation.h"
+
 #include "task_utils/successor_generator.h"
+#include "tasks/root_task.h"
 
 #include <cassert>
 #include "search_node_info.h"
@@ -169,7 +171,7 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
       canonical representatives.
     */
     StateRegistry dks_successor_state_registry(
-        *g_root_task(), *g_state_packer, *g_axiom_evaluator, g_initial_state_data);
+        *tasks::g_root_task, *g_state_packer, *g_axiom_evaluator, g_initial_state_data);
 
     StateRegistry *successor_registry =
         group->get_search_symmetries() == SearchSymmetries::DKS ?
@@ -267,6 +269,5 @@ void SearchSpace::dump(const TaskProxy &task_proxy) const {
 }
 
 void SearchSpace::print_statistics() const {
-    cout << "Number of registered states: "
-         << state_registry.size() << endl;
+    state_registry.print_statistics();
 }

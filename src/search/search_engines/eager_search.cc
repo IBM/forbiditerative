@@ -9,6 +9,7 @@
 
 #include "../algorithms/ordered_set.h"
 #include "../task_utils/successor_generator.h"
+#include "../tasks/root_task.h"
 
 #include "../structural_symmetries/group.h"
 
@@ -33,7 +34,7 @@ EagerSearch::EagerSearch(const Options &opts)
         group = opts.get<shared_ptr<Group>>("symmetries");
         if (group && !group->is_initialized()) {
             cout << "Initializing symmetries (eager search)" << endl;
-            group->compute_symmetries(TaskProxy(*g_root_task()));
+            group->compute_symmetries(TaskProxy(*tasks::g_root_task));
         }
 
         if (use_dks()) {
@@ -62,35 +63,32 @@ void EagerSearch::initialize() {
         cout << "Using multi-path dependence (LM-A*)" << endl;
     assert(open_list);
 
-    set<Heuristic *> hset;
-    open_list->get_involved_heuristics(hset);
+    set<Evaluator *> evals;
+    open_list->get_path_dependent_evaluators(evals);
 
-    // Add heuristics that are used for preferred operators (in case they are
-    // not also used in the open list).
-    hset.insert(preferred_operator_heuristics.begin(),
-                preferred_operator_heuristics.end());
+    // Collect path-dependent evaluators that are used for preferred operators
+    // (in case they are not also used in the open list).
+    for (Heuristic *heuristic : preferred_operator_heuristics) {
+        heuristic->get_path_dependent_evaluators(evals);
+    }
 
-    // Add heuristics that are used in the f_evaluator. They are usually also
-    // used in the open list and are hence already included, but we want to be
-    // sure.
+    // Collect path-dependent evaluators that are used in the f_evaluator.
+    // They are usually also used in the open list and will hence already be
+    // included, but we want to be sure.
     if (f_evaluator) {
-        f_evaluator->get_involved_heuristics(hset);
+        f_evaluator->get_path_dependent_evaluators(evals);
     }
 
-    heuristics.assign(hset.begin(), hset.end());
-    assert(!heuristics.empty());
+    path_dependent_evaluators.assign(evals.begin(), evals.end());
 
-    if (use_oss() || use_dks()) {
-        assert(heuristics.size() == 1);
-    }
     // Changed to copy the state to be able to reassign it.
     GlobalState initial_state = state_registry.get_initial_state();
     if (use_oss()) {
         vector<int> canonical_state = group->get_canonical_representative(initial_state);
         initial_state = state_registry.register_state_buffer(canonical_state);
     }
-    for (Heuristic *heuristic : heuristics) {
-        heuristic->notify_initial_state(initial_state);
+    for (Evaluator *evaluator : path_dependent_evaluators) {
+        evaluator->notify_initial_state(initial_state);
     }
 
     // Note: we consider the initial state as reached by a preferred
@@ -185,8 +183,8 @@ SearchStatus EagerSearch::step() {
 
         // update new path
         if (use_multi_path_dependence || succ_node.is_new()) {
-            for (Heuristic *heuristic : heuristics) {
-                heuristic->notify_state_transition(s, op_id, succ_state);
+            for (Evaluator *evaluator : path_dependent_evaluators) {
+                evaluator->notify_state_transition(s, op_id, succ_state);
             }
         }
 
@@ -314,7 +312,7 @@ pair<SearchNode, bool> EagerSearch::fetch_next_node() {
                     statistics.inc_dead_ends();
                     continue;
                 }
-                if (pushed_h < eval_context.get_result(heuristics[0]).get_h_value()) {
+                if (pushed_h < eval_context.get_result(path_dependent_evaluators[0]).get_h_value()) {
                     assert(node.is_open());
                     open_list->insert(eval_context, node.get_state_id());
                     continue;
