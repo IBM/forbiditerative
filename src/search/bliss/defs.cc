@@ -39,7 +39,7 @@ fatal_error(const char* fmt, ...)
 }
 
 void _OUT_OF_MEMORY(const char* file, int line) {
-    std::cerr << file << ":" << line << " out of memory" << std::endl;
+    std::cout << file << ":" << line << " out of memory" << std::endl;
     throw BlissMemoryOut();
 }
 
