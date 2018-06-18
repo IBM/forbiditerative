@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iomanip>
+#include <fstream>
 #include <vector>
 #include <numeric>
 
@@ -248,6 +249,18 @@ void Permutation::dump_fdr() const {
         }
     }
     cout << endl;
+}
+
+void Permutation::write(ofstream &file) const {
+    file << "    [";
+    for (size_t i = 0; i < value.size(); ++i) {
+        int val = value[i];
+        file << val;
+        if (i != value.size() - 1) {
+            file << ", ";
+        }
+    }
+    file << "]";
 }
 
 std::pair<int, int> Permutation::get_new_var_val_by_old_var_val(const int var, const int val) const {

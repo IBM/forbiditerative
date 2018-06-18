@@ -13,6 +13,7 @@
 #include "../tasks/root_task.h"
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <numeric>
 #include <queue>
@@ -28,6 +29,7 @@ Group::Group(const options::Options &opts)
       dump_symmetry_graph(opts.get<bool>("dump_symmetry_graph")),
       search_symmetries(SearchSymmetries(opts.get_enum("search_symmetries"))),
       dump_permutations(opts.get<bool>("dump_permutations")),
+      write_generators(opts.get<bool>("write_generators")),
       num_vars(0),
       permutation_length(0),
       num_identity_generators(0),
@@ -53,7 +55,7 @@ void Group::compute_symmetries(const TaskProxy &task_proxy) {
     }
     GraphCreator graph_creator;
     bool success = graph_creator.compute_symmetries(
-        task_proxy, stabilize_initial_state, stabilize_goal, time_bound, dump_symmetry_graph, this);
+        task_proxy, stabilize_initial_state, stabilize_goal, time_bound, dump_symmetry_graph, write_generators, this);
     if (!success) {
         generators.clear();
     }
@@ -142,7 +144,18 @@ void Group::dump_variables_equivalence_classes() const {
     }
 }
 
-
+void Group::write_generators_to_file() const {
+    ofstream file;
+    file.open ("generators.py");
+    file << "def get():" << endl;
+    file << "    return [" << endl;
+    for (const Permutation &perm : generators) {
+        perm.write(file);
+        file << "," << endl;
+    }
+    file << "    ]" << endl;
+    file.close();
+}
 
 void Group::statistics() const {
     int num_gen = get_num_generators();
@@ -308,6 +321,9 @@ static shared_ptr<Group> _parse(OptionParser &parser) {
     parser.add_option<bool>("dump_permutations",
                            "Dump the generators",
                            "false");
+    parser.add_option<bool>("write_generators",
+                            "Write symmetry group generators to a file in Python format",
+                            "false");
 
     Options opts = parser.parse();
 

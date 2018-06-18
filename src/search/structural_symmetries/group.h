@@ -30,6 +30,7 @@ class Group {
     const bool dump_symmetry_graph;
     const SearchSymmetries search_symmetries;
     const bool dump_permutations;
+    const bool write_generators;
 
     // Group properties
     int num_vars;
@@ -81,6 +82,7 @@ public:
     }
     void dump_generators() const;
     void dump_variables_equivalence_classes() const;
+    void write_generators_to_file() const;
     void statistics() const;
     bool is_stabilizing_initial_state() const {
         return stabilize_initial_state;

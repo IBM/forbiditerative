@@ -23,6 +23,7 @@ public:
     void dump_var_vals() const;
     void dump() const;
     void dump_fdr() const;
+    void write(std::ofstream &file) const;
 
     int get_order() const {
         return order;
