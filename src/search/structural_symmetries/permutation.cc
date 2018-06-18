@@ -252,7 +252,7 @@ void Permutation::dump_fdr() const {
 }
 
 void Permutation::write(ofstream &file) const {
-    file << "    [";
+    file << "[";
     for (size_t i = 0; i < value.size(); ++i) {
         int val = value[i];
         file << val;

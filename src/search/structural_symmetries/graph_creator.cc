@@ -69,7 +69,6 @@ bool GraphCreator::compute_symmetries(
         cout << "Done initializing symmetries: " << timer << endl;
         group->statistics();
         if (write_generators) {
-            cout << "writing generators" << endl;
             group->write_generators_to_file();
         }
         success = true;

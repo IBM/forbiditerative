@@ -147,13 +147,10 @@ void Group::dump_variables_equivalence_classes() const {
 void Group::write_generators_to_file() const {
     ofstream file;
     file.open ("generators.py");
-    file << "def get():" << endl;
-    file << "    return [" << endl;
     for (const Permutation &perm : generators) {
         perm.write(file);
-        file << "," << endl;
+        file << endl;
     }
-    file << "    ]" << endl;
     file.close();
 }
 
@@ -322,7 +319,7 @@ static shared_ptr<Group> _parse(OptionParser &parser) {
                            "Dump the generators",
                            "false");
     parser.add_option<bool>("write_generators",
-                            "Write symmetry group generators to a file in Python format",
+                            "Write symmetry group generators to a file ",
                             "false");
 
     Options opts = parser.parse();
