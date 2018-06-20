@@ -319,7 +319,8 @@ static shared_ptr<Group> _parse(OptionParser &parser) {
                            "Dump the generators",
                            "false");
     parser.add_option<bool>("write_generators",
-                            "Write symmetry group generators to a file ",
+                            "Write symmetry group generators to a file and "
+                            "stop afterwards.",
                             "false");
 
     Options opts = parser.parse();

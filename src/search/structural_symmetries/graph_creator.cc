@@ -68,14 +68,15 @@ bool GraphCreator::compute_symmetries(
         bliss_graph.canonical_form(stats1,&(add_permutation_to_group),group);
         cout << "Done initializing symmetries: " << timer << endl;
         group->statistics();
-        if (write_generators) {
-            group->write_generators_to_file();
-        }
         success = true;
     } catch (bliss::BlissException &e) {
         e.dump();
     }
     set_new_handler(original_new_handler);
+    if (write_generators) {
+        group->write_generators_to_file();
+        utils::exit_with(utils::ExitCode::PLAN_FOUND);
+    }
     return success;
 }
 
