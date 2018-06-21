@@ -7,6 +7,7 @@ namespace bliss {
     class Digraph;
 }
 struct DotGraph;
+class FactProxy;
 class EffectsProxy;
 class Group;
 class OperatorProxy;
@@ -35,6 +36,7 @@ class GraphCreator  {
     bool effect_can_be_overwritten(
         int effect_id,
         const EffectsProxy &effects) const;
+    bool is_fact_none_of_those(FactProxy fact) const;
 public:
     GraphCreator() = default;
     ~GraphCreator() = default;

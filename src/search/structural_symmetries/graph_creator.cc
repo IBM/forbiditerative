@@ -220,7 +220,7 @@ void GraphCreator::create_bliss_directed_graph(
     if (stabilize_initial_state) {
         /*
           Note: We cannot color both abstract initial and goal states, because
-          there exist problme instances where a goal fact is already true in
+          there exist problem instances where a goal fact is already true in
           the initial state (e.g. psr-small:p02-s5...), hence we would recolor
           the vertex and either not stabilizing the initial state or the goal
           state, depending on the order of coloring.
@@ -328,32 +328,37 @@ void GraphCreator::add_operator_directed_graph(
         }
     }
 }
+bool GraphCreator::is_fact_none_of_those(FactProxy fact) const {
+    /* Previous implementation!!!
+    VariableProxy var = fact.get_variable();
+    int val = fact.get_value();
+    return (val == var.get_domain_size() - 1);
+    */
+    // Checking whether the fact is actually called "none_of_those".
+    return fact.get_name() == "none_of_those";
+}
 
 bool GraphCreator::effect_can_be_overwritten(int effect_id, const EffectsProxy &effects) const {
     // Checking whether the effect is a delete effect that can be overwritten by an add effect
-    // Assumptions:
-    //  (1) This can happen only to the none_of_those values, and these can be
+    // Assumption:
+    //  This can happen only to the none_of_those values, and these can be
     //      overwritten only by a non none_of_those value that comes after it.
-    //  (2) none_of_those is the last value of a variable
-    //  (3) The variables in the effects are ordered by effect variables
-    //TODO: verify that the assumptions above hold
+    //TODO: verify that the assumption above holds
     int num_effects = effects.size();
 
     assert(effect_id < num_effects);
     FactProxy effect_fact = effects[effect_id].get_fact();
-    VariableProxy effect_var = effect_fact.get_variable();
-    int eff_val = effect_fact.get_value();
-    if (eff_val != effect_fact.get_variable().get_domain_size() - 1) // the value is not none_of_those
+    if (!is_fact_none_of_those(effect_fact))
         return false;
 
+    VariableProxy effect_var = effect_fact.get_variable();
     // Go over the next effects of the same variable, skipping the none_of_those
     for (int i=effect_id+1; i < num_effects; i++) {
-        if (effect_var != effects[i].get_fact().get_variable()) // Next variable
-            return false;
-        if (effects[i].get_fact().get_value() == effect_fact.get_variable().get_domain_size() - 1)
-            continue;
-        // Found effect on the same variable which is not none_of_those
-        return true;
+        FactProxy later_effect_fact = effects[i].get_fact();
+        if (effect_var == later_effect_fact.get_variable() && !is_fact_none_of_those(later_effect_fact)) {
+            // Found effect on the same variable which is not none_of_those
+            return true;
+        }
     }
     return false;
 }
