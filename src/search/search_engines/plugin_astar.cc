@@ -48,7 +48,7 @@ static shared_ptr<SearchEngine> _parse(OptionParser &parser) {
             if (group->get_search_symmetries() == SearchSymmetries::NONE) {
                 cerr << "Symmetries option passed to eager search, but no "
                      << "search symmetries should be used." << endl;
-                utils::exit_with(utils::ExitCode::INPUT_ERROR);
+                utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
             }
         }
         auto temp = search_common::create_astar_open_list_factory_and_f_eval(opts);

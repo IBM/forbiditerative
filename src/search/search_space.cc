@@ -242,7 +242,7 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
             state_trace[i-1].dump_pddl();
             cout << endl << "From the state" << endl;
             state_trace[i].dump_pddl();
-            utils::exit_with(utils::ExitCode::CRITICAL_ERROR);
+            utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
         }
         path.push_back(applicable_ops[min_cost_op]);
     }

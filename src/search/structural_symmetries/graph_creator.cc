@@ -75,7 +75,7 @@ bool GraphCreator::compute_symmetries(
     set_new_handler(original_new_handler);
     if (write_generators) {
         group->write_generators_to_file();
-        utils::exit_with(utils::ExitCode::PLAN_FOUND);
+        utils::exit_with(utils::ExitCode::SUCCESS);
     }
     return success;
 }
