@@ -43,6 +43,7 @@ bool GraphCreator::compute_symmetries(
     const TaskProxy &task_proxy,
     const bool stabilize_initial_state,
     const bool stabilize_goal,
+    const bool use_color_for_stabilizing_goal,
     const int time_bound,
     const bool dump_symmetry_graph,
     const bool write_generators,
@@ -57,6 +58,7 @@ bool GraphCreator::compute_symmetries(
             task_proxy,
             stabilize_initial_state,
             stabilize_goal,
+            use_color_for_stabilizing_goal,
             dump_symmetry_graph,
             group,
             bliss_graph);
@@ -141,6 +143,7 @@ void GraphCreator::create_bliss_directed_graph(
     const TaskProxy &task_proxy,
     const bool stabilize_initial_state,
     const bool stabilize_goal,
+    const bool use_color_for_stabilizing_goal,
     const bool dump_symmetry_graph,
     Group *group,
     bliss::Digraph &bliss_graph) const {
@@ -243,14 +246,32 @@ void GraphCreator::create_bliss_directed_graph(
     }
 
     if (stabilize_goal) {
-        // Recoloring the goal values
-        for (FactProxy goal_fact : task_proxy.get_goals()) {
-            int goal_vertex = group->get_index_by_var_val_pair(
-                goal_fact.get_variable().get_id(), goal_fact.get_value());
-            bliss_graph.change_color(goal_vertex, GOAL_VERTEX);
+        if (use_color_for_stabilizing_goal) {
+            // Recoloring the goal values
+            for (FactProxy goal_fact : task_proxy.get_goals()) {
+                int goal_vertex = group->get_index_by_var_val_pair(
+                    goal_fact.get_variable().get_id(), goal_fact.get_value());
+                bliss_graph.change_color(goal_vertex, GOAL_VERTEX);
+
+                if (dump_symmetry_graph) {
+                    dot_graph.change_node_color(goal_vertex, dot_colors[GOAL_VERTEX]);
+                }
+            }
+        } else {
+            vertex = bliss_graph.add_vertex(GOAL_VERTEX);
 
             if (dump_symmetry_graph) {
-                dot_graph.change_node_color(goal_vertex, dot_colors[GOAL_VERTEX]);
+                dot_graph.add_node(vertex, "goal", dot_colors[GOAL_VERTEX]);
+            }
+
+            for (FactProxy goal_fact : task_proxy.get_goals()) {
+                int goal_vertex = group->get_index_by_var_val_pair(
+                    goal_fact.get_variable().get_id(), goal_fact.get_value());
+                bliss_graph.add_edge(vertex, goal_vertex);
+
+                if (dump_symmetry_graph) {
+                    dot_graph.add_edge(vertex, goal_vertex);
+                }
             }
         }
     }

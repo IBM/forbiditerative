@@ -26,6 +26,7 @@ class Group {
     // Options for Bliss and the type of symmetries used
     const bool stabilize_initial_state;
     const bool stabilize_goal;
+    const bool use_color_for_stabilizing_goal;
     const int time_bound;
     const bool dump_symmetry_graph;
     const SearchSymmetries search_symmetries;

@@ -25,6 +25,7 @@ using namespace utils;
 Group::Group(const options::Options &opts)
     : stabilize_initial_state(opts.get<bool>("stabilize_initial_state")),
       stabilize_goal(opts.get<bool>("stabilize_goal")),
+      use_color_for_stabilizing_goal(opts.get<bool>("use_color_for_stabilizing_goal")),
       time_bound(opts.get<int>("time_bound")),
       dump_symmetry_graph(opts.get<bool>("dump_symmetry_graph")),
       search_symmetries(SearchSymmetries(opts.get_enum("search_symmetries"))),
@@ -55,7 +56,14 @@ void Group::compute_symmetries(const TaskProxy &task_proxy) {
     }
     GraphCreator graph_creator;
     bool success = graph_creator.compute_symmetries(
-        task_proxy, stabilize_initial_state, stabilize_goal, time_bound, dump_symmetry_graph, write_generators, this);
+        task_proxy,
+        stabilize_initial_state,
+        stabilize_goal,
+        use_color_for_stabilizing_goal,
+        time_bound,
+        dump_symmetry_graph,
+        write_generators,
+        this);
     if (!success) {
         generators.clear();
     }
@@ -297,6 +305,10 @@ static shared_ptr<Group> _parse(OptionParser &parser) {
                             "false");
     parser.add_option<bool>("stabilize_goal",
                             "Compute symmetries stabilizing the goal",
+                            "true");
+    parser.add_option<bool>("use_color_for_stabilizing_goal",
+                            "Use a color to stabilize the goal instead of "
+                            "using an additional node linked to goal values.",
                             "true");
     parser.add_option<bool>("dump_symmetry_graph",
                            "Dump symmetry graph in dot format",

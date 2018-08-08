@@ -23,6 +23,7 @@ class GraphCreator  {
         const TaskProxy &task_proxy,
         const bool stabilize_initial_state,
         const bool stabilize_goal,
+        const bool use_color_for_stabilizing_goal,
         const bool dump_symmetry_graph,
         Group *group,
         bliss::Digraph &bliss_graph) const;
@@ -44,6 +45,7 @@ public:
         const TaskProxy &task_proxy,
         const bool stabilize_initial_state,
         const bool stabilize_goal,
+        const bool use_color_for_stabilizing_goal,
         const int time_bound,
         const bool dump_symmetry_graph,
         const bool write_generators,
