@@ -181,16 +181,6 @@ void Group::dump_variables_equivalence_classes() const {
     }
 }
 
-void Group::write_generators_to_file() const {
-    ofstream file;
-    file.open ("generators.py");
-    for (const Permutation &perm : generators) {
-        perm.write(file);
-        file << endl;
-    }
-    file.close();
-}
-
 void Group::statistics() const {
     cout << "Number of search generators (affecting variables): "
          << get_num_generators() << endl;

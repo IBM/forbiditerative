@@ -28,7 +28,6 @@ public:
     void dump_var_vals() const;
     void dump() const;
     void dump_fdr() const;
-    void write(std::ofstream &file) const;
 
     std::pair<int, int> get_new_var_val_by_old_var_val(const int var, const int val) const;
 

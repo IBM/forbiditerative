@@ -210,18 +210,6 @@ void Permutation::dump_fdr() const {
     cout << endl;
 }
 
-void Permutation::write(ofstream &file) const {
-    file << "[";
-    for (size_t i = 0; i < value.size(); ++i) {
-        int val = value[i];
-        file << val;
-        if (i != value.size() - 1) {
-            file << ", ";
-        }
-    }
-    file << "]";
-}
-
 std::pair<int, int> Permutation::get_new_var_val_by_old_var_val(const int var, const int val) const {
     int old_ind = group.get_index_by_var_val_pair(var, val);
     int new_ind = get_value(old_ind);
