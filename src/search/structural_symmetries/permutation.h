@@ -25,10 +25,6 @@ public:
     void dump_fdr() const;
     void write(std::ofstream &file) const;
 
-    int get_order() const {
-        return order;
-    }
-
     std::pair<int, int> get_new_var_val_by_old_var_val(const int var, const int val) const;
 
     bool replace_if_less(std::vector<int> &state) const;
@@ -44,7 +40,6 @@ private:
     std::vector<int> from_vars;
     // Affected vars by cycles
     std::vector<std::vector<int> > affected_vars_cycles;
-    int order;
 
     void finalize();
     void _allocate();

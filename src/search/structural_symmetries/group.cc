@@ -192,26 +192,17 @@ void Group::write_generators_to_file() const {
 }
 
 void Group::statistics() const {
-    int num_gen = get_num_generators();
     cout << "Number of search generators (affecting variables): "
-         << num_gen << endl;
+         << get_num_generators() << endl;
     cout << "Number of identity generators (on facts, not on operators): "
          << get_num_identity_generators() << endl;
     cout << "Total number of generators: "
-         << num_gen + get_num_identity_generators() << endl;
-    cout << "Order of generators: [";
-    for (int gen_no = 0; gen_no < num_gen; ++gen_no) {
-        cout << get_permutation(gen_no).get_order();
-        if (gen_no != num_gen - 1)
-            cout << ", ";
-    }
-    cout << "]" << endl;
+         << get_num_generators() + get_num_identity_generators() << endl;
 
     if (dump_permutations) {
         dump_generators();
         dump_variables_equivalence_classes();
     }
-
 }
 
 vector<int> Group::get_canonical_representative(const GlobalState &state) const {

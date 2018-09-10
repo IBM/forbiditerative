@@ -69,24 +69,6 @@ Permutation::Permutation(const Permutation &perm1, const Permutation &perm2)
     finalize();
 }
 
-int gcd(int m, int n) {
-    assert(m > 0 && n > 0);
-    int r;
-
-    while (n != 0) {
-        r = m % n;
-        m = n;
-        n = r;
-    }
-    return m;
-}
-
-int lcm(int a, int b) {
-    int temp = gcd(a, b);
-
-    return temp ? (a / temp * b) : 0;
-}
-
 void Permutation::finalize(){
     int num_vars = group.get_permutation_num_variables();
     // Compute and sort affected variables, set from_vars.
@@ -115,11 +97,9 @@ void Permutation::finalize(){
     sort(vars_affected.begin(), vars_affected.end());
 
     // Going over the vector from_vars of the mappings of the variables and
-    // finding cycles, computing the least common multiple of the cycles'
-    // sizes to determine the permutation's order
+    // finding cycles.
     vector<bool> marked;
     marked.assign(group.get_permutation_length(), false);
-    order = 1;
     for (int var = 0; var < num_vars; var++) {
         if (marked[var] || from_vars[var] == -1)
             continue;
@@ -134,29 +114,8 @@ void Permutation::finalize(){
             marked[current] = true;
             cycle.insert(cycle.begin(),current);
         }
-        order = lcm(order, cycle.size());
         // Get here when from_vars[current] == i.
         affected_vars_cycles.push_back(cycle);
-    }
-
-    // Go over all variables that are not part of a cycle and see if the
-    // mapping of variable values increases the permutation's order
-    for (int ind = num_vars; ind < group.get_permutation_length(); ++ind) {
-        int to_i = get_value(ind);
-        int var = group.get_var_by_index(ind);
-        int to_var = group.get_var_by_index(to_i);
-        if (!marked[ind] && var == to_var && to_i != ind) {
-            int start = ind;
-            marked[start] = true;
-            int current = ind;
-            int cycle_size = 1;
-            while (get_value(current) != start) {
-                current = get_value(current);
-                marked[current] = true;
-                ++cycle_size;
-            }
-            order = lcm(order, cycle_size);
-        }
     }
 }
 
