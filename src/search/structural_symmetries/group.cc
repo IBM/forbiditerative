@@ -182,7 +182,9 @@ void Group::dump_variables_equivalence_classes() const {
 }
 
 void Group::statistics() const {
-    cout << "Number of search generators (affecting variables): "
+    cout << "Size of the grounded symmetry graph: "
+         << graph_size << endl;
+    cout << "Number of search generators (affecting facts): "
          << get_num_generators() << endl;
     cout << "Number of identity generators (on facts, not on operators): "
          << get_num_identity_generators() << endl;

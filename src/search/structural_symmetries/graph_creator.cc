@@ -61,12 +61,11 @@ bool GraphCreator::compute_symmetries(
             dump_symmetry_graph,
             group,
             bliss_graph);
-        cout << "Size of the grounded symmetry graph: " << bliss_graph.get_nof_vertices() << endl;
+        group->set_graph_size(bliss_graph.get_nof_vertices());
         bliss_graph.set_splitting_heuristic(bliss::Digraph::shs_flm);
         bliss_graph.set_time_limit(time_bound);
         bliss::Stats stats1;
         cout << "Using Bliss to find group generators" << endl;
-        group->set_graph_size(bliss_graph.get_nof_vertices());
         bliss_graph.canonical_form(stats1,&(add_permutation_to_group),group);
         cout << "Done initializing symmetries: " << timer << endl;
         group->statistics();
