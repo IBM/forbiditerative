@@ -354,7 +354,7 @@ static shared_ptr<Group> _parse(OptionParser &parser) {
         "write_all_generators",
         "Write all symmetry group generators to a file, including those that "
         "do not affect variables, and stop afterwards.",
-        "true");
+        "false");
 
     Options opts = parser.parse();
 
