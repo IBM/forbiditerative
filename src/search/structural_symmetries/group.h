@@ -31,11 +31,13 @@ class Group {
     const bool dump_symmetry_graph;
     const SearchSymmetries search_symmetries;
     const bool dump_permutations;
-    const bool write_generators;
+    const bool write_search_generators;
+    const bool write_all_generators;
 
     // Group properties
     int num_vars;
-    int permutation_length;
+    int permutation_length; // as used for search generators
+    int graph_size; // including vertices for operators
     std::vector<int> dom_sum_by_var;
     std::vector<int> var_by_val;
     int num_identity_generators;
@@ -49,6 +51,8 @@ class Group {
     std::vector<int> compute_permutation_trace_to_canonical_representative(const GlobalState& state) const;
     RawPermutation compute_permutation_from_trace(const std::vector<int> &permutation_trace) const;
     RawPermutation compute_inverse_permutation(const RawPermutation &permutation) const;
+
+    void write_generator_to_file(const unsigned int *generator) const;
 public:
     explicit Group(const options::Options &opts);
     ~Group() = default;
@@ -71,6 +75,9 @@ public:
     }
     int get_permutation_length() const {
         return permutation_length;
+    }
+    void set_graph_size(int length) {
+        graph_size = length;
     }
     int get_var_by_index(int val) const;
     std::pair<int, int> get_var_val_by_index(const int ind) const;

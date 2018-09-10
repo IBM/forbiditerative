@@ -48,7 +48,6 @@ public:
         const bool use_color_for_stabilizing_goal,
         const int time_bound,
         const bool dump_symmetry_graph,
-        const bool write_generators,
         Group *group);
 };
 

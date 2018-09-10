@@ -46,7 +46,6 @@ bool GraphCreator::compute_symmetries(
     const bool use_color_for_stabilizing_goal,
     const int time_bound,
     const bool dump_symmetry_graph,
-    const bool write_generators,
     Group *group) {
     bool success = false;
     new_handler original_new_handler = set_new_handler(out_of_memory_handler);
@@ -67,6 +66,7 @@ bool GraphCreator::compute_symmetries(
         bliss_graph.set_time_limit(time_bound);
         bliss::Stats stats1;
         cout << "Using Bliss to find group generators" << endl;
+        group->set_graph_size(bliss_graph.get_nof_vertices());
         bliss_graph.canonical_form(stats1,&(add_permutation_to_group),group);
         cout << "Done initializing symmetries: " << timer << endl;
         group->statistics();
@@ -75,10 +75,6 @@ bool GraphCreator::compute_symmetries(
         e.dump();
     }
     set_new_handler(original_new_handler);
-    if (write_generators) {
-        group->write_generators_to_file();
-        utils::exit_with(utils::ExitCode::SUCCESS);
-    }
     return success;
 }
 
