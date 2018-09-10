@@ -5,6 +5,11 @@
 
 #include "group.h"
 
+/*
+  This class represents search symmetries, i.e., it only stores a mapping of
+  variables and values, but not of operators of the planning task, since the
+  mapping of these is not used for symmetry pruning techniques.
+*/
 class Permutation{
 public:
     explicit Permutation(const Group &group);
