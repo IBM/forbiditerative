@@ -370,4 +370,4 @@ static PluginTypePlugin<Group> _type_plugin(
     // TODO: Replace empty string by synopsis for the wiki page.
     "");
 
-static PluginShared<Group> _plugin("structural_symmetries", _parse);
+static Plugin<Group> _plugin("structural_symmetries", _parse);

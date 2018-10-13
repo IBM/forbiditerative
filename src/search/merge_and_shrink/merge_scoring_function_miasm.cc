@@ -62,7 +62,7 @@ vector<double> MergeScoringFunctionMIASM::compute_scores(
         */
         assert(num_states);
         double score = static_cast<double>(alive_states_count) /
-                       static_cast<double>(num_states);
+            static_cast<double>(num_states);
         scores.push_back(score);
     }
     return scores;
@@ -88,7 +88,7 @@ static shared_ptr<MergeScoringFunction>_parse(options::OptionParser &parser) {
         + utils::format_paper_reference(
             {"Silvan Sievers", "Martin Wehrle", "Malte Helmert"},
             "An Analysis of Merge Strategies for Merge-and-Shrink Heuristics",
-            "http://ai.cs.unibas.ch/papers/sievers-et-al-icaps2016.pdf",
+            "https://ai.dmi.unibas.ch/papers/sievers-et-al-icaps2016.pdf",
             "Proceedings of the 26th International Conference on Planning and "
             "Scheduling (ICAPS 2016)",
             "2358-2366",
@@ -139,5 +139,5 @@ static shared_ptr<MergeScoringFunction>_parse(options::OptionParser &parser) {
     }
 }
 
-static options::PluginShared<MergeScoringFunction> _plugin("sf_miasm", _parse);
+static options::Plugin<MergeScoringFunction> _plugin("sf_miasm", _parse);
 }
