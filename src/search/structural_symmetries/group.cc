@@ -368,6 +368,7 @@ static shared_ptr<Group> _parse(OptionParser &parser) {
 static PluginTypePlugin<Group> _type_plugin(
     "Group",
     // TODO: Replace empty string by synopsis for the wiki page.
-    "");
+    "",
+    "symmetries");
 
 static Plugin<Group> _plugin("structural_symmetries", _parse);

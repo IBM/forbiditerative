@@ -218,19 +218,19 @@ SearchStatus EagerSearch::step() {
               initialized with one state and the insertion was performed with
               another state.
              */
-            EvaluationContext eval_context(
+            EvaluationContext succ_eval_context(
                 succ_state, succ_g, is_preferred, &statistics);
             statistics.inc_evaluated_states();
 
-            if (open_list->is_dead_end(eval_context)) {
+            if (open_list->is_dead_end(succ_eval_context)) {
                 succ_node.mark_as_dead_end();
                 statistics.inc_dead_ends();
                 continue;
             }
             succ_node.open(node, op, get_adjusted_cost(op));
 
-            open_list->insert(eval_context, succ_state.get_id());
-            if (search_progress.check_progress(eval_context)) {
+            open_list->insert(succ_eval_context, succ_state.get_id());
+            if (search_progress.check_progress(succ_eval_context)) {
                 print_checkpoint_line(succ_node.get_g());
                 reward_progress();
             }
@@ -249,7 +249,7 @@ SearchStatus EagerSearch::step() {
                 }
                 succ_node.reopen(node, op, get_adjusted_cost(op));
 
-                EvaluationContext eval_context(
+                EvaluationContext succ_eval_context(
                     succ_state, succ_node.get_g(), is_preferred, &statistics);
 
                 /*
@@ -269,7 +269,7 @@ SearchStatus EagerSearch::step() {
                   rather than a recomputation of the evaluator value
                   from scratch.
                 */
-                open_list->insert(eval_context, succ_state.get_id());
+                open_list->insert(succ_eval_context, succ_state.get_id());
             } else {
                 // If we do not reopen closed nodes, we just update the parent pointers.
                 // Note that this could cause an incompatibility between
