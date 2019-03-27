@@ -2,6 +2,7 @@
 #define STRUCTURAL_SYMMETRIES_GROUP_H
 
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 class GlobalState;
@@ -45,6 +46,7 @@ class Group {
     // Group creation
     bool initialized;
     std::vector<Permutation> generators;
+    std::vector<std::unordered_map<int, int>> to_be_written_generators;
     const Permutation &get_permutation(int index) const;
 
     // Path tracing
@@ -52,7 +54,8 @@ class Group {
     RawPermutation compute_permutation_from_trace(const std::vector<int> &permutation_trace) const;
     RawPermutation compute_inverse_permutation(const RawPermutation &permutation) const;
 
-    void write_generator_to_file(const unsigned int *generator) const;
+    void write_generators() const;
+    void add_to_be_written_generator(const unsigned int *generator);
 public:
     explicit Group(const options::Options &opts);
     ~Group() = default;

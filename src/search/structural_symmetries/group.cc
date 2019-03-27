@@ -74,26 +74,64 @@ void Group::compute_symmetries(const TaskProxy &task_proxy) {
     initialized = true;
 
     if (write_search_generators || write_all_generators) {
+        write_generators();
         utils::exit_with(utils::ExitCode::SUCCESS);
     }
 }
 
-void Group::write_generator_to_file(const unsigned int *generator) const {
+void Group::write_generators() const {
     assert(write_search_generators || write_all_generators);
-    ofstream file;
-    file.open("generators.py", std::ios_base::app);
-    file << "[";
-    int length = (write_search_generators ? permutation_length : graph_size);
-    for (int i = 0; i < length; ++i) {
-        int val = generator[i];
-        file << val;
-        if (i != length - 1) {
-            file << ", ";
+
+    /*
+      To avoid writing large generators, we first compute the set of vertices
+      that is actually affected by any generator and assign them consecutive
+      numbers.
+    */
+    unordered_map<int, int> vertex_to_id;
+    int vertex_counter = 0;
+    for (const auto &generator : to_be_written_generators) {
+        for (const pair<const int, int> &key_val : generator) {
+            if (!vertex_to_id.count(key_val.first)) {
+                vertex_to_id[key_val.first] = vertex_counter++;
+            }
         }
     }
-    file << "]";
-    file << endl;
+
+    /*
+      Then we go over all generators again, writing them out in permutations
+      (python-style lists) using the vertex to id mapping.
+    */
+    ofstream file;
+    file.open("generators.py", std::ios_base::out);
+    for (const auto &generator : to_be_written_generators) {
+        vector<int> permutation(vertex_counter);
+        iota(permutation.begin(), permutation.end(), 0);
+        for (const pair<const int, int> &key_val : generator) {
+            permutation[vertex_to_id[key_val.first]] = vertex_to_id[key_val.second];
+        }
+        file << "[";
+        for (size_t i = 0; i < permutation.size(); ++i) {
+            file << permutation[i];
+            if (i != permutation.size() - 1) {
+                file << ", ";
+            }
+        }
+        file << "]" << endl;
+    }
     file.close();
+}
+
+void Group::add_to_be_written_generator(const unsigned int *generator) {
+    assert(write_search_generators || write_all_generators);
+    int length = (write_search_generators ? permutation_length : graph_size);
+    unordered_map<int, int> gen_map;
+    for (int from = 0; from < length; ++from) {
+        int to = generator[from];
+        if (from != to) {
+            gen_map[from] = to;
+        }
+    }
+    to_be_written_generators.push_back(move(gen_map));
 }
 
 void Group::add_raw_generator(const unsigned int *generator) {
@@ -101,11 +139,11 @@ void Group::add_raw_generator(const unsigned int *generator) {
     if (permutation.identity()) {
         ++num_identity_generators;
         if (write_all_generators) {
-            write_generator_to_file(generator);
+            add_to_be_written_generator(generator);
         }
     } else {
         if (write_search_generators || write_all_generators) {
-            write_generator_to_file(generator);
+            add_to_be_written_generator(generator);
         }
         generators.push_back(move(permutation));
     }
