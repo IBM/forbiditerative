@@ -98,8 +98,8 @@ void Group::write_generators() const {
     }
 
     /*
-      Then we go over all generators again, writing them out in permutations
-      (python-style lists) using the vertex to id mapping.
+      Then we go over all generators again, writing them out as permutations
+      (python-style lists) using the vertex-to-id mapping.
     */
     ofstream file;
     file.open("generators.py", std::ios_base::out);
