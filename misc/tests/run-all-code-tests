@@ -1,0 +1,16 @@
+#! /bin/bash
+
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+set -x
+
+./test-exitcodes.py
+./test-standard-configs.py
+./test-translator.py ../../misc/tests/benchmarks all
+
+py.test ../../driver/tests.py
+
+echo
+echo "All code tests passed"

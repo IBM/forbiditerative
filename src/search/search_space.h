@@ -1,0 +1,82 @@
+#ifndef SEARCH_SPACE_H
+#define SEARCH_SPACE_H
+
+#include "global_state.h"
+#include "operator_cost.h"
+#include "per_state_information.h"
+#include "search_node_info.h"
+
+#include <vector>
+
+class GlobalOperator;
+class GlobalState;
+class Group;
+
+class SearchNode {
+    const StateRegistry &state_registry;
+    StateID state_id;
+    SearchNodeInfo &info;
+    OperatorCost cost_type;
+public:
+    SearchNode(const StateRegistry &state_registry,
+               StateID state_id,
+               SearchNodeInfo &info,
+               OperatorCost cost_type);
+
+    StateID get_state_id() const {
+        return state_id;
+    }
+    GlobalState get_state() const;
+
+    bool is_new() const;
+    bool is_open() const;
+    bool is_closed() const;
+    bool is_dead_end() const;
+
+    int get_g() const;
+    int get_real_g() const;
+
+    void open_initial();
+    void open(const SearchNode &parent_node,
+              const GlobalOperator *parent_op);
+    void reopen(const SearchNode &parent_node,
+                const GlobalOperator *parent_op);
+    void update_parent(const SearchNode &parent_node,
+                       const GlobalOperator *parent_op);
+    void close();
+    void mark_as_dead_end();
+
+    void dump() const;
+};
+
+
+class SearchSpace {
+    PerStateInformation<SearchNodeInfo> search_node_infos;
+
+    StateRegistry &state_registry;
+    OperatorCost cost_type;
+
+    void trace_path_with_symmetries(const GlobalState &goal_state,
+                                    std::vector<const GlobalOperator *> &path,
+                                    const std::shared_ptr<Group> &group) const;
+    void dump_state(std::ostream& os, const GlobalState& state) const;
+    bool dump_causal_link(const std::vector<const GlobalOperator *> &plan, 
+                          const std::vector<std::vector<GlobalEffect>>& plan_firing_effects,
+                          size_t to_index, GlobalCondition cond, std::ostream& os, bool coma) const;
+
+public:
+    SearchSpace(StateRegistry &state_registry, OperatorCost cost_type);
+
+    SearchNode get_node(const GlobalState &state);
+    void trace_path(const GlobalState &goal_state,
+                    std::vector<const GlobalOperator *> &path,
+                    const std::shared_ptr<Group> &group = nullptr) const;
+    void dump() const;
+    void print_statistics() const;
+    void dump_trace(const std::vector<StateID> &plan_trace, std::ostream& os) const;
+    void trace_from_plan(const std::vector<const GlobalOperator *> &plan, std::vector<StateID> &plan_trace) const;
+    void dump_partial_order_from_plan(const std::vector<const GlobalOperator *> &plan, std::ostream& os) const;
+
+};
+
+#endif
