@@ -21,7 +21,7 @@ WORKDIR /workspace/forbiditerative/
 
 # Set up some environment variables.
 ENV CXX g++
-ENV BUILD_COMMIT_ID 90626ba
+ENV BUILD_COMMIT_ID 853804c
 
 # Fetch the code at the right commit ID from the Github repo
 RUN curl -L https://github.com/IBM/forbiditerative/archive/${BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1
@@ -83,6 +83,7 @@ COPY --from=builder /workspace/forbiditerative/plan_topq.sh .
 COPY --from=builder /workspace/forbiditerative/plan_topk_q.sh .
 COPY --from=builder /workspace/forbiditerative/plan_diverse_agl.sh .
 COPY --from=builder /workspace/forbiditerative/plan_diverse_sat.sh .
+COPY --from=builder /workspace/forbiditerative/run.py .
 # COPY --from=builder /workspace/forbiditerative/plan_diverse_bounded.sh .
 
 ENV DIVERSE_FAST_DOWNWARD_PLANNER_PATH=/workspace/cerberus

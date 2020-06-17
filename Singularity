@@ -4,6 +4,9 @@ From: ctpelok77/forbiditerative:latest
 %setup
     # Just for diagnosis purposes
     hostname -f > $SINGULARITY_ROOTFS/etc/build_host
+%runscript
+    # This will be called whenever the Singularity container is invoked
+    python3 /workspace/forbiditerative/run.py $@
 
 %post
 
