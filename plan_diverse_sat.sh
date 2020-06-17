@@ -28,7 +28,7 @@ fi
 SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd)"
 $SOURCE/plan.py --planner diverse --domain $1 --problem $2 --number-of-plans $num_plans --use-local-folder --clean-local-folder
 
-PLANSDIR=$(PWD)/found_plans
+PLANSDIR="$(pwd)/found_plans"
 
 ### TODO: replace the value in num_plans with the actual number of plans in PLANSDIR, if at least as large as $3
 
