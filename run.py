@@ -30,4 +30,4 @@ if __name__ == "__main__":
 
     command = [script_name] 
     command.extend(sys.argv[3:])
-    print(command)
+    make_call(command)
