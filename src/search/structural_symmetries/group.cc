@@ -28,7 +28,7 @@ Group::Group(const options::Options &opts)
       use_color_for_stabilizing_goal(opts.get<bool>("use_color_for_stabilizing_goal")),
       time_bound(opts.get<int>("time_bound")),
       dump_symmetry_graph(opts.get<bool>("dump_symmetry_graph")),
-      search_symmetries(SearchSymmetries(opts.get_enum("search_symmetries"))),
+      search_symmetries(opts.get<SearchSymmetries>("search_symmetries")),
       dump_permutations(opts.get<bool>("dump_permutations")),
       write_search_generators(opts.get<bool>("write_search_generators")),
       write_all_generators(opts.get<bool>("write_all_generators")),
@@ -372,7 +372,7 @@ static shared_ptr<Group> _parse(OptionParser &parser) {
     search_symmetries.push_back("NONE");
     search_symmetries.push_back("OSS");
     search_symmetries.push_back("DKS");
-    parser.add_enum_option("search_symmetries",
+    parser.add_enum_option<SearchSymmetries>("search_symmetries",
                            search_symmetries,
                            "Choose the type of structural symmetries that "
                            "should be used for pruning: OSS for orbit space "
