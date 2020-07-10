@@ -236,10 +236,10 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
             }
         }
         if (!found) {
-            cout << "No operator is found!!!" << endl
+            utils::g_log << "No operator is found!!!" << endl
                  << "Cannot reach the state " << endl;
             state_trace[i-1].dump_pddl();
-            cout << endl << "From the state" << endl;
+            utils::g_log << endl << "From the state" << endl;
             state_trace[i].dump_pddl();
             utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
         }

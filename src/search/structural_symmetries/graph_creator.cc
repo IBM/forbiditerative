@@ -6,6 +6,7 @@
 #include "../task_proxy.h"
 
 #include "../utils/collections.h"
+#include "../utils/logging.h"
 #include "../utils/timer.h"
 
 #include "../bliss/graph.h"
@@ -51,7 +52,7 @@ bool GraphCreator::compute_symmetries(
     new_handler original_new_handler = set_new_handler(out_of_memory_handler);
     try {
         utils::Timer timer;
-        cout << "Initializing symmetries" << endl;
+        utils::g_log << "Initializing symmetries" << endl;
         bliss::Digraph bliss_graph = bliss::Digraph();
         create_bliss_directed_graph(
             task_proxy,
@@ -65,9 +66,9 @@ bool GraphCreator::compute_symmetries(
         bliss_graph.set_splitting_heuristic(bliss::Digraph::shs_flm);
         bliss_graph.set_time_limit(time_bound);
         bliss::Stats stats1;
-        cout << "Using Bliss to find group generators" << endl;
+        utils::g_log << "Using Bliss to find group generators" << endl;
         bliss_graph.canonical_form(stats1,&(add_permutation_to_group),group);
-        cout << "Done initializing symmetries: " << timer << endl;
+        utils::g_log << "Done initializing symmetries: " << timer << endl;
         group->statistics();
         success = true;
     } catch (bliss::BlissException &e) {

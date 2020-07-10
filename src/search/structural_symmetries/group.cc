@@ -162,19 +162,19 @@ void Group::dump_generators() const {
     }
 
     for (int i = 0; i < get_num_generators(); i++) {
-        cout << "Generator " << i << endl;
+        utils::g_log << "Generator " << i << endl;
         get_permutation(i).print_cycle_notation();
         get_permutation(i).dump_var_vals();
     }
 
     int num_vars = tasks::g_root_task->get_num_variables();
-    cout << "Extra group info:" << endl;
-    cout << "Number of identity on states generators: " << num_identity_generators << endl;
-    cout << "Permutation length: " << get_permutation_length() << endl;
-    cout << "Permutation variables by values (" << num_vars << "): " << endl;
+    utils::g_log << "Extra group info:" << endl;
+    utils::g_log << "Number of identity on states generators: " << num_identity_generators << endl;
+    utils::g_log << "Permutation length: " << get_permutation_length() << endl;
+    utils::g_log << "Permutation variables by values (" << num_vars << "): " << endl;
     for (int i = num_vars; i < get_permutation_length(); i++)
-        cout << get_var_by_index(i) << "  " ;
-    cout << endl;
+        utils::g_log << get_var_by_index(i) << "  " ;
+    utils::g_log << endl;
 }
 
 void Group::dump_variables_equivalence_classes() const {
@@ -204,7 +204,7 @@ void Group::dump_variables_equivalence_classes() const {
             }
         }
     }
-    cout << "Equivalence relation:" << endl;
+    utils::g_log << "Equivalence relation:" << endl;
     for (int i=0; i < num_vars; ++i) {
         vector<int> eqiv_class;
         for (int j=0; j < num_vars; ++j)
@@ -212,21 +212,21 @@ void Group::dump_variables_equivalence_classes() const {
                 eqiv_class.push_back(j);
         if (eqiv_class.size() <= 1)
             continue;
-        cout << "[";
+        utils::g_log << "[";
         for (int var : eqiv_class)
-            cout << " " << tasks::g_root_task->get_fact_name(FactPair(var, 0));
-        cout << " ]" << endl;
+            utils::g_log << " " << tasks::g_root_task->get_fact_name(FactPair(var, 0));
+        utils::g_log << " ]" << endl;
     }
 }
 
 void Group::statistics() const {
-    cout << "Size of the grounded symmetry graph: "
+    utils::g_log << "Size of the grounded symmetry graph: "
          << graph_size << endl;
-    cout << "Number of search generators (affecting facts): "
+    utils::g_log << "Number of search generators (affecting facts): "
          << get_num_generators() << endl;
-    cout << "Number of identity generators (on facts, not on operators): "
+    utils::g_log << "Number of identity generators (on facts, not on operators): "
          << get_num_identity_generators() << endl;
-    cout << "Total number of generators: "
+    utils::g_log << "Total number of generators: "
          << get_num_generators() + get_num_identity_generators() << endl;
 
     if (dump_permutations) {
@@ -329,7 +329,7 @@ RawPermutation Group::create_permutation_from_state_to_state(
 int Group::get_var_by_index(int ind) const {
     // In case of ind < num_vars, returns the index itself, as this is the variable part of the permutation.
     if (ind < num_vars) {
-        cout << "=====> WARNING!!!! Check that this is done on purpose!" << endl;
+        utils::g_log << "=====> WARNING!!!! Check that this is done on purpose!" << endl;
         return ind;
     }
     return var_by_val[ind-num_vars];

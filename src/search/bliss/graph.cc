@@ -295,21 +295,19 @@ AbstractGraph::reset_permutation(unsigned int* perm)
 }
 
 bool
-AbstractGraph::is_automorphism(unsigned int* const perm)
+AbstractGraph::is_automorphism(unsigned int* )
+// for compilation with -werror unused_parameters
 {
   _INTERNAL_ERROR();
   return false;
-  // for compilation with -werror unused_parameters
-  std::cout << perm << std::endl;
 }
 
 bool
-AbstractGraph::is_automorphism(const std::vector<unsigned int>& perm) const
+AbstractGraph::is_automorphism(const std::vector<unsigned int>&) const
+// for compilation with -werror unused_parameters
 {
   _INTERNAL_ERROR();
   return false;
-  // for compilation with -werror unused_parameters
-  std::cout << perm.size() << std::endl;
 }
 
 

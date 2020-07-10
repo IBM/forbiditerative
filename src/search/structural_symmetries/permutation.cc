@@ -1,6 +1,7 @@
 #include "permutation.h"
 
 #include "../tasks/root_task.h"
+#include "../utils/logging.h"
 
 #include <algorithm>
 #include <cassert>
@@ -131,83 +132,83 @@ void Permutation::print_cycle_notation() const {
             if(get_value(i) == i) continue; //don't print cycles of size 1
 
             pair<int, int> varval = group.get_var_val_by_index(i);
-            cout<<"("<< tasks::g_root_task->get_fact_name(FactPair(varval.first, varval.second))  <<" ";
+            utils::g_log<<"("<< tasks::g_root_task->get_fact_name(FactPair(varval.first, varval.second))  <<" ";
 
             while(get_value(current) != i){
                 done.push_back(current);
                 current = get_value(current);
 
                 pair<int, int> currvarval = group.get_var_val_by_index(current);
-                cout<< tasks::g_root_task->get_fact_name(FactPair(currvarval.first, currvarval.second)) <<" ";
+                utils::g_log<< tasks::g_root_task->get_fact_name(FactPair(currvarval.first, currvarval.second)) <<" ";
             }
             done.push_back(current);
-            cout<<") ";
+            utils::g_log<<") ";
         }
     }
-    cout << endl << "Variables:  ";
-    for(size_t i = 0; i < vars_affected.size(); i++) cout << vars_affected[i] << "  ";
-    cout << endl << "Variables permuted:  ";
+    utils::g_log << endl << "Variables:  ";
+    for(size_t i = 0; i < vars_affected.size(); i++) utils::g_log << vars_affected[i] << "  ";
+    utils::g_log << endl << "Variables permuted:  ";
 
-    for(size_t i = 0; i < vars_affected.size(); i++) cout << from_vars[vars_affected[i]] << " -> " << vars_affected[i] << "  ";
-    cout << endl;
+    for(size_t i = 0; i < vars_affected.size(); i++) utils::g_log << from_vars[vars_affected[i]] << " -> " << vars_affected[i] << "  ";
+    utils::g_log << endl;
 
-    cout << "Affected variables by cycles: " << endl;
+    utils::g_log << "Affected variables by cycles: " << endl;
     print_affected_variables_by_cycles();
 }
 
 void Permutation::print_affected_variables_by_cycles() const {
     for (size_t i=0; i < affected_vars_cycles.size(); i++) {
-        cout << "( " ;
+        utils::g_log << "( " ;
         for (size_t j=0; j < affected_vars_cycles[i].size(); j++) {
-            cout << affected_vars_cycles[i][j] << " ";
+            utils::g_log << affected_vars_cycles[i][j] << " ";
         }
-        cout << ")  ";
+        utils::g_log << ")  ";
     }
-    cout << endl;
+    utils::g_log << endl;
 }
 
 void Permutation::dump_var_vals() const {
     for (int i = 0; i < group.get_permutation_num_variables(); ++i) {
         for (int j = 0; j < tasks::g_root_task->get_variable_domain_size(i); ++j) {
             pair<int, int> var_val = get_new_var_val_by_old_var_val(i, j);
-            cout << i << "=" << j << "->"
+            utils::g_log << i << "=" << j << "->"
                  << var_val.first << "=" << var_val.second << ",";
         }
-        cout << endl;
+        utils::g_log << endl;
     }
-//    cout << endl;
+//    utils::g_log << endl;
 }
 
 void Permutation::dump() const {
     for(int i = 0; i < group.get_permutation_length(); i++){
         if (get_value(i) != i)
-            cout << setw(4) << i;
+            utils::g_log << setw(4) << i;
     }
-    cout << endl;
+    utils::g_log << endl;
     for(int i = 0; i < group.get_permutation_length(); i++){
         if (get_value(i) != i)
-            cout << setw(4) << get_value(i);
+            utils::g_log << setw(4) << get_value(i);
     }
-    cout << endl;
+    utils::g_log << endl;
 }
 
 void Permutation::dump_fdr() const {
     for(int i = group.get_permutation_num_variables(); i < group.get_permutation_length(); i++){
         if (get_value(i) != i) {
             pair<int, int> varval = group.get_var_val_by_index(i);
-            cout << setw(10) <<  "[" << tasks::g_root_task->get_variable_name(varval.first) << "] -> "
+            utils::g_log << setw(10) <<  "[" << tasks::g_root_task->get_variable_name(varval.first) << "] -> "
                      << static_cast<int>(varval.second);
         }
     }
-    cout << endl;
+    utils::g_log << endl;
     for(int i = group.get_permutation_num_variables(); i < group.get_permutation_length(); i++){
         if (get_value(i) != i) {
             pair<int, int> varval = group.get_var_val_by_index(get_value(i));
-            cout << setw(10) <<  "[" << tasks::g_root_task->get_variable_name(varval.first) << "] -> "
+            utils::g_log << setw(10) <<  "[" << tasks::g_root_task->get_variable_name(varval.first) << "] -> "
                      << static_cast<int>(varval.second);
         }
     }
-    cout << endl;
+    utils::g_log << endl;
 }
 
 std::pair<int, int> Permutation::get_new_var_val_by_old_var_val(const int var, const int val) const {

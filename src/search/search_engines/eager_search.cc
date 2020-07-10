@@ -38,12 +38,12 @@ EagerSearch::EagerSearch(const Options &opts)
     if (opts.contains("symmetries")) {
         group = opts.get<shared_ptr<Group>>("symmetries");
         if (group && !group->is_initialized()) {
-            cout << "Initializing symmetries (eager search)" << endl;
+            utils::g_log << "Initializing symmetries (eager search)" << endl;
             group->compute_symmetries(TaskProxy(*tasks::g_root_task));
         }
 
         if (use_dks()) {
-            cout << "Setting group in registry for DKS search" << endl;
+            utils::g_log << "Setting group in registry for DKS search" << endl;
             state_registry.set_group(group);
         }
     } else {
