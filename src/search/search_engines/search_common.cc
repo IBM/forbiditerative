@@ -3,6 +3,7 @@
 #include "../option_parser_util.h"
 
 #include "../evaluators/g_evaluator.h"
+#include "../evaluators/d_evaluator.h"
 #include "../evaluators/sum_evaluator.h"
 #include "../evaluators/weighted_evaluator.h"
 
@@ -10,6 +11,9 @@
 #include "../open_lists/open_list_factory.h"
 #include "../open_lists/standard_scalar_open_list.h"
 #include "../open_lists/tiebreaking_open_list.h"
+
+#include "../operator_cost.h"
+#include "../tasks/cost_adapted_task.h"
 
 #include <memory>
 
@@ -19,6 +23,7 @@ namespace search_common {
 using GEval = g_evaluator::GEvaluator;
 using SumEval = sum_evaluator::SumEvaluator;
 using WeightedEval = weighted_evaluator::WeightedEvaluator;
+using DEval = d_evaluator::DEvaluator;
 
 shared_ptr<OpenListFactory> create_standard_scalar_open_list_factory(
     ScalarEvaluator *eval, bool pref_only) {
@@ -116,6 +121,34 @@ create_astar_open_list_factory_and_f_eval(const Options &opts) {
     ScalarEvaluator *h = opts.get<ScalarEvaluator *>("eval");
     ScalarEvaluator *f = new SumEval(vector<ScalarEvaluator *>({g, h}));
     vector<ScalarEvaluator *> evals = {f, h};
+
+    Options options;
+    options.set("evals", evals);
+    options.set("pref_only", false);
+    options.set("unsafe_pruning", false);
+    shared_ptr<OpenListFactory> open =
+        make_shared<TieBreakingOpenListFactory>(options);
+    return make_pair(open, f);
+}
+
+pair<shared_ptr<OpenListFactory>, ScalarEvaluator *>
+create_shortest_astar_open_list_factory_and_f_eval(const Options &opts) {
+    GEval *g = new GEval();
+    ScalarEvaluator *h = opts.get<ScalarEvaluator *>("eval");
+    ScalarEvaluator *f = new SumEval(vector<ScalarEvaluator *>({g, h}));
+
+    // Creating abstract task with unit costs
+    Options cost_options;
+    cost_options.set<int>("cost_type", OperatorCost::ONE);
+    shared_ptr<AbstractTask> unit_cost_task = make_shared<tasks::CostAdaptedTask>(cost_options);
+
+    Options d_options;
+    d_options.set("transform", unit_cost_task);
+    d_options.set<bool>("cache_estimates", true);
+
+    DEval *d = new DEval(d_options);
+
+    vector<ScalarEvaluator *> evals = {f, d, h};
 
     Options options;
     options.set("evals", evals);

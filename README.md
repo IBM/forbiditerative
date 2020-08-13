@@ -6,14 +6,14 @@
 2. Top-quality planning
 3. Unordered top-quality planning
 4. Satisficing/Agile diverse planning
-5. Diversity-bounded diverse planning
+5. Bounded diversity diverse planning
 
-## The planners are based on the idea of obtaining multiple solutions by iteratively reformulating planning tasks to restrict the set of valid plans, forbidding previously found ones. Thus, the planners can be referred to as FI-top-k, FI-top-quality, FI-unordered-top-quality, FI-diverse-{agl,sat,bnd}.
+## The planners are based on the idea of obtaining multiple solutions by iteratively reformulating planning tasks to restrict the set of valid plans, forbidding previously found ones. Thus, the planners can be referred to as FI-top-k, FI-top-quality, FI-unordered-top-quality, FI-diverse-{agl,sat,bD}.
 
 The example invocation code can be found (for the corresponding computational problem) in
-1. plan_topk.sh
-2. plan_topk_q.sh
-3. plan_topq.sh
+1. plan_topk.sh or plan_topk_via_unordered_topq.sh
+2. plan_topq_via_topk.sh or plan_topq_via_unordered_topq.sh
+3. plan_unordered_topq.sh
 4. plan_diverse_{agl,sat}.sh
 5. plan_diverse_bounded.sh
 
@@ -31,26 +31,26 @@ For building the code please use
 ```
 ## FI-top-quality
 ```
-# ./plan_topk_q.sh <domain> <problem> <quality-multiplier>
-./plan_topk_q.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 1.1
+# ./plan_topq_via_topk.sh <domain> <problem> <quality-multiplier>
+./plan_topq_via_topk.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 1.1
 ```
 ## FI-unordered-top-quality
 ```
-# ./plan_topq.sh <domain> <problem> <quality-multiplier>
-./plan_topq.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 1.1
+# ./plan_unordered_topq.sh <domain> <problem> <quality-multiplier>
+./plan_unordered_topq.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 1.1
 ```
-##FI-diverse-agl
+## FI-diverse-agl
 ```
 # ./plan_diverse_agl.sh <domain> <problem> <number-of-plans>
 ./plan_diverse_agl.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10
 ```
-##FI-diverse-sat
+## FI-diverse-sat
 ```
 ## See the dependencies below (1 and 2)
 # ./plan_diverse_sat.sh <domain> <problem> <number-of-plans> <diversity-metric> <larger-number-of-plans>
 ./plan_diverse_sat.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 stability 20
 ```
-##FI-diverse-bnd
+## FI-diverse-bD
 ```
 ## See the dependencies below (1, 2, and 3)
 # ./plan_diverse_bounded.sh <domain> <problem> <number-of-plans> <diversity-metric> <bound> <larger-number-of-plans>
@@ -59,9 +59,9 @@ For building the code please use
 
 
 # Dependencies
-For diverse planners, the dependencies are as follows:
-1. A Fast Downward (recent version) based planner for computing a single plan should be installed and a path to that planner should be specified in an environment variable **DIVERSE_FAST_DOWNWARD_PLANNER_PATH**. We suggest using the [*Cerberus* planner, post-IPC2018 version](https://bitbucket.org/ctpelok/fd-red-black-postipc2018)
-2. Computation of a subset of plans is performed in a post-processing, path to the code should be specified in an environment variable **DIVERSE_SCORE_COMPUTATION_PATH**.
+For some of the diverse planners, the dependencies are as follows:
+1. A Fast Downward (recent version) based planner for computing a single plan should be installed and a path to that planner should be specified in an environment variable **DIVERSE_FAST_DOWNWARD_PLANNER_PATH**. We suggest using the [*Cerberus* planner, post-IPC2018 version](https://github.com/ctpelok77/fd-red-black-postipc2018)
+2. Computation of a subset of plans is performed in a post-processing, path to the code should be specified in an environment variable **DIVERSE_SCORE_COMPUTATION_PATH**. The code can be found [here](https://github.com/IBM/diversescore).
 3. Note that for the diversity-bounded diverse planning the computation in a post-processing requires enabling CPLEX support in Fast Downward (see http://www.fast-downward.org/) and building the post-processing code with LP support.
 
 ## Licensing

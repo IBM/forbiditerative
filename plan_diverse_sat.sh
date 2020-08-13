@@ -1,36 +1,34 @@
 #!/bin/bash
-
 # $1 domain
 # $2 problem
 # $3 number of plans (k)
 # $4 metric (stability, state, uniqueness, stability-state, stability-uniqueness, state-uniqueness, stability-state-uniqueness, top-cost)
-# $5 total number of plans (optional, 1000 by default)
+# $5 total number of plans (optional, used k as default)
 
-if [ "$#" -lt 4 ]; then
+if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
     echo "Illegal number of parameters"
+    exit 1
 fi
 
-if [ "$#" -gt 5 ]; then
-    echo "Illegal number of parameters"
-fi
-
-num_plans=0
+num_plans=$3
 
 if [ "$#" -eq 5 ]; then
     num_plans=$5
 fi
 
 if [ "$num_plans" -lt $3 ]; then
-    num_plans=$3
+    echo "Total number of plans, if specified, should be at least as large as k"
+    exit 1
 fi
 
 
 SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd)"
 $SOURCE/plan.py --planner diverse --domain $1 --problem $2 --number-of-plans $num_plans --use-local-folder --clean-local-folder
 
-PLANSDIR="$(pwd)/found_plans"
+PLANSDIR=$SOURCE/found_plans
 
-### TODO: replace the value in num_plans with the actual number of plans in PLANSDIR, if at least as large as $3
+## replace the value in num_found_plans with the actual number of plans in PLANSDIR
+num_plans=`ls -1q $PLANSDIR/sas_plan.* | wc -l`
 
 function get_metric_param() {
     ret=""

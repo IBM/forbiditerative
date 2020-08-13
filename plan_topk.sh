@@ -16,5 +16,5 @@ if [ "$#" -eq 4 ]; then
 fi
 
 SOURCE="$( dirname "${BASH_SOURCE[0]}" )"
-$SOURCE/plan.py --planner topk --domain $1 --problem $2 --number-of-plans $3 $REORDERING --symmetries --use-local-folder --clean-local-folder # --keep-intermediate-tasks #--plans-as-json 
+$SOURCE/plan.py --planner topk --domain $1 --problem $2 --number-of-plans $3 $REORDERING --symmetries --use-local-folder --clean-local-folder #--keep-intermediate-tasks #  #--plans-as-json 
 

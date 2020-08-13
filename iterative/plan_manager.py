@@ -4,10 +4,10 @@ from __future__ import print_function
 
 import itertools
 import os
-import os.path
 import re
 import logging
 import copy_plans
+import json
 
 _PLAN_INFO_REGEX = re.compile(r"; cost = (\d+) \((unit cost|general cost)\)\n")
 
@@ -45,6 +45,13 @@ class PlanManager(object):
     def get_plan_prefix(self):
         return self._plan_prefix
 
+
+    def get_number_valid_plans(self, up_to_best_known_bound):
+        if up_to_best_known_bound and not self._compute_best_known:
+            raise RuntimeError("Cannot use up_to_best_known_bound if the best known bound is not computed.")
+
+        return self.get_plan_counter_upto_best_known_bound() if up_to_best_known_bound else self.get_plan_counter()
+
     def get_plan_counter(self):
         return len(self._plan_costs)
 
@@ -79,6 +86,8 @@ class PlanManager(object):
 
     def get_last_processed_plan(self):
         counter = self.get_plan_counter()
+        if counter == 0:
+            return None
         return self._get_local_plan_file(counter)
 
     def forget_last_processed_plan(self):
@@ -92,7 +101,8 @@ class PlanManager(object):
         The best known bound is set to the cost of the cheapest out of the new plans.
         """
         def bogus_plan(msg):
-            raise RuntimeError("%s: %s" % (plan_filename, msg))
+            logging.info("%s: %s" % (plan_filename, msg))
+            #raise RuntimeError("%s: %s" % (plan_filename, msg))
 
         num_plans_so_far = self.get_plan_counter()
         had_incomplete_plan = False
@@ -103,6 +113,7 @@ class PlanManager(object):
                 break
             if had_incomplete_plan:
                 bogus_plan("plan found after incomplete plan")
+                break
             cost, problem_type = _parse_plan(plan_filename)
             if cost is None:
                 had_incomplete_plan = True
@@ -133,8 +144,7 @@ class PlanManager(object):
             return 0
         ## The bound can only improve
         if self._compute_best_known and self._best_known_bound > new_plans_min_cost:
-            print(self._best_known_bound)
-            print(new_plans_min_cost)
+            logging.info("Best known bound is %s, while new plans minimal cost is %s" % (self._best_known_bound, new_plans_min_cost) )
             bogus_plan("new plan found is cheaper than the known bound")
         if self._compute_best_known:
             self._best_known_bound = new_plans_min_cost
@@ -238,6 +248,35 @@ class PlanManager(object):
                 map_back_plan(plan_filename)
             else:
                 break
+
+    def plans_to_json(self, filename):
+        def read_plan_actions(name):
+            lines = []
+            with open(name, 'r') as f:
+                content = f.readlines()
+                for line in content:
+                    stripped_line = line.strip()
+                    if not stripped_line:
+                        continue
+                    if stripped_line.startswith("(") and stripped_line.endswith(")"):
+                        ## Removing the added part
+                        a = stripped_line[1:-1].split("__###__")[0]
+                        lines.append(a)
+            return lines
+        plans = []
+        for counter in itertools.count(start=1):
+            plan_filename = self._get_local_plan_file(counter)
+            if os.path.exists(plan_filename):
+                actions = read_plan_actions(plan_filename)
+                cost = self._plan_costs[counter-1]
+                plans.append( { "cost" : cost, "actions" : actions } )
+            else:
+                break
+
+        with open(filename, 'w') as f:
+            json.dump({ "plans" : plans }, f, indent=4)
+
+
     def copy_found_plans_back(self):
         copy_plans.copy_found_plans_back(self._local_folder)
 

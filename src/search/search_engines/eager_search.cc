@@ -434,6 +434,9 @@ static SearchEngine *_parse_astar(OptionParser &parser) {
     parser.add_option<bool>("mpd",
                             "use multi-path dependence (LM-A*)", "false");
 
+    parser.add_option<bool>("shortest",
+                            "Obtain shortest solution by tie breaking with distance from goal", "false");
+
     add_pruning_option(parser);
     SearchEngine::add_options_to_parser(parser);
     parser.add_option<shared_ptr<Group>>(
@@ -454,7 +457,7 @@ static SearchEngine *_parse_astar(OptionParser &parser) {
             }
         }
 
-        auto temp = search_common::create_astar_open_list_factory_and_f_eval(opts);
+        auto temp = opts.get<bool>("shortest") ? search_common::create_shortest_astar_open_list_factory_and_f_eval(opts) : search_common::create_astar_open_list_factory_and_f_eval(opts);
         opts.set("open", temp.first);
         opts.set("f_eval", temp.second);
         opts.set("reopen_closed", true);

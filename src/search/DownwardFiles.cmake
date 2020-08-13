@@ -204,6 +204,13 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME D_EVALUATOR
+    HELP "The d-evaluator"
+    SOURCES
+        evaluators/d_evaluator
+)
+
+fast_downward_plugin(
     NAME COMBINING_EVALUATOR
     HELP "The combining evaluator"
     SOURCES
@@ -277,7 +284,7 @@ fast_downward_plugin(
     HELP "Basic classes used for all search engines"
     SOURCES
         search_engines/search_common
-    DEPENDS G_EVALUATOR SUM_EVALUATOR WEIGHTED_EVALUATOR
+    DEPENDS G_EVALUATOR SUM_EVALUATOR WEIGHTED_EVALUATOR D_EVALUATOR
     DEPENDENCY_ONLY
 )
 

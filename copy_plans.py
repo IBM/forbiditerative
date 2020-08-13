@@ -4,7 +4,8 @@ import json
 import os, glob, shutil
 import logging
 
-import planner_call
+# import planner_call
+from planner_call import PlansToJsonPlannerCall, make_call
 
 def get_plan_files(folder=None):
     plans = "sas_plan*"
@@ -303,9 +304,10 @@ def read_plan_and_get_cost(name):
 def get_json_from_plans(args, input_plans_folder_name, destination=os.getcwd()):
     ## Running a planner with the folder name and the number of plans to extract
     plans = get_plan_files(input_plans_folder_name)
-    command = planner_call.get_plans_to_json_callstring(args.domain, args.problem, input_plans_folder_name, len(plans), args.results_file)
-
+    pc = PlansToJsonPlannerCall()
+    command = pc.get_callstring(domain_file=args.domain, problem_file=args.problem, plans_path=input_plans_folder_name, num_plans=len(plans), results_file=args.results_file)
+    # command = planner_call.get_plans_to_json_callstring(args.domain, args.problem, input_plans_folder_name, len(plans), args.results_file)
     try:
-        planner_call.make_call(command, None, destination, enable_output=False)
+        make_call(command=command, time_limit=None, local_folder=destination, enable_output=False)
     except:
         raise
