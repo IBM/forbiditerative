@@ -184,7 +184,7 @@ class TopKViaUnorderedTopQualityPlanner(Planner):
 
         logging.info("Reformulating the planning task, forbidding found solutions")
 
-        logging.debug("Number of plans to forbid: %s, number of plans up to the best known bound: %s" % (num_plans_found, plan_manager.get_number_valid_plans(up_to_best_known_bound=True)) )
+        logging.debug("Number of plans to forbid: %s, number of plans up to the best known bound: %s" % (plan_manager.get_plan_counter(), plan_manager.get_number_valid_plans(up_to_best_known_bound=True)) )
 
 
         logging.debug("Running " + str(command))
@@ -493,7 +493,7 @@ class TopQualityViaUnorderedTopQualityPlanner(Planner):
 
         logging.info("Reformulating the planning task, forbidding found solutions")
 
-        logging.debug("Number of plans to forbid: %s, number of plans up to the best known bound: %s" % (num_plans_found, plan_manager.get_number_valid_plans(up_to_best_known_bound=True)) )
+        logging.debug("Number of plans to forbid: %s, number of plans up to the best known bound: %s" % (plan_manager.get_plan_counter(), plan_manager.get_number_valid_plans(up_to_best_known_bound=True)) )
         logging.debug("Running " + str(command))
         return command
 
