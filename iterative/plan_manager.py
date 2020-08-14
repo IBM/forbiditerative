@@ -262,13 +262,17 @@ class PlanManager(object):
                         ## Removing the added part
                         a = stripped_line[1:-1].split("__###__")[0]
                         lines.append(a)
-            return lines
+                last_line = content[-1]
+                match = _PLAN_INFO_REGEX.match(last_line)
+                cost = None
+                if match:
+                    cost = int(match.group(1))
+            return lines, cost
         plans = []
         for counter in itertools.count(start=1):
             plan_filename = self._get_local_plan_file(counter)
             if os.path.exists(plan_filename):
-                actions = read_plan_actions(plan_filename)
-                cost = self._plan_costs[counter-1]
+                actions, cost = read_plan_actions(plan_filename)
                 plans.append( { "cost" : cost, "actions" : actions } )
             else:
                 break
