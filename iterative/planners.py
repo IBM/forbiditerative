@@ -576,7 +576,7 @@ class TopQualityViaUnorderedTopQualityPlanner(Planner):
 class DiversePlanner(Planner):
     def get_planner_call(self):
         path = os.getenv('DIVERSE_FAST_DOWNWARD_PLANNER_PATH')
-        return CerberusPlannerCall if path else BaseSatisficingPlannerCall()
+        return CerberusPlannerCall() if path else BaseSatisficingPlannerCall()
 
     def get_plan_manager(self, local_folder):
         return pm.PlanManager("sas_plan", local_folder, compute_best_known=False)
