@@ -11,7 +11,7 @@ import logging
 import timers
 
 import copy_plans
-import planner_call
+from planner_call import make_call, get_base_dir
 
 from iterative import plan_manager as pm 
 from iterative import task_manager as tm
@@ -21,10 +21,16 @@ def get_planner(args):
     ### TODO: Get the actual planner from args
     if args.planner == "topk":
         return planners.TopKPlanner(args)
-    if args.planner == "topq":
-        return planners.TopQPlanner(args)        
-    if args.planner == "topkq":
-        return planners.TopKQPlanner(args)        
+    if args.planner == "unordered_topq":
+        return planners.UnorderedTopQualityPlanner(args)
+    if args.planner == "extended_unordered_topq":
+        return planners.ExtendedUnorderedTopQualityPlanner(args)
+    if args.planner == "topq_via_topk":
+        return planners.TopQualityViaTopKPlanner(args)
+    if args.planner == "topk_via_unordered_topq":
+        return planners.TopKViaUnorderedTopQualityPlanner(args)
+    if args.planner == "topq_via_unordered_topq":
+        return planners.TopQualityViaUnorderedTopQualityPlanner(args)
     if args.planner == "diverse": 
         return planners.DiversePlanner(args)
     ##
@@ -32,8 +38,11 @@ def get_planner(args):
 
 def find_plans(args):
     planner = get_planner(args)
+    enable_planners_output = True
+    if args.suppress_planners_output:
+        enable_planners_output = False
 
-    local_folder = planner_call.get_base_dir()
+    local_folder = get_base_dir()
     if args.use_local_folder:
         local_folder = copy_plans.create_local_folder(False)
 
@@ -45,9 +54,9 @@ def find_plans(args):
     task_manager = tm.TaskManager("reformulated_output.sas", local_folder, keep_intermediate_tasks=args.keep_intermediate_tasks)
 
     time_limit = limits.get_time_limit(None, args.overall_time_limit)
-    command = planner.get_external_planner_callstring(task_manager, plan_manager, time_limit)
+    command = planner.get_planner_callstring(task_manager, plan_manager, time_limit)
     try:
-        planner_call.make_call(command, time_limit, local_folder, enable_output=False)
+        make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
     except:
         planner.report_iteration_step(plan_manager, success=False)
         planner.finalize(plan_manager)
@@ -56,6 +65,7 @@ def find_plans(args):
 
     num_plans_processed = plan_manager.process_new_plans()
     planner.report_done_external_planner_run()
+    planner.report_number_of_plans(plan_manager)
 
     if num_plans_processed == 0:
         logging.info("No plans were found")
@@ -75,11 +85,34 @@ def find_plans(args):
 
     ## Keeping the original sas
     task_manager.add_task("output.sas")
+
+    command = planner.get_extend_plans_callstring(task_manager, plan_manager)
+
+    if command is not None:
+        ## Adding plans from the just found plan
+        time_limit = limits.get_time_limit(None, args.overall_time_limit)
+        try:
+            make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
+        except:
+            planner.report_iteration_step(plan_manager, success=False)
+            planner.finalize(plan_manager)
+            planner.cleanup(plan_manager)
+            raise
+        plan_manager.process_new_plans()
+        planner.report_done_plans_extension_run()
+        planner.report_number_of_plans(plan_manager)
+        if planner.enough_plans_found(plan_manager):
+            planner.report_iteration_step(plan_manager, success=True)
+            planner.finalize(plan_manager)
+            planner.cleanup(plan_manager)
+            planner.report_done()
+            return
+
     # calling the reformulation
     command = planner.get_reformulation_callstring(task_manager, plan_manager)
     time_limit = limits.get_time_limit(None, args.overall_time_limit)
     try:
-        planner_call.make_call(command, time_limit, local_folder, enable_output=False)
+        make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
     except:
         planner.report_iteration_step(plan_manager, success=False)
         planner.finalize(plan_manager)
@@ -88,7 +121,6 @@ def find_plans(args):
 
     plan_manager.process_new_plans()
     planner.report_done_reformulation_run()
-
     planner.report_number_of_plans(plan_manager)
 
     if not task_manager.add_task("reformulated_output.sas"):
@@ -106,9 +138,9 @@ def find_plans(args):
 
     while not planner.enough_plans_found(plan_manager):
         time_limit = limits.get_time_limit(None, args.overall_time_limit)
-        command = planner.get_external_planner_callstring(task_manager, plan_manager, time_limit)
+        command = planner.get_planner_callstring(task_manager, plan_manager, time_limit)
         try:
-            planner_call.make_call(command, time_limit, local_folder, enable_output=False)
+            make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
         except:
             planner.report_iteration_step(plan_manager, success=False)
             planner.finalize(plan_manager)
@@ -117,6 +149,7 @@ def find_plans(args):
 
         num_plans_processed = plan_manager.process_new_plans()
         planner.report_done_external_planner_run()
+        planner.report_number_of_plans(plan_manager)
 
         if num_plans_processed == 0:
             logging.info("Iteration terminated, no plans were found, exiting")
@@ -129,11 +162,32 @@ def find_plans(args):
             planner.report_iteration_step(plan_manager, success=True)
             break
 
+        command = planner.get_extend_plans_callstring(task_manager, plan_manager)
+        if command is not None:
+            ## Adding plans from the just found plan
+            time_limit = limits.get_time_limit(None, args.overall_time_limit)
+            try:
+                make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
+            except:
+                planner.report_iteration_step(plan_manager, success=False)
+                planner.finalize(plan_manager)
+                planner.cleanup(plan_manager)
+                raise
+            plan_manager.process_new_plans()
+            planner.report_done_plans_extension_run()
+            planner.report_number_of_plans(plan_manager)
+            if planner.enough_plans_found(plan_manager):
+                planner.report_iteration_step(plan_manager, success=True)
+                planner.finalize(plan_manager)
+                planner.cleanup(plan_manager)
+                planner.report_done()
+                return
+
         # calling the reformulation
         command = planner.get_reformulation_callstring(task_manager, plan_manager)
         time_limit = limits.get_time_limit(None, args.overall_time_limit)
         try:
-            planner_call.make_call(command, time_limit, local_folder, enable_output=False)
+            make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
         except:
             planner.report_iteration_step(plan_manager, success=False)
             planner.finalize(plan_manager)
@@ -164,19 +218,14 @@ def validate_input(args):
         exit(1)
 
     if not args.planner:
-        logging.error("Required parameters --planner PLANNER (topk, topq, or diverse)")
+        logging.error("Required parameters --planner PLANNER (topk, unordered_topq, extended_unordered_topq, topq_via_topk, topk_via_unordered_topq, topq_via_unordered_topq, or diverse)")
         exit(1)
 
-    if args.planner == "topk" or args.planner == "diverse":
-        if not args.number_of_plans:
-            logging.error("Required parameter --number-of-plans NUMBER_OF_PLANS")
-            exit(1)
-    elif args.planner == "topq" or args.planner == "topkq":
-        if not args.quality_bound:
-            print("Required parameter --quality-bound QUALITY_BOUND")
-            exit(1)
-    else:
-        logging.error("Illegal option!")
+    if args.planner in ["topk", "topk_via_unordered_topq", "diverse", "extended_unordered_topq"] and not args.number_of_plans:
+        logging.error("Required parameter --number-of-plans NUMBER_OF_PLANS")
+        exit(1)
+    if args.planner in ["unordered_topq", "extended_unordered_topq", "topq_via_topk", "topq_via_unordered_topq"] and not args.quality_bound:
+        logging.error("Required parameter --quality-bound QUALITY_BOUND")
         exit(1)
 
     if not args.domain or not args.problem:
@@ -202,11 +251,11 @@ if __name__ == "__main__":
     lim.add_argument("--overall-time-limit")
     #lim.add_argument("--overall-memory-limit")
  
-    parser.add_argument("--planner", help="The type of planner", choices=["topk", "topq", "topkq", "diverse"])
+    parser.add_argument("--planner", help="The type of planner", choices=["topk", "topk_via_unordered_topq", "unordered_topq",  "extended_unordered_topq", "topq_via_topk", "topq_via_unordered_topq", "diverse"])
     parser.add_argument("--domain", help="PDDL domain file")
     parser.add_argument("--problem", help="PDDL problem file")
 
-    parser.add_argument("--number-of-plans", help="The overall number of plans for the first step", type=int)
+    parser.add_argument("--number-of-plans", help="The overall number of plans", type=int)
     parser.add_argument("--quality-bound", help="A relative (to an optimal plan cost) bound on the plans quality (>= 1.0)", type=float)
 
     parser.add_argument("--symmetries", help="Extend plans with symmetries", action="store_true")
@@ -219,9 +268,13 @@ if __name__ == "__main__":
     parser.add_argument("--plans-as-json", help="Dump plans as a json file", action="store_true")
     parser.add_argument("--results-file", help="File name for dumping plans", default="results.json")
 
+    parser.add_argument("--upper-bound-on-number-of-plans", help="The overall bound on the number of plans", type=int, default=1000000)
+
+    parser.add_argument("--suppress-planners-output", help="Suppress the output of the individual planners", action="store_true")
+
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO,
+    logging.basicConfig(level=logging.DEBUG,
                         format="%(levelname)-8s %(message)s",
                         stream=sys.stdout)
 

@@ -1,6 +1,7 @@
 #include "multisets_forbid_reformulated_task.h"
 
 #include <cassert>
+#include <algorithm>
 
 #include "../utils/system.h"
 
@@ -139,11 +140,14 @@ string MultisetsForbidReformulatedTask::get_variable_name(int var) const {
 	int relative_index = var - parent->get_num_variables();
 
 	if (relative_index < number_of_plans)
-		return "possible" + std::to_string(relative_index);
+		return "plan_id_still_possible" + std::to_string(relative_index+1);
 
 	relative_index -= number_of_plans;
 	assert(relative_index < operators_on_plans);
-	return "following" + std::to_string(relative_index);
+	int op_no = var_no_to_op_no[relative_index];
+	string op_name = parent->get_operator_name(op_no, false);
+	std::replace(op_name.begin(), op_name.end(), ' ', '_');
+	return "following_" + op_name + "_" + std::to_string(relative_index);
 }
 
 int MultisetsForbidReformulatedTask::get_variable_domain_size(int var) const {

@@ -77,6 +77,20 @@ extern std::shared_ptr<OpenListFactory> create_wastar_open_list_factory(
 */
 extern std::pair<std::shared_ptr<OpenListFactory>, ScalarEvaluator *>
 create_astar_open_list_factory_and_f_eval(const options::Options &opts);
+
+
+/*
+  Create open list factory and f_evaluator (used for displaying progress
+  statistics) for A* search.
+
+  The resulting open list factory produces a tie-breaking open list
+  ordered primarily on g + h, secondarily on the distance from the
+  initial state (g on the adapted task with unit cost actions), and
+  thirdly on h. Uses "eval" from
+  the passed-in Options object as the h evaluator.
+*/
+extern std::pair<std::shared_ptr<OpenListFactory>, ScalarEvaluator *>
+create_shortest_astar_open_list_factory_and_f_eval(const options::Options &opts);
 }
 
 #endif
