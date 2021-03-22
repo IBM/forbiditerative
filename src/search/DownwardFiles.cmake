@@ -55,7 +55,6 @@ fast_downward_plugin(
         evaluation_result
         evaluator
         evaluator_cache
-        global_state
         heuristic
         open_list
         open_list_factory
@@ -174,6 +173,14 @@ fast_downward_plugin(
     HELP "Poor man's version of boost::dynamic_bitset"
     SOURCES
         algorithms/dynamic_bitset
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME NAMED_VECTOR
+    HELP "Generic vector with associated name for each element"
+    SOURCES
+        algorithms/named_vector
     DEPENDENCY_ONLY
 )
 
@@ -449,7 +456,7 @@ fast_downward_plugin(
     SOURCES
         lp/lp_internals
         lp/lp_solver
-    DEPENDENCY_ONLY
+    DEPENDS NAMED_VECTOR
 )
 
 fast_downward_plugin(
@@ -653,7 +660,6 @@ fast_downward_plugin(
         merge_and_shrink/merge_selector
         merge_and_shrink/merge_selector_score_based_filtering
         merge_and_shrink/merge_strategy
-        merge_and_shrink/merge_strategy_aliases
         merge_and_shrink/merge_strategy_factory
         merge_and_shrink/merge_strategy_factory_precomputed
         merge_and_shrink/merge_strategy_factory_sccs
@@ -685,6 +691,7 @@ fast_downward_plugin(
         landmarks/landmark_factory
         landmarks/landmark_factory_h_m
         landmarks/landmark_factory_merged
+        landmarks/landmark_factory_relaxation
         landmarks/landmark_factory_rpg_exhaust
         landmarks/landmark_factory_rpg_sasp
         landmarks/landmark_factory_zhu_givan

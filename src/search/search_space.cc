@@ -1,6 +1,5 @@
 #include "search_space.h"
 
-#include "global_state.h"
 #include "search_node_info.h"
 #include "task_proxy.h"
 
@@ -8,6 +7,7 @@
 #include "structural_symmetries/permutation.h"
 
 #include "task_utils/successor_generator.h"
+#include "task_utils/task_properties.h"
 
 #include "utils/logging.h"
 
@@ -15,17 +15,13 @@
 
 using namespace std;
 
-SearchNode::SearchNode(const StateRegistry &state_registry,
-                       StateID state_id,
-                       SearchNodeInfo &info)
-    : state_registry(state_registry),
-      state_id(state_id),
-      info(info) {
-    assert(state_id != StateID::no_state);
+SearchNode::SearchNode(const State &state, SearchNodeInfo &info)
+    : state(state), info(info) {
+    assert(state.get_id() != StateID::no_state);
 }
 
-GlobalState SearchNode::get_state() const {
-    return state_registry.lookup_state(state_id);
+const State &SearchNode::get_state() const {
+    return state;
 }
 
 bool SearchNode::is_open() const {
@@ -69,7 +65,7 @@ void SearchNode::open(const SearchNode &parent_node,
     info.status = SearchNodeInfo::OPEN;
     info.g = parent_node.info.g + adjusted_cost;
     info.real_g = parent_node.info.real_g + parent_op.get_cost();
-    info.parent_state_id = parent_node.get_state_id();
+    info.parent_state_id = parent_node.get_state().get_id();
     info.creating_operator = OperatorID(parent_op.get_id());
 }
 
@@ -84,7 +80,7 @@ void SearchNode::reopen(const SearchNode &parent_node,
     info.status = SearchNodeInfo::OPEN;
     info.g = parent_node.info.g + adjusted_cost;
     info.real_g = parent_node.info.real_g + parent_op.get_cost();
-    info.parent_state_id = parent_node.get_state_id();
+    info.parent_state_id = parent_node.get_state().get_id();
     info.creating_operator = OperatorID(parent_op.get_id());
 }
 
@@ -98,7 +94,7 @@ void SearchNode::update_parent(const SearchNode &parent_node,
     // may require reopening closed nodes.
     info.g = parent_node.info.g + adjusted_cost;
     info.real_g = parent_node.info.real_g + parent_op.get_cost();
-    info.parent_state_id = parent_node.get_state_id();
+    info.parent_state_id = parent_node.get_state().get_id();
     info.creating_operator = OperatorID(parent_op.get_id());
 }
 
@@ -112,8 +108,8 @@ void SearchNode::mark_as_dead_end() {
 }
 
 void SearchNode::dump(const TaskProxy &task_proxy) const {
-    utils::g_log << state_id << ": ";
-    get_state().dump_fdr();
+    utils::g_log << state.get_id() << ": ";
+    task_properties::dump_fdr(state);
     if (info.creating_operator != OperatorID::no_operator) {
         OperatorsProxy operators = task_proxy.get_operators();
         OperatorProxy op = operators[info.creating_operator.get_index()];
@@ -128,11 +124,11 @@ SearchSpace::SearchSpace(StateRegistry &state_registry)
     : state_registry(state_registry) {
 }
 
-SearchNode SearchSpace::get_node(const GlobalState &state) {
-    return SearchNode(state_registry, state.get_id(), search_node_infos[state]);
+SearchNode SearchSpace::get_node(const State &state) {
+    return SearchNode(state, search_node_infos[state]);
 }
 
-void SearchSpace::trace_path(const GlobalState &goal_state,
+void SearchSpace::trace_path(const State &goal_state,
                              vector<OperatorID> &path,
                              const shared_ptr<AbstractTask> &task,
                              const shared_ptr<Group> &group) const {
@@ -140,7 +136,8 @@ void SearchSpace::trace_path(const GlobalState &goal_state,
         trace_path_with_symmetries(goal_state, path, task, group);
         return;
     }
-    GlobalState current_state = goal_state;
+    State current_state = goal_state;
+    assert(current_state.get_registry() == &state_registry);
     assert(path.empty());
     for (;;) {
         const SearchNodeInfo &info = search_node_infos[current_state];
@@ -154,7 +151,7 @@ void SearchSpace::trace_path(const GlobalState &goal_state,
     reverse(path.begin(), path.end());
 }
 
-void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
+void SearchSpace::trace_path_with_symmetries(const State &goal_state,
                                              vector<OperatorID> &path,
                                              const shared_ptr<AbstractTask> &task,
                                              const shared_ptr<Group> &group) const {
@@ -177,16 +174,16 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
                 &dks_successor_state_registry : &state_registry;
 
     vector<RawPermutation> permutations;
-    vector<GlobalState> state_trace;
-    GlobalState current_state = goal_state;
+    vector<State> state_trace;
+    State current_state = goal_state;
     while (true) {
         const SearchNodeInfo &info = search_node_infos[current_state];
         assert(info.status != SearchNodeInfo::NEW);
         OperatorID op_id = info.creating_operator;
         state_trace.push_back(current_state);
         // Important: new_state needs to be the initial state!
-        GlobalState parent_state = state_registry.get_initial_state();
-        GlobalState new_state = state_registry.get_initial_state();
+        State parent_state = state_registry.get_initial_state();
+        State new_state = state_registry.get_initial_state();
         if (op_id != OperatorID::no_operator) {
             parent_state = state_registry.lookup_state(info.parent_state_id);
             new_state = successor_registry->get_successor_state(parent_state, operators[op_id]);
@@ -226,7 +223,7 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
 
         for (size_t o = 0; o < applicable_ops.size(); o++) {
             OperatorProxy op = operators[applicable_ops[o]];
-            GlobalState succ_state = successor_registry->get_successor_state(state_trace[i], op);
+            State succ_state = successor_registry->get_successor_state(state_trace[i], op);
             if (succ_state.get_id() == state_trace[i-1].get_id()) {
                 found = true;
                 if (op.get_cost() < min_cost) {
@@ -238,9 +235,9 @@ void SearchSpace::trace_path_with_symmetries(const GlobalState &goal_state,
         if (!found) {
             utils::g_log << "No operator is found!!!" << endl
                  << "Cannot reach the state " << endl;
-            state_trace[i-1].dump_pddl();
+            task_properties::dump_pddl(state_trace[i-1]);
             utils::g_log << endl << "From the state" << endl;
-            state_trace[i].dump_pddl();
+            task_properties::dump_pddl(state_trace[i]);
             utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
         }
         path.push_back(applicable_ops[min_cost_op]);
@@ -252,10 +249,10 @@ void SearchSpace::dump(const TaskProxy &task_proxy) const {
     for (StateID id : state_registry) {
         /* The body duplicates SearchNode::dump() but we cannot create
            a search node without discarding the const qualifier. */
-        GlobalState state = state_registry.lookup_state(id);
+        State state = state_registry.lookup_state(id);
         const SearchNodeInfo &node_info = search_node_infos[state];
         utils::g_log << id << ": ";
-        state.dump_fdr();
+        task_properties::dump_fdr(state);
         if (node_info.creating_operator != OperatorID::no_operator &&
             node_info.parent_state_id != StateID::no_state) {
             OperatorProxy op = operators[node_info.creating_operator.get_index()];

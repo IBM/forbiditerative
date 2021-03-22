@@ -25,13 +25,7 @@ StateRegistry::StateRegistry(const TaskProxy &task_proxy)
           StateIDSemanticHash(canonical_state_data_pool, get_bins_per_state()),
           StateIDSemanticEqual(canonical_state_data_pool, get_bins_per_state())),
       group(0),
-      has_symmetries_and_uses_dks(false),
-      cached_initial_state(0) {
-}
-
-
-StateRegistry::~StateRegistry() {
-    delete cached_initial_state;
+      has_symmetries_and_uses_dks(false) {
 }
 
 void StateRegistry::set_group(const shared_ptr<Group> &group_) {
@@ -71,7 +65,7 @@ StateID StateRegistry::insert_id_or_pop_state_dks() {
     // Adding an entry for the canonical state to the canonical_state_data_pool
     vector<int> canonical_state =
         group->get_canonical_representative(
-            GlobalState(state_data_pool[state_data_pool.size() - 1], *this, id));
+            task_proxy.create_state(*this, id, state_data_pool[state_data_pool.size() - 1]));
     PackedStateBin *canonical_buffer = new PackedStateBin[state_packer.get_num_bins()];
     fill_n(canonical_buffer, state_packer.get_num_bins(), 0);
     for (int i = 0; i < num_variables; ++i) {
@@ -90,25 +84,25 @@ StateID StateRegistry::insert_id_or_pop_state_dks() {
     return StateID(result.first);
 }
 
-GlobalState StateRegistry::lookup_state(StateID id) const {
-    return GlobalState(state_data_pool[id.value], *this, id);
+State StateRegistry::lookup_state(StateID id) const {
+    const PackedStateBin *buffer = state_data_pool[id.value];
+    return task_proxy.create_state(*this, id, buffer);
 }
 
-const GlobalState &StateRegistry::get_initial_state() {
-    if (cached_initial_state == 0) {
-        PackedStateBin *buffer = new PackedStateBin[get_bins_per_state()];
+const State &StateRegistry::get_initial_state() {
+    if (!cached_initial_state) {
+        int num_bins = get_bins_per_state();
+        unique_ptr<PackedStateBin[]> buffer(new PackedStateBin[num_bins]);
         // Avoid garbage values in half-full bins.
-        fill_n(buffer, get_bins_per_state(), 0);
+        fill_n(buffer.get(), num_bins, 0);
 
         State initial_state = task_proxy.get_initial_state();
         for (size_t i = 0; i < initial_state.size(); ++i) {
-            state_packer.set(buffer, i, initial_state[i].get_value());
+            state_packer.set(buffer.get(), i, initial_state[i].get_value());
         }
-        state_data_pool.push_back(buffer);
-        // buffer is copied by push_back
-        delete[] buffer;
+        state_data_pool.push_back(buffer.get());
         StateID id = insert_id_or_pop_state();
-        cached_initial_state = new GlobalState(lookup_state(id));
+        cached_initial_state = utils::make_unique_ptr<State>(lookup_state(id));
     }
     return *cached_initial_state;
 }
@@ -116,22 +110,40 @@ const GlobalState &StateRegistry::get_initial_state() {
 //TODO it would be nice to move the actual state creation (and operator application)
 //     out of the StateRegistry. This could for example be done by global functions
 //     operating on state buffers (PackedStateBin *).
-GlobalState StateRegistry::get_successor_state(const GlobalState &predecessor, const OperatorProxy &op) {
+State StateRegistry::get_successor_state(const State &predecessor, const OperatorProxy &op) {
     assert(!op.is_axiom());
-    state_data_pool.push_back(predecessor.get_packed_buffer());
+    state_data_pool.push_back(predecessor.get_buffer());
     PackedStateBin *buffer = state_data_pool[state_data_pool.size() - 1];
-    for (EffectProxy effect : op.get_effects()) {
-        if (does_fire(effect, predecessor)) {
-            FactPair effect_pair = effect.get_fact().get_pair();
-            state_packer.set(buffer, effect_pair.var, effect_pair.value);
+    /* Experiments for issue348 showed that for tasks with axioms it's faster
+       to compute successor states using unpacked data. */
+    if (task_properties::has_axioms(task_proxy)) {
+        predecessor.unpack();
+        vector<int> new_values = predecessor.get_unpacked_values();
+        for (EffectProxy effect : op.get_effects()) {
+            if (does_fire(effect, predecessor)) {
+                FactPair effect_pair = effect.get_fact().get_pair();
+                new_values[effect_pair.var] = effect_pair.value;
+            }
         }
+        axiom_evaluator.evaluate(new_values);
+        for (size_t i = 0; i < new_values.size(); ++i) {
+            state_packer.set(buffer, i, new_values[i]);
+        }
+        StateID id = insert_id_or_pop_state();
+        return task_proxy.create_state(*this, id, buffer, move(new_values));
+    } else {
+        for (EffectProxy effect : op.get_effects()) {
+            if (does_fire(effect, predecessor)) {
+                FactPair effect_pair = effect.get_fact().get_pair();
+                state_packer.set(buffer, effect_pair.var, effect_pair.value);
+            }
+        }
+        StateID id = insert_id_or_pop_state();
+        return task_proxy.create_state(*this, id, buffer);
     }
-    axiom_evaluator.evaluate(buffer, state_packer);
-    StateID id = insert_id_or_pop_state();
-    return lookup_state(id);
 }
 
-GlobalState StateRegistry::register_state_buffer(const vector<int> &state) {
+State StateRegistry::register_state_buffer(const vector<int> &state) {
     PackedStateBin *buffer = new PackedStateBin[state_packer.get_num_bins()];
     fill_n(buffer, state_packer.get_num_bins(), 0);
     for (int i = 0; i < num_variables; ++i) {
@@ -143,11 +155,11 @@ GlobalState StateRegistry::register_state_buffer(const vector<int> &state) {
     return lookup_state(id);
 }
 
-GlobalState StateRegistry::permute_state(const GlobalState &state, const Permutation &permutation) {
+State StateRegistry::permute_state(const State &state, const Permutation &permutation) {
     PackedStateBin *buffer = new PackedStateBin[state_packer.get_num_bins()];
     fill_n(buffer, state_packer.get_num_bins(), 0);
     for (int i = 0; i < num_variables; ++i) {
-        pair<int, int> var_val = permutation.get_new_var_val_by_old_var_val(i, state[i]);
+        pair<int, int> var_val = permutation.get_new_var_val_by_old_var_val(i, state[i].get_value());
         assert(var_val.second < task_proxy.get_variables()[var_val.first].get_domain_size());
         state_packer.set(buffer, var_val.first, var_val.second);
     }

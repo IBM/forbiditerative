@@ -60,7 +60,7 @@ protected:
     virtual SearchStatus step() = 0;
 
     void set_plan(const Plan &plan);
-    bool check_goal_and_set_plan(const GlobalState &state,
+    bool check_goal_and_set_plan(const State &state,
                                  const std::shared_ptr<Group> &group = nullptr);
     int get_adjusted_cost(const OperatorProxy &op) const;
 public:

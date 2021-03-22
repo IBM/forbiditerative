@@ -5,8 +5,8 @@
 #include <unordered_map>
 #include <vector>
 
-class GlobalState;
 class Permutation;
+class State;
 class StateRegistry;
 class TaskProxy;
 
@@ -50,7 +50,7 @@ class Group {
     const Permutation &get_permutation(int index) const;
 
     // Path tracing
-    std::vector<int> compute_permutation_trace_to_canonical_representative(const GlobalState& state) const;
+    std::vector<int> compute_permutation_trace_to_canonical_representative(const State& state) const;
     RawPermutation compute_permutation_from_trace(const std::vector<int> &permutation_trace) const;
     RawPermutation compute_inverse_permutation(const RawPermutation &permutation) const;
 
@@ -109,13 +109,13 @@ public:
     }
 
     // Used for OSS
-    std::vector<int> get_canonical_representative(const GlobalState &state) const;
+    std::vector<int> get_canonical_representative(const State &state) const;
     // Following methods: used for path tracing (OSS and DKS)
     RawPermutation new_identity_raw_permutation() const;
     RawPermutation compose_permutations(
         const RawPermutation &permutation1, const RawPermutation &permutation2) const;
     RawPermutation create_permutation_from_state_to_state(
-        const GlobalState &from_state, const GlobalState &to_state) const;
+        const State &from_state, const State &to_state) const;
 };
 
 #endif

@@ -100,7 +100,7 @@ void SearchEngine::search() {
 }
 
 bool SearchEngine::check_goal_and_set_plan(
-    const GlobalState &state, const shared_ptr<Group> &group) {
+    const State &state, const shared_ptr<Group> &group) {
     if (task_properties::is_goal_state(task_proxy, state)) {
         utils::g_log << "Solution found!" << endl;
         Plan plan;

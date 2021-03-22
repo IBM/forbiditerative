@@ -3,7 +3,6 @@
 #include "graph_creator.h"
 #include "permutation.h"
 
-#include "../global_state.h"
 #include "../option_parser.h"
 #include "../per_state_information.h"
 #include "../plugin.h"
@@ -235,13 +234,10 @@ void Group::statistics() const {
     }
 }
 
-vector<int> Group::get_canonical_representative(const GlobalState &state) const {
+vector<int> Group::get_canonical_representative(const State &state) const {
     assert(has_symmetries());
-    int num_vars = tasks::g_root_task->get_num_variables();
-    vector<int> canonical_state(num_vars);
-    for (int i = 0; i < num_vars; ++i) {
-        canonical_state[i] = state[i];
-    }
+    state.unpack();
+    vector<int> canonical_state = state.get_unpacked_values();
 
     bool changed = true;
     while (changed) {
@@ -255,14 +251,11 @@ vector<int> Group::get_canonical_representative(const GlobalState &state) const 
     return canonical_state;
 }
 
-vector<int> Group::compute_permutation_trace_to_canonical_representative(const GlobalState &state) const {
+vector<int> Group::compute_permutation_trace_to_canonical_representative(const State &state) const {
     // TODO: duplicate code with get_canonical_representative
     assert(has_symmetries());
-    int num_vars = tasks::g_root_task->get_num_variables();
-    vector<int> canonical_state(num_vars);
-    for(int i = 0; i < num_vars; ++i) {
-        canonical_state[i] = state[i];
-    }
+    state.unpack();
+    vector<int> canonical_state = state.get_unpacked_values();
 
     vector<int> permutation_trace;
     bool changed = true;
@@ -316,7 +309,7 @@ RawPermutation Group::compose_permutations(
 }
 
 RawPermutation Group::create_permutation_from_state_to_state(
-        const GlobalState& from_state, const GlobalState& to_state) const {
+        const State& from_state, const State& to_state) const {
     assert(has_symmetries());
     vector<int> from_state_permutation_trace = compute_permutation_trace_to_canonical_representative(from_state);
     vector<int> to_state_permutation_trace = compute_permutation_trace_to_canonical_representative(to_state);

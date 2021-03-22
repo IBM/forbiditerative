@@ -96,8 +96,7 @@ void EagerSearch::initialize() {
 
     path_dependent_evaluators.assign(evals.begin(), evals.end());
 
-    // Changed to copy the state to be able to reassign it.
-    GlobalState initial_state = state_registry.get_initial_state();
+    State initial_state = state_registry.get_initial_state();
     if (use_oss()) {
         vector<int> canonical_state = group->get_canonical_representative(initial_state);
         initial_state = state_registry.register_state_buffer(canonical_state);
@@ -145,11 +144,7 @@ SearchStatus EagerSearch::step() {
             return FAILED;
         }
         StateID id = open_list->remove_min();
-        // TODO is there a way we can avoid creating the state here and then
-        //      recreate it outside of this function with node.get_state()?
-        //      One way would be to store GlobalState objects inside SearchNodes
-        //      instead of StateIDs
-        GlobalState s = state_registry.lookup_state(id);
+        State s = state_registry.lookup_state(id);
         node.emplace(search_space.get_node(s));
 
         if (node->is_closed())
@@ -201,7 +196,7 @@ SearchStatus EagerSearch::step() {
         break;
     }
 
-    GlobalState s = node->get_state();
+    const State &s = node->get_state();
     if (check_goal_and_set_plan(s, group))
         return SOLVED;
 
@@ -238,7 +233,7 @@ SearchStatus EagerSearch::step() {
         */
         StateRegistry tmp_registry(task_proxy);
         StateRegistry *successor_registry = use_oss() ? &tmp_registry : &state_registry;
-        GlobalState succ_state = successor_registry->get_successor_state(s, op);
+        State succ_state = successor_registry->get_successor_state(s, op);
         if (use_oss()) {
             vector<int> canonical_state = group->get_canonical_representative(succ_state);
             succ_state = state_registry.register_state_buffer(canonical_state);
