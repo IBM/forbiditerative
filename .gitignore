@@ -5,5 +5,7 @@ __pycache__/
 /builds/
 /experiments/issue*/.venv/
 /experiments/issue*/data/
+/experiments/structural-symmetries-pruning/.venv/
+/experiments/structural-symmetries-pruning/data/
 /misc/.tox/
 /misc/autodoc/downward-xmlrpc.secret
