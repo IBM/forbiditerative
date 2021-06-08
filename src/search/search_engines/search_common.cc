@@ -6,10 +6,15 @@
 #include "../evaluators/g_evaluator.h"
 #include "../evaluators/sum_evaluator.h"
 #include "../evaluators/weighted_evaluator.h"
+#include "../evaluators/prototype_g_evaluator.h"
 
 #include "../open_lists/alternation_open_list.h"
 #include "../open_lists/best_first_open_list.h"
 #include "../open_lists/tiebreaking_open_list.h"
+
+#include "../operator_cost.h"
+#include "../tasks/cost_adapted_task.h"
+#include "../tasks/root_task.h"
 
 #include <memory>
 
@@ -19,6 +24,8 @@ namespace search_common {
 using GEval = g_evaluator::GEvaluator;
 using SumEval = sum_evaluator::SumEvaluator;
 using WeightedEval = weighted_evaluator::WeightedEvaluator;
+
+using PGEval = prototype_g_evaluator::PrototypeGEvaluator;
 
 shared_ptr<OpenListFactory> create_standard_scalar_open_list_factory(
     const shared_ptr<Evaluator> &eval, bool pref_only) {
@@ -125,4 +132,30 @@ create_astar_open_list_factory_and_f_eval(const Options &opts) {
         make_shared<tiebreaking_open_list::TieBreakingOpenListFactory>(options);
     return make_pair(open, f);
 }
+
+pair<shared_ptr<OpenListFactory>, const vector<shared_ptr<Evaluator>>>
+create_shortest_astar_open_list_factory_and_f_eval(const Options &opts) {
+    shared_ptr<GEval> g = make_shared<GEval>();
+    shared_ptr<Evaluator> h = opts.get<shared_ptr<Evaluator>>("eval");
+    shared_ptr<Evaluator> f = make_shared<SumEval>(vector<shared_ptr<Evaluator>>({g, h}));
+
+    // Creating abstract task with unit costs.
+    shared_ptr<AbstractTask> unit_cost_task = make_shared<tasks::CostAdaptedTask>(tasks::g_root_task, OperatorCost::ONE);
+
+    Options d_options;
+    d_options.set("transform", unit_cost_task);
+    d_options.set<bool>("cache_estimates", true);
+    shared_ptr<PGEval> d = make_shared<PGEval>(d_options);
+
+    vector<shared_ptr<Evaluator>> evals = {f, d, h};
+
+    Options options;
+    options.set("evals", evals);
+    options.set("pref_only", false);
+    options.set("unsafe_pruning", false);
+    shared_ptr<OpenListFactory> open =
+        make_shared<tiebreaking_open_list::TieBreakingOpenListFactory>(options);
+    return make_pair(open, evals);
+}
+
 }
