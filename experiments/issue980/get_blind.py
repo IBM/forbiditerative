@@ -46,8 +46,7 @@ exp.add_fetcher('data/issue980-v1-eval')
 exp.add_fetcher('data/issue980-v2-eval')
 
 
-algs = ["blind", "shortest-blind", "shortest-blind-oss"]
-full_alg_name = ["%s-%s" % (r, a) for r in REVISIONS for a in algs]
+full_alg_name = ["issue980-blind", "issue980-shortest-blind", "a0eb9a43ba45f8f9817d99ee7b8ea9676937a0a9-shortest-blind-oss"]
 attributes = (
             IssueExperiment.DEFAULT_TABLE_ATTRIBUTES + ["plan_length"])
 exp.add_absolute_report_step(attributes=attributes,filter_algorithm=full_alg_name)
