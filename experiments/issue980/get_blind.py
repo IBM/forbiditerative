@@ -15,7 +15,7 @@ BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 # These revisions are all tag experimental branches off the same revision.
 # we only need different tags so lab creates separate build directories in the build cache.
 # We then manually recompile the code in the build cache with the correct settings.
-REVISIONS = ["issue980"]
+REVISIONS = ["a0eb9a43ba45f8f9817d99ee7b8ea9676937a0a9"]
 CONFIGS = [
     IssueConfig("blind", ["--search", "astar(blind())"]),
     IssueConfig("shortest-blind", ["--search", "shortest_astar(blind())"]),
