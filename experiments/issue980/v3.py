@@ -17,20 +17,20 @@ BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 # We then manually recompile the code in the build cache with the correct settings.
 REVISIONS = ["a0eb9a43ba45f8f9817d99ee7b8ea9676937a0a9"]
 CONFIGS = [
-    IssueConfig("lmcut", [
-        "--if-unit-cost",
-        "--search", "astar(celmcut())",
-        "--if-non-unit-cost",
-        "--search", "astar(celmcut())", "--always"]),
+    # IssueConfig("lmcut", [
+    #     "--if-unit-cost",
+    #     "--search", "astar(celmcut())",
+    #     "--if-non-unit-cost",
+    #     "--search", "astar(celmcut())", "--always"]),
     IssueConfig("shortest-lmcut", [
         "--if-unit-cost",
-        "--search", "shortest_astar(celmcut())",
+        "--search", "astar(celmcut())",
         "--if-non-unit-cost",
         "--search", "shortest_astar(celmcut())", "--always"]),
     IssueConfig("shortest-lmcut-oss", [
         "--if-unit-cost",        
         "--symmetries", "sym=structural_symmetries(time_bound=0,search_symmetries=oss, stabilize_initial_state=false)", 
-        "--search", "shortest_astar(celmcut(),symmetries=sym)",
+        "--search", "astar(celmcut(),symmetries=sym)",
         "--if-non-unit-cost",
         "--symmetries", "sym=structural_symmetries(time_bound=0,search_symmetries=oss, stabilize_initial_state=false)", 
         "--search", "shortest_astar(celmcut(),symmetries=sym)",
