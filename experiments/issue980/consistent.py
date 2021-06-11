@@ -22,18 +22,30 @@ CONFIGS = [
     #     "--search", "astar(celmcut())",
     #     "--if-non-unit-cost",
     #     "--search", "astar(celmcut())", "--always"]),
-    IssueConfig("shortest-lmcut-por", [
+    IssueConfig("shortest-ms", [
         "--if-unit-cost",
-        "--search", "astar(celmcut(),pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))",
+        "--search", "astar(merge_and_shrink(transform=no_transform(), cache_estimates=true, merge_strategy=merge_strategy=merge_sccs(order_of_sccs=topological,merge_selector=score_based_filtering(scoring_functions=[goal_relevance,dfp,total_order])),shrink_strategy=shrink_strategy=shrink_bisimulation(greedy=false), prune_unreachable_states=true, prune_irrelevant_states=true, max_states=-1, max_states_before_merge=-1, threshold_before_merge=-1, verbosity=normal, main_loop_max_time=infinity))",
         "--if-non-unit-cost",
-        "--search", "shortest_astar(celmcut(),pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))", "--always"]),
-    IssueConfig("shortest-lmcut-oss-por", [
-        "--if-unit-cost",        
-        "--symmetries", "sym=structural_symmetries(time_bound=0,search_symmetries=oss, stabilize_initial_state=false)", 
-        "--search", "astar(celmcut(),symmetries=sym,pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))",
+        "--search", "shortest_astar(merge_and_shrink(transform=no_transform(), cache_estimates=true, merge_strategy=merge_strategy=merge_sccs(order_of_sccs=topological,merge_selector=score_based_filtering(scoring_functions=[goal_relevance,dfp,total_order])),shrink_strategy=shrink_strategy=shrink_bisimulation(greedy=false), prune_unreachable_states=true, prune_irrelevant_states=true, max_states=-1, max_states_before_merge=-1, threshold_before_merge=-1, verbosity=normal, main_loop_max_time=infinity))",
+        "--always"]),
+    IssueConfig("shortest-cegar", [
+        "--if-unit-cost",
+        "--search", "astar(cegar())",
         "--if-non-unit-cost",
-        "--symmetries", "sym=structural_symmetries(time_bound=0,search_symmetries=oss, stabilize_initial_state=false)", 
-        "--search", "shortest_astar(celmcut(),symmetries=sym,pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))",
+        "--search", "shortest_astar(cegar())",
+        "--always"]),
+    IssueConfig("shortest-hmax", [
+        "--if-unit-cost",
+        "--search", "astar(hmax())",
+        "--if-non-unit-cost",
+        "--search", "shortest_astar(hmax())",
+        "--always"]),
+
+    IssueConfig("shortest-ipdb", [
+        "--if-unit-cost",
+        "--search", "astar(ipdb(pdb_max_size=2000000, collection_max_size=20000000, num_samples=1000, min_improvement=10, max_time=infinity, random_seed=-1, max_time_dominance_pruning=infinity, transform=no_transform(), cache_estimates=true))",
+        "--if-non-unit-cost",
+        "--search", "shortest_astar(ipdb(pdb_max_size=2000000, collection_max_size=20000000, num_samples=1000, min_improvement=10, max_time=infinity, random_seed=-1, max_time_dominance_pruning=infinity, transform=no_transform(), cache_estimates=true))",
         "--always"]),
 ]
 SUITE = ["agricola-opt18-strips", "barman-opt11-strips", "caldera-split-opt18-adl", "cavediving-14-adl", "citycar-opt14-adl", "data-network-opt18-strips", "elevators-opt08-strips", "elevators-opt11-strips", "floortile-opt11-strips", "floortile-opt14-strips", "ged-opt14-strips", "openstacks-opt08-adl", "openstacks-opt08-strips", "openstacks-opt11-strips", "openstacks-opt14-strips", "organic-synthesis-split-opt18-strips", "parcprinter-08-strips", "parcprinter-opt11-strips", "pegsol-08-strips", "pegsol-opt11-strips", "petri-net-alignment-opt18-strips", "scanalyzer-08-strips", "scanalyzer-opt11-strips", "settlers-opt18-adl", "sokoban-opt08-strips", "sokoban-opt11-strips", "spider-opt18-strips", "tetris-opt14-strips", "transport-opt08-strips", "transport-opt11-strips", "transport-opt14-strips", "woodworking-opt08-strips", "woodworking-opt11-strips"]
