@@ -42,8 +42,8 @@ exp.add_parser(exp.PLANNER_PARSER)
 exp.add_step('build', exp.build)
 exp.add_step('start', exp.start_runs)
 exp.add_fetcher(name='fetch')
-exp.add_fetcher('data/issue980-v1-eval')
-exp.add_fetcher('data/issue980-v2-eval')
+exp.add_fetcher('data/issue980-v3-eval')
+exp.add_fetcher('data/issue980-por-eval')
 
 algs = ["shortest-lmcut", "shortest-lmcut-oss", "shortest-lmcut-por", "shortest-lmcut-oss-por"]
 full_alg_name = ["%s-%s" % (a, r) for r in REVISIONS for a in algs]
