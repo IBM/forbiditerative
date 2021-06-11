@@ -24,16 +24,16 @@ CONFIGS = [
     #     "--search", "astar(celmcut())", "--always"]),
     IssueConfig("shortest-lmcut-por", [
         "--if-unit-cost",
-        "--search", "astar(celmcut(),pruning=stubborn_sets_simple(minimum_pruning_ratio=0.01),num_por_probes=1000)",
+        "--search", "astar(celmcut(),pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))",
         "--if-non-unit-cost",
-        "--search", "shortest_astar(celmcut(),pruning=stubborn_sets_simple(minimum_pruning_ratio=0.01),num_por_probes=1000)", "--always"]),
+        "--search", "shortest_astar(celmcut(),pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))", "--always"]),
     IssueConfig("shortest-lmcut-oss-por", [
         "--if-unit-cost",        
         "--symmetries", "sym=structural_symmetries(time_bound=0,search_symmetries=oss, stabilize_initial_state=false)", 
-        "--search", "astar(celmcut(),symmetries=sym,pruning=stubborn_sets_simple(minimum_pruning_ratio=0.01),num_por_probes=1000)",
+        "--search", "astar(celmcut(),symmetries=sym,pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))",
         "--if-non-unit-cost",
         "--symmetries", "sym=structural_symmetries(time_bound=0,search_symmetries=oss, stabilize_initial_state=false)", 
-        "--search", "shortest_astar(celmcut(),symmetries=sym,pruning=stubborn_sets_simple(minimum_pruning_ratio=0.01),num_por_probes=1000)",
+        "--search", "shortest_astar(celmcut(),symmetries=sym,pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))",
         "--always"]),
 ]
 SUITE = ["agricola-opt18-strips", "barman-opt11-strips", "caldera-split-opt18-adl", "cavediving-14-adl", "citycar-opt14-adl", "data-network-opt18-strips", "elevators-opt08-strips", "elevators-opt11-strips", "floortile-opt11-strips", "floortile-opt14-strips", "ged-opt14-strips", "openstacks-opt08-adl", "openstacks-opt08-strips", "openstacks-opt11-strips", "openstacks-opt14-strips", "organic-synthesis-split-opt18-strips", "parcprinter-08-strips", "parcprinter-opt11-strips", "pegsol-08-strips", "pegsol-opt11-strips", "petri-net-alignment-opt18-strips", "scanalyzer-08-strips", "scanalyzer-opt11-strips", "settlers-opt18-adl", "sokoban-opt08-strips", "sokoban-opt11-strips", "spider-opt18-strips", "tetris-opt14-strips", "transport-opt08-strips", "transport-opt11-strips", "transport-opt14-strips", "woodworking-opt08-strips", "woodworking-opt11-strips"]
