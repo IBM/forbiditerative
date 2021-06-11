@@ -40,8 +40,10 @@ protected:
       We copy some parts of the task here, so we can avoid the more expensive
       access through the task interface during the search.
     */
+    bool has_conditional_effects;
     int num_operators;
     std::vector<std::vector<FactPair>> sorted_op_preconditions;
+    std::vector<std::vector<FactPair>> sorted_op_effect_conditions;
     std::vector<std::vector<FactPair>> sorted_op_effects;
     std::vector<FactPair> sorted_goals;
 

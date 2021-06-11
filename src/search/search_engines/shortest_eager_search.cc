@@ -201,6 +201,17 @@ SearchStatus ShortestEagerSearch::step() {
     if (check_goal_and_set_plan(s, group))
         return SOLVED;
 
+
+    // This evaluates the expanded state (again) to get preferred ops
+    EvaluationContext eval_context(s, node->get_g(), false, &statistics, true);
+
+    // Check that the f is not over the bound
+    int f_value = eval_context.get_evaluator_value(f_evaluator.get()) - node->get_g() + node->get_real_g();
+    if (f_value >= bound) {
+        utils::g_log << "Bound was reached (" <<  bound << ") -- stopping" << endl;
+        return FAILED;        
+    }
+
     int parent_pg = 0;
     if (d_evaluator->is_estimate_cached(s)) {
         parent_pg = d_evaluator->get_cached_estimate(s);
@@ -215,8 +226,8 @@ SearchStatus ShortestEagerSearch::step() {
     */
     pruning_method->prune_operators(s, applicable_ops);
 
-    // This evaluates the expanded state (again) to get preferred ops
-    EvaluationContext eval_context(s, node->get_g(), false, &statistics, true);
+    // // This evaluates the expanded state (again) to get preferred ops
+    // EvaluationContext eval_context(s, node->get_g(), false, &statistics, true);
     ordered_set::OrderedSet<OperatorID> preferred_operators;
     for (const shared_ptr<Evaluator> &preferred_operator_evaluator : preferred_operator_evaluators) {
         collect_preferred_operators(eval_context,

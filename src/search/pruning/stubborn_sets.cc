@@ -45,8 +45,9 @@ void StubbornSets::initialize(const shared_ptr<AbstractTask> &task) {
     PruningMethod::initialize(task);
     TaskProxy task_proxy(*task);
     task_properties::verify_no_axioms(task_proxy);
-    task_properties::verify_no_conditional_effects(task_proxy);
+    //task_properties::verify_no_conditional_effects(task_proxy);
 
+    has_conditional_effects = task_properties::has_conditional_effects(task_proxy);
     num_operators = task_proxy.get_operators().size();
     num_unpruned_successors_generated = 0;
     num_pruned_successors_generated = 0;
@@ -85,6 +86,18 @@ void StubbornSets::compute_sorted_operators(const TaskProxy &task_proxy) {
                     op.get_effects(),
                     [](const EffectProxy &eff) {return eff.get_fact().get_pair();}));
         });
+
+    if (has_conditional_effects) {
+        for (const OperatorProxy op : task_proxy.get_operators()) {
+            vector<FactPair> conditions;
+            for (const EffectProxy effect : op.get_effects()) {
+                for (const FactProxy cond : effect.get_conditions()) {
+                    conditions.push_back(cond.get_pair());
+                }
+            }
+            sorted_op_effect_conditions.push_back(utils::sorted<FactPair>(conditions));
+        }
+    }
 }
 
 void StubbornSets::compute_achievers(const TaskProxy &task_proxy) {
