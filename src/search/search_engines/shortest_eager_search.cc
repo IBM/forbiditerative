@@ -208,7 +208,7 @@ SearchStatus ShortestEagerSearch::step() {
     // Check that the f is not over the bound
     int f_value = eval_context.get_evaluator_value(f_evaluator.get()) - node->get_g() + node->get_real_g();
     if (f_value >= bound) {
-        utils::g_log << "Bound was reached (" <<  bound << ") -- stopping" << endl;
+        utils::g_log << "NO SOLUTION: Bound was reached (" <<  bound << ") -- stopping" << endl;
         return FAILED;        
     }
 

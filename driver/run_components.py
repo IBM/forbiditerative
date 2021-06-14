@@ -105,7 +105,7 @@ def run_search(args):
         args.plan_file,
         portfolio_bound=args.portfolio_bound,
         single_plan=args.portfolio_single_plan)
-    plan_manager.delete_existing_plans()
+    # plan_manager.delete_existing_plans()
 
     if args.portfolio:
         assert not args.search_options
