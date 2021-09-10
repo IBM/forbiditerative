@@ -272,10 +272,10 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
-    NAME PROTOTYPE_G_EVALUATOR
-    HELP "The prototype g-evaluator"
+    NAME D_EVALUATOR
+    HELP "The d-evaluator"
     SOURCES
-        evaluators/prototype_g_evaluator
+        evaluators/d_evaluator
     DEPENDS EVALUATORS_PLUGIN_GROUP
 )
 
@@ -365,7 +365,7 @@ fast_downward_plugin(
     HELP "Basic classes used for all search engines"
     SOURCES
         search_engines/search_common
-    DEPENDS ALTERNATION_OPEN_LIST G_EVALUATOR BEST_FIRST_OPEN_LIST SUM_EVALUATOR TIEBREAKING_OPEN_LIST WEIGHTED_EVALUATOR
+    DEPENDS ALTERNATION_OPEN_LIST G_EVALUATOR D_EVALUATOR BEST_FIRST_OPEN_LIST SUM_EVALUATOR TIEBREAKING_OPEN_LIST WEIGHTED_EVALUATOR
     DEPENDENCY_ONLY
 )
 

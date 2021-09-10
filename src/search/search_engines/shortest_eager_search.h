@@ -43,7 +43,6 @@ class ShortestEagerSearch : public SearchEngine {
     void update_f_value_statistics(EvaluationContext &eval_context);
     void reward_progress();
 
-    std::shared_ptr<Evaluator> d_evaluator;
 protected:
     virtual void initialize() override;
     virtual SearchStatus step() override;
@@ -56,7 +55,6 @@ public:
 
     void dump_search_space() const;
 };
-
 }
 
 #endif

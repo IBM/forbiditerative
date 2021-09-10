@@ -30,8 +30,7 @@ ShortestEagerSearch::ShortestEagerSearch(const Options &opts)
       f_evaluator(opts.get<shared_ptr<Evaluator>>("f_eval", nullptr)),
       preferred_operator_evaluators(opts.get_list<shared_ptr<Evaluator>>("preferred")),
       lazy_evaluator(opts.get<shared_ptr<Evaluator>>("lazy_evaluator", nullptr)),
-      pruning_method(opts.get<shared_ptr<PruningMethod>>("pruning")),
-      d_evaluator(opts.get<shared_ptr<Evaluator>>("d_eval", nullptr)) {
+      pruning_method(opts.get<shared_ptr<PruningMethod>>("pruning")) {
     if (lazy_evaluator && !lazy_evaluator->does_cache_estimates()) {
         cerr << "lazy_evaluator must cache its estimates" << endl;
         utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
@@ -110,7 +109,7 @@ void ShortestEagerSearch::initialize() {
       Note: we consider the initial state as reached by a preferred
       operator.
     */
-    EvaluationContext eval_context(initial_state, 0, true, &statistics);
+    EvaluationContext eval_context(initial_state, 0, true, &statistics, false, 0);
 
     statistics.inc_evaluated_states();
 
@@ -155,7 +154,7 @@ SearchStatus ShortestEagerSearch::step() {
           We can pass calculate_preferred=false here since preferred
           operators are computed when the state is expanded.
         */
-        EvaluationContext eval_context(s, node->get_g(), false, &statistics);
+        EvaluationContext eval_context(s, node->get_g(), false, &statistics, false, node->get_d());
 
         if (lazy_evaluator) {
             /*
@@ -201,22 +200,6 @@ SearchStatus ShortestEagerSearch::step() {
     if (check_goal_and_set_plan(s, group))
         return SOLVED;
 
-
-    // This evaluates the expanded state (again) to get preferred ops
-    EvaluationContext eval_context(s, node->get_g(), false, &statistics, true);
-
-    // Check that the f is not over the bound
-    int f_value = eval_context.get_evaluator_value(f_evaluator.get()) - node->get_g() + node->get_real_g();
-    if (f_value >= bound) {
-        utils::g_log << "NO SOLUTION: Bound was reached (" <<  bound << ") -- stopping" << endl;
-        return FAILED;        
-    }
-
-    int parent_pg = 0;
-    if (d_evaluator->is_estimate_cached(s)) {
-        parent_pg = d_evaluator->get_cached_estimate(s);
-    }
-
     vector<OperatorID> applicable_ops;
     successor_generator.generate_applicable_ops(s, applicable_ops);
 
@@ -226,8 +209,8 @@ SearchStatus ShortestEagerSearch::step() {
     */
     pruning_method->prune_operators(s, applicable_ops);
 
-    // // This evaluates the expanded state (again) to get preferred ops
-    // EvaluationContext eval_context(s, node->get_g(), false, &statistics, true);
+    // This evaluates the expanded state (again) to get preferred ops
+    EvaluationContext eval_context(s, node->get_g(), false, &statistics, true, node->get_d());
     ordered_set::OrderedSet<OperatorID> preferred_operators;
     for (const shared_ptr<Evaluator> &preferred_operator_evaluator : preferred_operator_evaluators) {
         collect_preferred_operators(eval_context,
@@ -260,14 +243,6 @@ SearchStatus ShortestEagerSearch::step() {
 
         SearchNode succ_node = search_space.get_node(succ_state);
 
-        bool pg_reopen = false;
-        // Check if a reopen might be needed based on d evaluator
-        if (d_evaluator->is_estimate_cached(succ_state)) {
-            int old_pg = d_evaluator->get_cached_estimate(succ_state);
-            if (parent_pg + 1 < old_pg) 
-                pg_reopen = true;
-        }
-
         for (Evaluator *evaluator : path_dependent_evaluators) {
             evaluator->notify_state_transition(s, op_id, succ_state);
         }
@@ -292,7 +267,7 @@ SearchStatus ShortestEagerSearch::step() {
               another state.
              */
             EvaluationContext succ_eval_context(
-                succ_state, succ_g, is_preferred, &statistics);
+                succ_state, succ_g, is_preferred, &statistics, false, node->get_d() + 1);
             statistics.inc_evaluated_states();
 
             if (open_list->is_dead_end(succ_eval_context)) {
@@ -307,8 +282,9 @@ SearchStatus ShortestEagerSearch::step() {
                 statistics.print_checkpoint_line(succ_node.get_g());
                 reward_progress();
             }
-        } else if (succ_node.get_g() > node->get_g() + get_adjusted_cost(op) 
-           || (succ_node.get_g() == node->get_g() + get_adjusted_cost(op) && pg_reopen)) {
+        } else if (succ_node.get_g() > node->get_g() + get_adjusted_cost(op)
+                   || (succ_node.get_g() == node->get_g() + get_adjusted_cost(op)
+                       && succ_node.get_d() > node->get_d() + 1)) {
             // We found a new cheapest path to an open or closed state.
             if (reopen_closed_nodes) {
                 if (succ_node.is_closed()) {
@@ -324,7 +300,7 @@ SearchStatus ShortestEagerSearch::step() {
                 succ_node.reopen(*node, op, get_adjusted_cost(op));
 
                 EvaluationContext succ_eval_context(
-                    succ_state, succ_node.get_g(), is_preferred, &statistics);
+                    succ_state, succ_node.get_g(), is_preferred, &statistics, false, succ_node.get_d());
 
                 /*
                   Note: our old code used to retrieve the h value from
@@ -381,5 +357,4 @@ void ShortestEagerSearch::update_f_value_statistics(EvaluationContext &eval_cont
         statistics.report_f_value_progress(f_value);
     }
 }
-
 }
