@@ -88,6 +88,7 @@ void SearchNode::reopen(const SearchNode &parent_node,
     info.real_g = parent_node.info.real_g + parent_op.get_cost();
     info.parent_state_id = parent_node.get_state().get_id();
     info.creating_operator = OperatorID(parent_op.get_id());
+    info.d = parent_node.info.d + 1;
 }
 
 // like reopen, except doesn't change status
