@@ -47,9 +47,29 @@ exp.add_step('build', exp.build)
 exp.add_step('start', exp.start_runs)
 exp.add_fetcher(name='fetch')
 
+
+exp.add_fetcher('data/issue980-v4-DEval-sym-eval')
+exp.add_fetcher('data/issue980-v4-DEval-por-eval')
+exp.add_fetcher('data/issue980-v4-DEval-sym-por-eval')
+exp.add_fetcher('data/issue980-v4-DEval-dks-eval')
+exp.add_fetcher('data/issue980-v4-DEval-dks-por-eval')
+exp.add_fetcher('data/issue980-v4-DEval-sym-msus-eval')
+exp.add_fetcher('data/issue980-v4-DEval-sym-por-msus-eval')
+
+
+algs = []
+for x in ["-blind", "-cegar", "-hmax", "-ipdb", "-lmcut", "-ms", "-ms-us"]:
+    for y in ["", "-dks", "-oss"]:
+        for z in ["", "-por"]:
+            if y == "" and not z=="":
+                continue
+            if x == "-ms" and y =="-oss":
+                continue
+            algs.append("%s-shortest%s%s%s" % (REVISIONS[0],x, y, z))
+
 attributes = (
             IssueExperiment.DEFAULT_TABLE_ATTRIBUTES + ["plan_length"])
-exp.add_absolute_report_step(attributes=attributes)
+exp.add_absolute_report_step(attributes=attributes, filter_algorithm=algs)
 
 
 
