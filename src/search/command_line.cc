@@ -129,7 +129,7 @@ static shared_ptr<SearchEngine> parse_cmd_line_aux(
 
 
 shared_ptr<SearchEngine> parse_cmd_line(
-    int argc, const char **argv, options::Registry &registry, bool dry_run, bool is_unit_cost) {
+    int argc, const char **argv, options::Registry &registry, bool dry_run, bool is_unit_cost, bool has_conditional_effects) {
     vector<string> args;
     bool active = true;
     for (int i = 1; i < argc; ++i) {
@@ -139,6 +139,10 @@ shared_ptr<SearchEngine> parse_cmd_line(
             active = is_unit_cost;
         } else if (arg == "--if-non-unit-cost") {
             active = !is_unit_cost;
+        } else if (arg == "--if-conditional-effects") {
+            active = has_conditional_effects;
+        } else if (arg == "--if-no-conditional-effects") {
+            active = !has_conditional_effects;
         } else if (arg == "--always") {
             active = true;
         } else if (active) {

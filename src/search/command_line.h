@@ -22,7 +22,7 @@ public:
 
 extern std::shared_ptr<SearchEngine> parse_cmd_line(
     int argc, const char **argv, options::Registry &registry, bool dry_run,
-    bool is_unit_cost);
+    bool is_unit_cost, bool has_conditional_effects);
 
 extern std::string usage(const std::string &progname);
 
