@@ -21,7 +21,8 @@ WORKDIR /workspace/forbiditerative/
 
 # Set up some environment variables.
 ENV CXX g++
-ENV BUILD_COMMIT_ID 1751d5e
+ENV BUILD_COMMIT_ID c0d3409
+
 # Fetch the code at the right commit ID from the Github repo
 RUN curl -L https://github.com/IBM/forbiditerative/archive/${BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1
 
