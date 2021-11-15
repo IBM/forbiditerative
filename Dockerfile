@@ -37,8 +37,7 @@ RUN strip --strip-all builds/release/bin/downward
 #################################
 WORKDIR /workspace/diversescore/
 
-ENV BUILD_COMMIT_ID 8208ae3
-
+ENV BUILD_COMMIT_ID 8615bf2
 # Fetch the code at the right commit ID from the Github repo
 RUN curl -L https://github.com/IBM/diversescore/archive/${BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1
 
