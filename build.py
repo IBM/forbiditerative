@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import errno
 import glob
@@ -73,10 +73,9 @@ Make options
 Example usage:
   ./{script_name}                     # build {default_config_name} in #cores threads
   ./{script_name} -j4                 # build {default_config_name} in 4 threads
-  ./{script_name} -j4 downward        # as above, but only build the planner
-  ./{script_name} debug32 -j4         # build debug32 in 4 threads
-  ./{script_name} --debug -j4         # build {debug_config_name} in 4 threads
-  ./{script_name} release64 debug64   # build both 64-bit build configs
+  ./{script_name} debug               # build debug
+  ./{script_name} --debug             # build {debug_config_name}
+  ./{script_name} release debug       # build release and debug configs
   ./{script_name} --all VERBOSE=true  # build all build configs with detailed logs
 """.format(**locals()))
 

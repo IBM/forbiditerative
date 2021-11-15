@@ -36,7 +36,7 @@ def make_call(command, time_limit, local_folder, enable_output=False):
 
 class PlannerCall(object):
     def build_args(self):
-        return ["--build", "release64"]
+        return []
 
     def get_path(self):
         """Assume that this script always lives in the base dir of the infrastructure."""

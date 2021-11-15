@@ -27,10 +27,10 @@ ENV BUILD_COMMIT_ID c0d3409
 RUN curl -L https://github.com/IBM/forbiditerative/archive/${BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1
 
 # Invoke the build script with appropriate options
-RUN python3 ./build.py -j4 release64
+RUN python3 ./build.py 
 
 # Strip the main binary to reduce size
-RUN strip --strip-all builds/release64/bin/downward
+RUN strip --strip-all builds/release/bin/downward
 
 #################################
 # Download and Install ForbidIterative
@@ -71,7 +71,7 @@ COPY --from=builder /workspace/diversescore/builds/release/bin/ ./builds/release
 COPY --from=builder /workspace/diversescore/driver ./driver
 WORKDIR /workspace/forbiditerative/
 COPY --from=builder /workspace/forbiditerative/fast-downward.py .
-COPY --from=builder /workspace/forbiditerative/builds/release64/bin/ ./builds/release64/bin/
+COPY --from=builder /workspace/forbiditerative/builds/release/bin/ ./builds/release/bin/
 COPY --from=builder /workspace/forbiditerative/driver ./driver
 COPY --from=builder /workspace/forbiditerative/copy_plans.py .
 COPY --from=builder /workspace/forbiditerative/plan.py .
