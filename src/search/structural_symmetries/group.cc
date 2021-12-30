@@ -2,6 +2,7 @@
 
 #include "graph_creator.h"
 #include "permutation.h"
+#include "operator_permutation.h"
 
 #include "../option_parser.h"
 #include "../per_state_information.h"
@@ -31,7 +32,9 @@ Group::Group(const options::Options &opts)
       dump_permutations(opts.get<bool>("dump_permutations")),
       write_search_generators(opts.get<bool>("write_search_generators")),
       write_all_generators(opts.get<bool>("write_all_generators")),
+      keep_operator_symmetries(opts.get<bool>("keep_operator_symmetries")),
       num_vars(0),
+      num_operators(0),
       permutation_length(0),
       graph_size(0),
       num_identity_generators(0),
@@ -145,6 +148,10 @@ void Group::add_raw_generator(const unsigned int *generator) {
             add_to_be_written_generator(generator);
         }
         generators.push_back(move(permutation));
+        if (keep_operator_symmetries) {
+            OperatorPermutation op_permutation(*this, generator);
+            operator_generators.push_back(move(op_permutation));
+        }
     }
 }
 
@@ -359,6 +366,9 @@ static shared_ptr<Group> _parse(OptionParser &parser) {
     parser.add_option<bool>("dump_symmetry_graph",
                            "Dump symmetry graph in dot format",
                            "false");
+    parser.add_option<bool>("keep_operator_symmetries",
+                            "Compute and keep operator symmetries",
+                            "false");
 
     // Type of search symmetries to be used
     vector<string> search_symmetries;

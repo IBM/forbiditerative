@@ -159,6 +159,7 @@ void GraphCreator::create_bliss_directed_graph(
     }
 
     group->set_permutation_num_variables(vars.size());
+    group->set_permutation_num_operators(task_proxy.get_operators().size());
     group->set_permutation_length(num_vertices_so_far);
 
     DotGraph dot_graph;

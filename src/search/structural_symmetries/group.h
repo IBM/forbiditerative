@@ -6,6 +6,7 @@
 #include <vector>
 
 class Permutation;
+class OperatorPermutation;
 class State;
 class StateRegistry;
 class TaskProxy;
@@ -34,9 +35,11 @@ class Group {
     const bool dump_permutations;
     const bool write_search_generators;
     const bool write_all_generators;
+    const bool keep_operator_symmetries;
 
     // Group properties
     int num_vars;
+    int num_operators;
     int permutation_length; // as used for search generators
     int graph_size; // including vertices for operators
     std::vector<int> dom_sum_by_var;
@@ -46,6 +49,7 @@ class Group {
     // Group creation
     bool initialized;
     std::vector<Permutation> generators;
+    std::vector<OperatorPermutation> operator_generators;
     std::vector<std::unordered_map<int, int>> to_be_written_generators;
     const Permutation &get_permutation(int index) const;
 
@@ -72,6 +76,12 @@ public:
     }
     int get_permutation_num_variables() const {
         return num_vars;
+    }
+    void set_permutation_num_operators(int nops) {
+        num_operators = nops;
+    }
+    int get_permutation_num_operators() const {
+        return num_operators;
     }
     void set_permutation_length(int length) {
         permutation_length = length;

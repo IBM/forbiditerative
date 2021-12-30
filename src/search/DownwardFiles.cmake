@@ -829,6 +829,7 @@ fast_downward_plugin(
         structural_symmetries/graph_creator.cc
         structural_symmetries/group.cc
         structural_symmetries/permutation.cc
+        structural_symmetries/operator_permutation.cc
     DEPENDS BLISS
 )
 
