@@ -14,7 +14,7 @@ from common_setup import IssueConfig, IssueExperiment
 DIR = os.path.dirname(os.path.abspath(__file__))
 SCRIPT_NAME = os.path.splitext(os.path.basename(__file__))[0]
 BENCHMARKS_DIR = os.environ['DOWNWARD_BENCHMARKS']
-REVISIONS = ['forbid-iterative', 'no-d-eval']
+REVISIONS = ['forbid-iterative']
 CONFIGS = [
     IssueConfig('lmcut-oss-por', ['--symmetries', 'sym=structural_symmetries(time_bound=0,search_symmetries=oss)', '--search', 'astar(lmcut(),symmetries=sym,verbosity=silent,pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))']),
 ]
