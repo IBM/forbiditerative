@@ -605,6 +605,34 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME PLANS_GRAPH
+    HELP "Graph representation of multiple plans"
+    SOURCES
+        plans/plans_graph
+        plans/operator_interaction
+)
+
+fast_downward_plugin(
+    NAME EXTRA_TASKS_REFORMULATION
+    HELP "Non-core task transformations for reformulation"
+    SOURCES
+        tasks/plan_forbid_reformulated_task
+        tasks/graph_forbid_reformulated_task
+        tasks/multiset_forbid_reformulated_task
+        tasks/multisets_forbid_reformulated_task
+    DEPENDS PLANS_GRAPH TASK_PROPERTIES
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME FORBID_ITERATIVE
+    HELP "Forbid iterative search"
+    SOURCES
+        forbid_iterative_search
+    DEPENDS PLANS_GRAPH EXTRA_TASKS_REFORMULATION SEARCH_COMMON STRUCTURAL_SYMMETRIES
+)
+
+fast_downward_plugin(
     NAME CAUSAL_GRAPH
     HELP "Causal Graph"
     SOURCES

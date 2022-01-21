@@ -69,3 +69,73 @@ void PlanManager::save_plan(
     utils::g_log << "Plan cost: " << plan_cost << endl;
     ++num_previously_generated_plans;
 }
+
+void PlanManager::load_plan(string path_to_plan_file, Plan &plan, const TaskProxy &task_proxy) const {
+    std::unordered_map<string, OperatorID> ops_by_names;
+    compute_ops_by_names(ops_by_names, task_proxy);
+    load_single_plan(path_to_plan_file, ops_by_names, plan);
+}
+
+void PlanManager::load_plans(string path_to_plan_folder, int num_plans, vector<Plan> &plans, const TaskProxy &task_proxy) const {
+    // Assumption: the files are named sas_plan.1 .. sas_plan.num_plans
+    // TODO: make it work with other OS
+    std::unordered_map<string, OperatorID> ops_by_names;
+    compute_ops_by_names(ops_by_names, task_proxy);
+    for (int plan_no=1; plan_no <= num_plans; ++plan_no) {
+        string fname = path_to_plan_folder + "/" + "sas_plan." + std::to_string(plan_no);
+        //cout << "FNAME: " << fname << endl;
+        Plan plan;
+        load_single_plan(fname, ops_by_names, plan);
+        plans.push_back(plan);
+    }
+}
+
+void PlanManager::load_single_plan(std::string path_to_plan_file,
+        const std::unordered_map<std::string, OperatorID>& ops_by_names, Plan &plan) const {
+
+    utils::g_log << "Reading plan from file " << path_to_plan_file << endl;
+    ifstream planfile;
+    planfile.open(path_to_plan_file);
+
+    if (!planfile.is_open()) {
+        throw std::system_error(errno, std::system_category(), "failed to open file");
+
+        cerr << "File is not open!" << endl;
+        utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
+    }
+    string line;
+    //cout << "-----------------------------------------------------------------------" << endl;
+    while(std::getline(planfile, line)) {
+        if (line.size() == 0 || line[0] == ';')
+            continue;
+        string op_name = line.substr(1, line.size()-2);
+        //op_name = op_name.substr(0, op_name.find("__###__"));
+        //cout << op_name << endl;
+        auto it = ops_by_names.find(op_name);
+        if (it == ops_by_names.end()) {
+            // Trying adding a trailing space
+            string op_name_trailing_space = op_name + " ";
+            it = ops_by_names.find(op_name_trailing_space);
+            if (it == ops_by_names.end()) {
+                cerr << "#" << op_name << "#   Operator not found!!!" << endl;
+                cerr << "Operator names:" << endl;
+                for (auto name : ops_by_names) {
+                    cerr << "#" << name.first << "#" << endl;
+                }
+                utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
+            }
+        }
+        //cout << "Name " << it->first << endl;
+        //cout << "Found operator " << it->second->get_name() << endl;
+        plan.push_back(it->second);
+    }
+}
+
+void PlanManager::compute_ops_by_names(unordered_map<string, OperatorID>& ops_by_names, const TaskProxy &task_proxy) const {
+    // Creating a hashmap from operator names to ids
+    OperatorsProxy operators = task_proxy.get_operators();
+    for (OperatorProxy op : operators) {
+        ops_by_names.insert({op.get_name(), OperatorID(op.get_id())});
+        // ops_by_names[op.get_name()] = OperatorID(op.get_id());
+    }
+}

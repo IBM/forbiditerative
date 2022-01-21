@@ -56,6 +56,11 @@ class SearchSpace {
                                     std::vector<OperatorID> &path,
                                     const std::shared_ptr<AbstractTask> &task,
                                     const std::shared_ptr<Group> &group) const;
+    void dump_state(std::ostream& os, const State& state) const;
+    bool dump_causal_link(const std::vector<OperatorID> &plan, 
+                          const std::vector<std::vector<EffectProxy>>& plan_firing_effects,
+                          size_t to_index, FactProxy cond, std::ostream& os, bool coma, const TaskProxy &task_proxy) const;
+
 public:
     explicit SearchSpace(StateRegistry &state_registry);
 
@@ -67,6 +72,10 @@ public:
 
     void dump(const TaskProxy &task_proxy) const;
     void print_statistics() const;
+    void dump_trace(const std::vector<StateID> &plan_trace, std::ostream& os) const;
+    void trace_from_plan(const std::vector<OperatorID> &plan, std::vector<StateID> &plan_trace, const TaskProxy &task_proxy) const;
+    void dump_partial_order_from_plan(const std::vector<OperatorID> &plan, std::ostream& os, const TaskProxy &task_proxy) const;
+
 };
 
 #endif

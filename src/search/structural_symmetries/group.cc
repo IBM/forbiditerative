@@ -45,6 +45,10 @@ const Permutation &Group::get_permutation(int index) const {
     return generators[index];
 }
 
+const OperatorPermutation &Group::get_operator_permutation(int index) const { 
+    return operator_generators[index]; 
+}
+
 void Group::add_to_dom_sum_by_var(int summed_dom) {
     dom_sum_by_var.push_back(summed_dom);
 }

@@ -252,6 +252,109 @@ void SearchSpace::trace_path_with_symmetries(const State &goal_state,
     }
 }
 
+void SearchSpace::trace_from_plan(const vector<OperatorID> &plan, std::vector<StateID> &plan_trace, const TaskProxy &task_proxy) const {
+    assert(plan_trace.size() == 0);
+    State current_state = state_registry.get_initial_state();
+    OperatorsProxy operators = task_proxy.get_operators();
+    for (size_t i=0; i < plan.size(); ++i) {
+        OperatorProxy op = operators[plan[i].get_index()];
+        current_state = state_registry.get_successor_state(current_state, op);
+        plan_trace.push_back(current_state.get_id());
+    }
+}
+
+void SearchSpace::dump_trace(const std::vector<StateID> &plan_trace, std::ostream& os) const {
+
+    State current_state = state_registry.get_initial_state();
+    dump_state(os, current_state);
+    for (size_t i=0; i < plan_trace.size(); ++i) {
+        os << "," << endl;
+        dump_state(os, state_registry.lookup_state(plan_trace[i]));
+    }
+}
+
+void SearchSpace::dump_state(std::ostream& os, const State& state) const {
+    int num_vars = state.size();
+    vector<string> names;
+    for (int var=0; var < num_vars; ++var) {
+        string fact_name = state[var].get_name();        
+        if (fact_name == "<none of those>")
+            continue;
+        if (fact_name.compare(0, 11, "NegatedAtom") == 0)
+            continue;
+        names.push_back(fact_name);
+    }
+
+    os << "[" << endl;
+    size_t i = 0;
+    for (; i < names.size() - 1; ++i) {
+        os << "\"" << names[i] << "\"," << endl;
+    }
+    os << "\"" << names[i] << "\"" << endl;
+    os << "]" << endl;
+}
+
+void SearchSpace::dump_partial_order_from_plan(const vector<OperatorID> &plan, std::ostream& os, const TaskProxy &task_proxy) const {
+    if (plan.size() == 0) 
+        return;
+
+    // Checking which effects fire
+    State current_state = state_registry.get_initial_state();
+    OperatorsProxy operators = task_proxy.get_operators();
+    vector<vector<EffectProxy>> plan_firing_effects;
+
+    for (size_t i=0; i < plan.size(); ++i) {
+        OperatorProxy op = operators[plan[i].get_index()];
+
+        vector<EffectProxy> firing_effects;
+        for (EffectProxy eff : op.get_effects()) {
+            if (does_fire(eff, current_state))
+                firing_effects.push_back(eff);
+        }
+        plan_firing_effects.push_back(firing_effects);
+        current_state = state_registry.get_successor_state(current_state, op);
+    }
+    bool dumped_first = false;
+    for (size_t i = plan.size() - 1; i > 0; --i ) { 
+        OperatorProxy op = operators[plan[i].get_index()];
+        for ( FactProxy cond : op.get_preconditions()) {
+            bool dumped = dump_causal_link(plan, plan_firing_effects, i, cond, os, dumped_first, task_proxy);
+            if (dumped) {
+                dumped_first = true;
+            }
+        }
+    }
+}
+
+bool SearchSpace::dump_causal_link(const vector<OperatorID> &plan, 
+                                    const std::vector<std::vector<EffectProxy>>& plan_firing_effects,
+                                    size_t to_index, FactProxy cond, std::ostream& os, bool coma, const TaskProxy &task_proxy) const {
+
+    OperatorsProxy operators = task_proxy.get_operators();
+    OperatorProxy to_op = operators[plan[to_index].get_index()];
+
+    for (size_t i = to_index; i > 0; ) { 
+        --i;
+        // Check if cond is in action effects
+
+        OperatorProxy op = operators[plan[i].get_index()];
+        for (EffectProxy eff : plan_firing_effects[i]) {
+            if (eff.get_fact() != cond) {
+                continue;
+            }
+            if (coma) {
+                os << ",";
+            }
+            os << "{ \"from\": \"" << op.get_name() << "\", "
+               << "\"fact\": \"" << eff.get_fact().get_name() << "\", "
+               << "\"to\": \"" << to_op.get_name() << "\"}" << endl;
+            return true;
+        }
+    }
+    return false;
+}
+
+
 void SearchSpace::dump(const TaskProxy &task_proxy) const {
     OperatorsProxy operators = task_proxy.get_operators();
     for (StateID id : state_registry) {

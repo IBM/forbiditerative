@@ -54,6 +54,19 @@ inline void feed(HashState &hash_state, const FactPair &fact) {
 
 
 class AbstractTask : public subscriber::SubscriberService<AbstractTask> {
+    void dump_operator_pre_post_to_SAS(std::ostream& os, int pre, FactPair eff, const std::vector<FactPair>& eff_cond) const;
+	void dump_operators_to_SAS(std::ostream &os) const;
+	void dump_operator_to_SAS(std::ostream &os, int op_no) const;
+	void dump_axioms_to_SAS(std::ostream &os) const;
+	void dump_axiom_to_SAS(std::ostream &os, int op_no) const;
+    void dump_mutexes(std::ostream& os) const;
+    void dump_variable(std::ostream& os, std::string name, int axiom_layer, int domain, const std::vector<std::string>& values) const;
+    void dump_version(std::ostream& os) const;
+
+	void dump_variables_to_SAS(std::ostream &os) const;
+	void dump_initial_state_to_SAS(std::ostream &os) const;
+	void dump_goal_to_SAS(std::ostream &os) const;
+        bool is_unit_cost() const;
 public:
     AbstractTask() = default;
     virtual ~AbstractTask() override = default;
@@ -106,6 +119,8 @@ public:
     virtual void convert_state_values(
         std::vector<int> &values,
         const AbstractTask *ancestor_task) const = 0;
+
+    virtual void dump_to_SAS(std::ostream &os) const;
 };
 
 #endif
