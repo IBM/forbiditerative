@@ -1,6 +1,6 @@
 #include "operator_permutation.h"
 
-#include <numeric>
+#include <algorithm> 
 #include <cassert>
 
 
