@@ -42,7 +42,7 @@ void OperatorPermutation::set_value(int op_no, int to_op_no) {
 
 
 void OperatorPermutation::finalize(){
-    ::sort(ops_affected.begin(), ops_affected.end());
+    sort(ops_affected.begin(), ops_affected.end());
 }
 
 bool OperatorPermutation::identity() const{
