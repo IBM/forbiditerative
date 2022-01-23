@@ -6,7 +6,10 @@ import os
 from lab.environments import LocalEnvironment, BaselSlurmEnvironment
 from lab.reports import Attribute, arithmetic_mean, geometric_mean
 
+#from relativescatter import RelativeScatterPlotReport
+
 from downward.reports.compare import ComparativeReport
+from downward.reports.scatter import ScatterPlotReport
 
 import common_setup
 from common_setup import IssueConfig, IssueExperiment
@@ -41,6 +44,8 @@ exp.add_step('build', exp.build)
 exp.add_step('start', exp.start_runs)
 exp.add_fetcher(name='fetch')
 
+exp.add_fetcher('data/2022-01-21-without-deval-lmcut-oss-por-eval')
+
 extra_attributes=[
     Attribute('num_search_generators', absolute=True, min_wins=False),
     Attribute('num_operator_generators', absolute=True, min_wins=False),
@@ -65,7 +70,7 @@ def make_comparison_tables():
                         exp.name, report.output_format))
     report(exp.eval_dir, outfile)
 
-    sreport = RelativeScatterPlotReport(
+    sreport = ScatterPlotReport(
             attributes=["memory"],
             filter_algorithm=["forbid-iterative-lmcut-oss-por", "no-d-eval-lmcut-oss-por"],
             get_category=lambda run1, run2: run1["domain"])
