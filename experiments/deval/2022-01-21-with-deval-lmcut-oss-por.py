@@ -53,6 +53,30 @@ attributes = list(exp.DEFAULT_TABLE_ATTRIBUTES)
 attributes.extend(extra_attributes)
 
 exp.add_absolute_report_step(attributes=attributes)
-exp.add_comparison_table_step(revisions=REVISIONS, attributes=attributes)
+
+
+def make_comparison_tables():
+    compared_configs = [("forbid-iterative-lmcut-oss-por", "no-d-eval-lmcut-oss-por", "Diff (lmcut-oss-por)")]
+
+    report = ComparativeReport(compared_configs, attributes=attributes)
+    outfile = os.path.join(
+                    exp.eval_dir,
+                    "%s-compare.%s" % (
+                        exp.name, report.output_format))
+    report(exp.eval_dir, outfile)
+
+    sreport = RelativeScatterPlotReport(
+            attributes=["memory"],
+            filter_algorithm=["forbid-iterative-lmcut-oss-por", "no-d-eval-lmcut-oss-por"],
+            get_category=lambda run1, run2: run1["domain"])
+    
+    outfile = os.path.join(
+                    exp.eval_dir,
+                    "%s-memory.%s" % (
+                        exp.name, sreport.output_format))
+    sreport(exp.eval_dir, outfile)
+
+exp.add_step("make-comparison-tables", make_comparison_tables)
+
 
 exp.run_steps()
