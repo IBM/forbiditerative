@@ -201,7 +201,7 @@ public:
     void add_plan(PlanManager& plan_manager, const Plan& plan, PlanOrdersReduction reduce_orders);
     bool add_symmetry(std::shared_ptr<Group> group, int gen_index);
 
-    StateID get_initial_state_id() const { return task_proxy.get_initial_state().get_id(); }
+    StateID get_initial_state_id() const { return registry->get_initial_state().get_id(); }
     void dump_plans(PlanManager& plan_manager, size_t number_of_plans);
 
     void dump_graph();

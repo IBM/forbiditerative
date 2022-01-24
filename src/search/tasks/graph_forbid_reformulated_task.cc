@@ -52,7 +52,13 @@ GraphForbidReformulatedTask::GraphForbidReformulatedTask(
 	initial_state_values.push_back(1);
 	initial_state_values.insert(initial_state_values.end(), num_states, 0);
 	// Setting initial state value to 1
-	int initial_state_index = parent->get_num_variables() + 1 + get_state_index(forbidding_graph->get_initial_state_id());
+
+	int init_state = get_state_index(forbidding_graph->get_initial_state_id());
+	if (init_state == -1) {
+		cerr << "State id for the initial state is not found, problem with forbidding graph" <<endl;
+		utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
+	}
+	int initial_state_index = parent->get_num_variables() + 1 + init_state;
 	initial_state_values[initial_state_index] = 1;
 	cout << "Initial state var index: " << initial_state_index << endl;
 }
