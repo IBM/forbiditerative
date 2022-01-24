@@ -119,12 +119,12 @@ class BaseCostOptimalPlannerCall(BasePlannerCall):
 class BaseSatisficingPlannerCall(BasePlannerCall):
     def planner_args(self, **kwargs):
         # LAMA first iteration
-        return ["--heuristic",
-    "hlm,hff=lm_ff_syn(lm_rhw(reasonable_orders=true,lm_cost_type=one),"
-    "                  transform=adapt_costs(one))",
-    "--search", """lazy_greedy([hff,hlm],preferred=[hff,hlm],
+        return ["--evaluator",
+                "hlm=lmcount(lm_factory=lm_rhw(reasonable_orders=true),transform=adapt_costs(one),pref=false)",
+                "--evaluator", "hff=ff(transform=adapt_costs(one))",
+                "--search", """lazy_greedy([hff,hlm],preferred=[hff,hlm],
                                cost_type=one,reopen_closed=false)"""]
-
+        
 class ShortestOptimalPlannerCall(PlannerCall):
     def get_path(self):
         path = os.getenv('SHORTEST_OPTIMAL_FAST_DOWNWARD_PLANNER_PATH')
