@@ -50,6 +50,12 @@ private:
     bool dumping_plans_files;
     int read_plans_and_dump_graph;
     int number_of_edges_until_greedy_clean;
+    std::string external_plan_file;
+    std::string external_plans_path;
+    std::string json_file_to_dump;
+    bool is_external_plan_file;
+    bool is_external_plans_path;
+    bool is_json_file_to_dump;
 
     void get_plan_for_op_ids(const std::vector<int>& plan_ids, Plan& plan) const;
 
@@ -72,7 +78,7 @@ private:
 protected:
 
     virtual void initialize() {}
-    virtual SearchStatus step() { return SOLVED; }
+    virtual SearchStatus step();
 
     void reformulate_and_dump(bool optimal, std::vector<Plan> &plans);
 public:

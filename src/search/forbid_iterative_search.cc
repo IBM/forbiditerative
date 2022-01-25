@@ -40,7 +40,13 @@ ForbidIterativeSearch::ForbidIterativeSearch(const Options &opts)
       dump_debug_info(opts.get<bool>("dump")),
       dumping_plans_files(opts.get<bool>("dumping_plans_files")),
       read_plans_and_dump_graph(opts.get<int>("read_plans_and_dump_graph")),
-      number_of_edges_until_greedy_clean(opts.get<int>("number_of_edges_until_greedy_clean")) {
+      number_of_edges_until_greedy_clean(opts.get<int>("number_of_edges_until_greedy_clean")),
+      external_plan_file(""),
+      external_plans_path(""),
+      json_file_to_dump(""),
+      is_external_plan_file(false),
+      is_external_plans_path(false),
+      is_json_file_to_dump(false) {
 
     if (opts.contains("extend_plans_with_symmetry")) {
         symmetry_group =  opts.get<shared_ptr<Group>>("extend_plans_with_symmetry");
@@ -57,18 +63,53 @@ ForbidIterativeSearch::ForbidIterativeSearch(const Options &opts)
         symmetry_group = nullptr;
     }
     if (opts.contains("external_plan_file")) {
-        // If the option is used, a single plan is loaded, and a reformulation is performed
-        //TODO: Check if can be unified with  external_plans_path
-        Plan plan;
-        plan_manager.load_plan(opts.get<string>("external_plan_file"), plan, task_proxy);
-        vector<Plan> plans = { plan };
 
-        if (reformulate != TaskReformulationType::NONE && 
+        if (reformulate != TaskReformulationType::NONE &&
             reformulate != TaskReformulationType::NONE_FIND_ADDITIONAL_PLANS && 
             reformulate != TaskReformulationType::FORBID_MULTIPLE_PLANS) {
             cerr << "Only FORBID_MULTIPLE_PLANS, NONE, or NONE_FIND_ADDITIONAL_PLANS should be used with a single input plan" << endl;
-            utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);                          
+            utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
         }
+
+        external_plan_file = opts.get<string>("external_plan_file");
+        is_external_plan_file = true;
+    } else if (opts.contains("external_plans_path")) {
+        // If the option is used, multiple plans are loaded
+
+        if (reformulate == TaskReformulationType::FORBID_SINGLE_PLAN ||
+            reformulate == TaskReformulationType::FORBID_MULTIPLE_PLANS ||
+            reformulate == TaskReformulationType::NONE_FIND_ADDITIONAL_PLANS) {
+            cerr << "Only FORBID_SINGLE_PLAN_MULTISET or FORBID_MULTIPLE_PLAN_MULTISETS should be used with multiple plans" << endl;
+            utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
+        }
+
+        if (number_of_plans_to_read <= 0) {
+            cerr << "At least one plan should be specified" << endl;
+            utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
+        }
+        external_plans_path = opts.get<string>("external_plans_path");
+        is_external_plans_path = true;
+        if (opts.contains("json_file_to_dump")) {
+            json_file_to_dump = opts.get<string>("json_file_to_dump");
+            is_json_file_to_dump = true;
+        }
+    }
+}
+
+ForbidIterativeSearch::~ForbidIterativeSearch() {
+}
+
+void ForbidIterativeSearch::print_statistics() const {
+
+}
+
+SearchStatus ForbidIterativeSearch::step() {
+    if (is_external_plan_file) {
+        // If the option is used, a single plan is loaded, and a reformulation is performed
+        //TODO: Check if can be unified with  external_plans_path
+        Plan plan;
+        plan_manager.load_plan(external_plan_file, plan, task_proxy);
+        vector<Plan> plans = { plan };
 
         if (reformulate == TaskReformulationType::NONE_FIND_ADDITIONAL_PLANS) {
             // No reformulation, only dump plans
@@ -107,19 +148,12 @@ ForbidIterativeSearch::ForbidIterativeSearch(const Options &opts)
             reformulate_and_dump(true, plans);
         }
         utils::exit_with(utils::ExitCode::SUCCESS);
-    }
-    if (opts.contains("external_plans_path")) {
+    } else if (is_external_plans_path) {
         // If the option is used, multiple plans are loaded
-        if (number_of_plans_to_read <= 0) {
-            cerr << "At least one plan should be specified" << endl;
-            utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);            
-        }
         vector<Plan> plans;
-        plan_manager.load_plans(opts.get<string>("external_plans_path"), number_of_plans_to_read, plans, task_proxy);
-        if (opts.contains("json_file_to_dump")) {
-            string filename = opts.get<string>("json_file_to_dump");
-
-            ofstream os(filename.c_str());
+        plan_manager.load_plans(external_plans_path, number_of_plans_to_read, plans, task_proxy);
+        if (is_json_file_to_dump) {
+            ofstream os(json_file_to_dump.c_str());
             os << "{ \"plans\" : [" << endl;
             bool first_dumped = false;
             for (const Plan& plan : plans) {
@@ -134,13 +168,6 @@ ForbidIterativeSearch::ForbidIterativeSearch(const Options &opts)
             utils::exit_with(utils::ExitCode::SUCCESS);
         }
         
-        if (reformulate == TaskReformulationType::FORBID_SINGLE_PLAN || 
-            reformulate == TaskReformulationType::FORBID_MULTIPLE_PLANS ||
-            reformulate == TaskReformulationType::NONE_FIND_ADDITIONAL_PLANS) {
-            cerr << "Only FORBID_SINGLE_PLAN_MULTISET or FORBID_MULTIPLE_PLAN_MULTISETS should be used with multiple plans" << endl;
-            utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);                          
-        }
-
         utils::HashSet<Plan> unique_plans;
         vector<Plan> ordered_unique_plans;
         for (const Plan& plan : plans) {
@@ -152,15 +179,8 @@ ForbidIterativeSearch::ForbidIterativeSearch(const Options &opts)
         reformulate_and_dump(false, ordered_unique_plans);
         utils::exit_with(utils::ExitCode::SUCCESS);
     }
+    return SOLVED; 
 }
-
-ForbidIterativeSearch::~ForbidIterativeSearch() {
-}
-
-void ForbidIterativeSearch::print_statistics() const {
-
-}
-
 
 void ForbidIterativeSearch::dump_plan_json(const Plan& plan, std::ostream& os) const {
     int plan_cost = calculate_plan_cost(plan, task_proxy);
@@ -588,6 +608,7 @@ void ForbidIterativeSearch::add_forbid_plan_reformulation_option(OptionParser &p
 }
 
 
+
 static shared_ptr<SearchEngine> _parse(OptionParser &parser) {
     parser.document_synopsis("Forbid iterative search", "");
 
@@ -600,7 +621,6 @@ static shared_ptr<SearchEngine> _parse(OptionParser &parser) {
 
     if (!parser.dry_run()) {
         engine = make_shared<ForbidIterativeSearch>(opts);
-
     }
 
     return engine;
