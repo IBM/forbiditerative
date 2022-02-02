@@ -23,6 +23,7 @@ class ColoringStrategy;
 
 class RedBlackTask {
     TaskProxy task_proxy;
+    const utils::Verbosity verbosity;
     ColoringStrategy coloring;
     bool dump_conflicting_conditional_effects;
     RedBlackTaskCore core;

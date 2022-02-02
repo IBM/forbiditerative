@@ -12,7 +12,7 @@ NoveltyHeuristic::NoveltyHeuristic(const Options &opts)
     : Heuristic(opts), novelty_heuristic(opts.get<shared_ptr<Evaluator>>("eval")),
         solution_found_by_heuristic(false),
         statistics(opts.get<utils::Verbosity>("verbosity")) {
-    cout << "Initializing novelty heuristic..." << endl;
+    utils::g_log  << "Initializing novelty heuristic..." << endl;
     // Setting the value to DEAD_END initially.
     VariablesProxy variables = task_proxy.get_variables();
     novelty_per_variable_value.assign(variables.size(), std::vector<int>());

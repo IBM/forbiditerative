@@ -6,39 +6,40 @@
 using namespace std;
 
 namespace red_black {
-RedBlackTaskCore::RedBlackTaskCore(const AbstractTask &task) :
+RedBlackTaskCore::RedBlackTaskCore(const AbstractTask &task, const utils::Verbosity verbosity) :
                 task_proxy(task),
-                num_invertible_vars(0) {
+                num_invertible_vars(0),
+                verbosity(verbosity) {
     // Creating the dtgs for all variables
     create_extended_DTGs(task);
 }
 
 // initialization
 void RedBlackTaskCore::initialize() {
-    cout << "Initializing Red-Black task core..." << endl;
+    utils::g_log << "Initializing Red-Black task core..." << endl;
 
     // Preparing DTGs and operators for further evaluation of invertibility and other criteria
     prepare_DTGs_for_invertibility_check();
     // Checking invertibility here, move to the appropriate place later (probably to the parser)
     check_invertibility();
 
-    cout << "Number of invertible variables is " << get_num_invertible_vars() << endl;
+    utils::g_log << "Number of invertible variables is " << get_num_invertible_vars() << endl;
     if (get_num_invertible_vars() > 0) {
-#ifdef DEBUG_RED_BLACK
-        // Dumping the black causal graph
-        cout << "Invertible causal graph:" << endl;
-        VariablesProxy variables = task_proxy.get_variables();
-        for (VariableProxy var : variables) {
-            cout << "Variable: " << var.get_name()  << (is_invertible(var) ? "" : " not") <<
-                    " invertible, successors: " << endl;
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            // Dumping the black causal graph
+            utils::g_log << "Invertible causal graph:" << endl;
+            VariablesProxy variables = task_proxy.get_variables();
+            for (VariableProxy var : variables) {
+                utils::g_log << "Variable: " << var.get_name()  << (is_invertible(var) ? "" : " not") <<
+                        " invertible, successors: " << endl;
 
-            for (int succ_id : task_proxy.get_causal_graph().get_successors(var.get_id())) {
-                VariableProxy succ_var = variables[succ_id];
-                cout << succ_var.get_name() << (is_invertible(succ_var) ? "" : " not") <<
-                        " invertible" << endl;
+                for (int succ_id : task_proxy.get_causal_graph().get_successors(var.get_id())) {
+                    VariableProxy succ_var = variables[succ_id];
+                    utils::g_log << succ_var.get_name() << (is_invertible(succ_var) ? "" : " not") <<
+                            " invertible" << endl;
+                }
             }
         }
-#endif
 
         // Setting goal values for all vars
         GoalsProxy goals = task_proxy.get_goals();
@@ -50,7 +51,7 @@ void RedBlackTaskCore::initialize() {
 
         free_initial_data();
     }
-    cout << "Finished initializing Red-Black task core at time step [t=" << utils::g_timer << "]" << endl;
+    utils::g_log << "Finished initializing Red-Black task core" << endl;
 }
 
 void RedBlackTaskCore::free_mem() {
@@ -64,7 +65,7 @@ void RedBlackTaskCore::free_mem() {
 }
 
 void RedBlackTaskCore::create_extended_DTGs(const AbstractTask &task) {
-    cout << "Initializing extended DTGs" << endl;
+    utils::g_log << "Initializing extended DTGs" << endl;
     // Creating the extended DTGs from actions
 
     VariablesProxy variables = task_proxy.get_variables();
@@ -75,7 +76,7 @@ void RedBlackTaskCore::create_extended_DTGs(const AbstractTask &task) {
 
 void RedBlackTaskCore::prepare_DTGs_for_invertibility_check() {
     // For now, setting the operators by preconditions for all variables
-    cout << "Adding " << task_proxy.get_operators().size() << " operators to extended DTGs" << endl;
+    utils::g_log << "Adding " << task_proxy.get_operators().size() << " operators to extended DTGs" << endl;
     // Step 2: Add ops by transition.
     red_black_sas_operators.resize(task_proxy.get_operators().size());
     for (size_t op_no = 0; op_no < task_proxy.get_operators().size(); ++op_no) {
@@ -83,7 +84,7 @@ void RedBlackTaskCore::prepare_DTGs_for_invertibility_check() {
         red_black_sas_operators[op_no] = rb_sas_op;
         // Adding operator index to each proposition of the precondition
 
-//        cout << op_no << ": Created SAS operator" << endl;
+//        utils::g_log << op_no << ": Created SAS operator" << endl;
         // Here, all effects are still red
         for (EffectProxy eff : rb_sas_op->get_red_effect()) {
             VariableProxy var = eff.get_fact().get_variable();
@@ -106,7 +107,7 @@ void RedBlackTaskCore::prepare_DTGs_for_invertibility_check() {
 }
 
 void RedBlackTaskCore::check_invertibility() {
-    cout << "Checking invertibility..." << endl;
+    utils::g_log << "Checking invertibility..." << endl;
     invertible_vars.assign(task_proxy.get_variables().size(), false);
     VariablesProxy variables = task_proxy.get_variables();
     for (VariableProxy var : variables) {
@@ -115,11 +116,11 @@ void RedBlackTaskCore::check_invertibility() {
             num_invertible_vars++;
         }
     }
-    cout << "Done checking invertibility" << endl;
+    utils::g_log << "Done checking invertibility" << endl;
 }
 
 void RedBlackTaskCore::check_connectivity() {
-    cout << "Checking connectivity..." << endl;
+    utils::g_log << "Checking connectivity..." << endl;
     VariablesProxy variables = task_proxy.get_variables();
     for (VariableProxy var : variables) {
         /*
@@ -130,7 +131,7 @@ void RedBlackTaskCore::check_connectivity() {
         */
         connectivity_status.push_back(get_dtg(var)->check_connectivity());
     }
-    cout << "Done checking connectivity" << endl;
+    utils::g_log << "Done checking connectivity" << endl;
 }
 
 void RedBlackTaskCore::free_initial_data() {

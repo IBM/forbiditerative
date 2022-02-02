@@ -1,5 +1,5 @@
 #include "red_black_operator.h"
-
+#include "../utils/logging.h"
 #include <map>
 
 using namespace std;
@@ -210,32 +210,32 @@ void RedBlackOperator::apply(int *curr_state_buffer) const {
 }
 
 void RedBlackOperator::dump() const {
-    cout << "< red: ";
+    utils::g_log << "< red: ";
     for (FactProxy fact : red_precondition) {
-        cout << " [" << fact.get_name() <<"]";
+        utils::g_log << " [" << fact.get_name() <<"]";
     }
-    cout << ", black: ";
+    utils::g_log << ", black: ";
     for (FactProxy fact : black_precondition) {
-        cout << " [" << fact.get_name() <<"]";
+        utils::g_log << " [" << fact.get_name() <<"]";
     }
-    cout << " | red: ";
+    utils::g_log << " | red: ";
     for (EffectProxy eff : red_effect) {
-        cout << " [";
+        utils::g_log << " [";
         EffectConditionsProxy conditions = eff.get_conditions();
         for (FactProxy fact : conditions) {
-            cout << " " << fact.get_name();
+            utils::g_log << " " << fact.get_name();
         }
-        cout << " => " << eff.get_fact().get_name() << "]";
+        utils::g_log << " => " << eff.get_fact().get_name() << "]";
     }
-    cout << ", black: ";
+    utils::g_log << ", black: ";
     for (EffectProxy eff : black_effect) {
-        cout << " [";
+        utils::g_log << " [";
         EffectConditionsProxy conditions = eff.get_conditions();
         for (FactProxy fact : conditions) {
-            cout << " " << fact.get_name();
+            utils::g_log << " " << fact.get_name();
         }
-        cout << " => " << eff.get_fact().get_name() << "]";
+        utils::g_log << " => " << eff.get_fact().get_name() << "]";
     }
-    cout << " >" << endl;
+    utils::g_log << " >" << endl;
 }
 }

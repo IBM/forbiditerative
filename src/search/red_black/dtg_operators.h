@@ -140,6 +140,7 @@ public:
     virtual ~DtgOperators();
 
     static bool use_astar;
+    static utils::Verbosity verbosity;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     // Used once, in the initialization. Not used during the search for heuristic computation.

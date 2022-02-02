@@ -96,13 +96,4 @@ if(PLUGIN_LP_SOLVER_ENABLED AND USE_LP)
     endif()
 endif()
 
-
-option(
-  DEBUG_RED_BLACK
-  "Compile with debug info for RB heuristic."
-  FALSE)
-
-if(DEBUG_RED_BLACK)
-    add_definitions("-D DEBUG_RED_BLACK")
-endif()
   

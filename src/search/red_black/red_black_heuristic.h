@@ -47,6 +47,8 @@ class RedBlackHeuristic: public ff_heuristic::FFHeuristic {
     bool solution_found_by_heuristic;
     const bool extract_plan;
     bool initialized;
+    const utils::Verbosity verbosity;
+
     int *curr_state_buffer;
     void initialize();
     int get_red_black_plan_cost(const State &state);

@@ -21,8 +21,9 @@ NoveltyHeuristicTest::NoveltyHeuristicTest(const Options &opts)
 	  preferred_operators_from_evals(false),
 	  multiplier(opts.get<int>("multiplier")),
 	  reached_by_op_id(-1),
+      verbosity(opts.get<utils::Verbosity>("verbosity")),
       statistics(opts.get<utils::Verbosity>("verbosity"))  {
-    cout << "Initializing novelty heuristic..." << endl;
+    utils::g_log  << "Initializing novelty heuristic..." << endl;
 
     if (cutoff_type == NO_CUTOFF) {
         // In this case, we don't need to store novelty values per operator
@@ -39,11 +40,13 @@ NoveltyHeuristicTest::NoveltyHeuristicTest(const Options &opts)
 		novelty_per_variable_value[var.get_id()].assign(var.get_domain_size(), std::vector<int>(novelty_heuristics.size(), DEAD_END));
 	}
 	if (store_values_for_operators()) {
-    	cout << "Allocating memory for storing heuristic values per operator" << endl;
+		if (verbosity >= utils::Verbosity::NORMAL) {
+	    	utils::g_log  << "Allocating memory for storing heuristic values per operator" << endl;
+		}
 		OperatorsProxy operators = task_proxy.get_operators();
 		novelty_per_operator.assign(operators.size(), std::vector<int>(novelty_heuristics.size(), DEAD_END));
     }
-	cout << "Done initializing novelty heuristic" << endl;
+	utils::g_log  << "Done initializing novelty heuristic" << endl;
 }
 
 NoveltyHeuristicTest::~NoveltyHeuristicTest() {
@@ -91,7 +94,9 @@ int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
 			if (reached_by_op_id.get_index() >= 0 && store_values_for_operators()) {
 				int curr_value = get_value_for_operator(reached_by_op_id, heuristic_index);
 				if (curr_value == DEAD_END || curr_value > value) {
-					//cout << "Updating value for operator " << reached_by_op_id << " from " << curr_value << " to " << value << endl;
+					if (verbosity >= utils::Verbosity::DEBUG) {
+						utils::g_log  << "Updating value for operator " << reached_by_op_id << " from " << curr_value << " to " << value << endl;
+					}
 					update_value_for_operator(reached_by_op_id, heuristic_index, value);
 				}
 			}
@@ -188,7 +193,6 @@ int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
 		strictly_better_novelty_facts_estimate += compute_aggregated_score(novel_values_for_fact);
 		strictly_worse_novelty_facts_estimate += compute_aggregated_score(non_novel_values_for_fact);
 	}
-	//	cout << "-----------------------------------------------------------------------" << endl;
 
 	int ret = multiplier * task_proxy.get_variables().size();
 	if (type == BASIC) {
@@ -203,8 +207,9 @@ int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
 	} else {
 		utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
 	}
-	if (dump_value)
-		cout << "NoveltyValue " << ret << endl;
+	if (dump_value) {
+		utils::g_log  << "NoveltyValue " << ret << endl;
+	}
 	return ret;
 }
 
@@ -221,20 +226,20 @@ void NoveltyHeuristicTest::notify_state_transition(
 // bool NoveltyHeuristicTest::is_preferred(OperatorID op_id, int heuristic_index, int heuristic_value) const {
 	
 // 	// Check first if the heuristic thinks the op is preferred
-// 	cout << "Checking if the operator " << op_id << " is preferred by the heuristic " << heuristic_index << endl;
+// 	utils::g_log  << "Checking if the operator " << op_id << " is preferred by the heuristic " << heuristic_index << endl;
 // 	if ( ! novelty_heuristics[heuristic_index]->is_preferred( task_proxy.get_operators()[op_id] ) ) {
-// 		cout << "not preferred" << endl;
+// 		utils::g_log  << "not preferred" << endl;
 // 		return false;
 // 	}
-// 	cout << "preferred, now checking if it is novel" << endl;
+// 	utils::g_log  << "preferred, now checking if it is novel" << endl;
 
 // 	int curr_value = get_value_for_operator(op_id, heuristic_index);
-// 	cout << "Currently stored value for operator: " << curr_value << ", new heuristic value: " << heuristic_value << endl;
+// 	utils::g_log  << "Currently stored value for operator: " << curr_value << ", new heuristic value: " << heuristic_value << endl;
 // 	if (curr_value == DEAD_END || curr_value > heuristic_value) {
-// 		cout << "novel" << endl;
+// 		utils::g_log  << "novel" << endl;
 // 		return true;
 // 	} 
-// 	cout << "not novel" << endl;
+// 	utils::g_log  << "not novel" << endl;
 // 	return false;
 // }
 
@@ -265,14 +270,15 @@ int NoveltyHeuristicTest::get_estimate_novel(int curr_value, int heur_value) con
 	}
 	//Here, curr_value > heur_value
 	if (type == BASIC || type == SEPARATE_NOVEL || type == SEPARATE_BOTH) {
-//		cout << "1" << endl;
 		return multiplier;
 	}
 
 	if (type == SEPARATE_BOTH_AGGREGATE) {
 		// Here, we return a value between 0 and multiplier
 		double diff =  ((double) (curr_value - heur_value)) / novelty_heuristics_largest_value;
-//		cout << diff << endl;
+		if (verbosity >= utils::Verbosity::DEBUG) {
+			utils::g_log  << diff << endl;
+		}
 		return (int) (multiplier * diff);
 	}
 	utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
@@ -282,21 +288,21 @@ int NoveltyHeuristicTest::get_estimate_non_novel(int curr_value, int heur_value)
 	if (type == BASIC ||
 		type == SEPARATE_NOVEL ||
 		curr_value == heur_value) {
-//		cout << "0" << endl;
 		return 0;
 	}
 
 	//Here, curr_value < heur_value
 	if (type == SEPARATE_BOTH) {
-//		cout << "1" << endl;
 		return multiplier;
 	}
 
 	if (type == SEPARATE_BOTH_AGGREGATE) {
 		// Here, we return a value between 1 and multiplier
 	    double diff =  ((double) (heur_value - curr_value)) / novelty_heuristics_largest_value;
-//		cout << diff << endl;
-//		cout << "h: " << heur_value << " - c: " << curr_value << " =  " << diff << " * multiplier: " << multiplier <<  " / "<< novelty_heuristics_largest_value << " = " << (int) (multiplier * diff)  << endl;
+		if (verbosity >= utils::Verbosity::DEBUG) {
+			utils::g_log  << diff << endl;
+			utils::g_log  << "h: " << heur_value << " - c: " << curr_value << " =  " << diff << " * multiplier: " << multiplier <<  " / "<< novelty_heuristics_largest_value << " = " << (int) (multiplier * diff)  << endl;
+		}
 		return (int) (multiplier * diff);
 	}
 	utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);

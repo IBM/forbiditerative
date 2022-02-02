@@ -3,6 +3,7 @@
 #include "red_black_heuristic.h"
 #include "../algorithms/transitive_closure.h"
 #include "../algorithms/sccs.h"
+#include "../utils/logging.h"
 
 #include <cassert>
 #include <limits>
@@ -11,7 +12,8 @@
 #include <vector>
 
 namespace red_black {
-bool DtgOperators::use_astar = false;
+bool DtgOperators::use_astar = false; 
+utils::Verbosity DtgOperators::verbosity = utils::Verbosity::SILENT;
 
 DtgOperators::DtgOperators(int v, const AbstractTask &task) :
                 task_proxy(task),
@@ -28,9 +30,9 @@ DtgOperators::DtgOperators(int v, const AbstractTask &task) :
                 shortest_paths_calculated(false),
                 is_red_connected(false)    {
 
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Creating variable " << task_proxy.get_variables()[var].get_name() << " with domain size " << range << ", allocating " << range * range << " vectors for sas actions" << endl;
-//#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Creating variable " << task_proxy.get_variables()[var].get_name() << " with domain size " << range << ", allocating " << range * range << " vectors for sas actions" << endl;
+    }
     ops_by_from_to.assign(range,vector<vector<op_eff_pair>>());
     for (int value = 0; value < range; ++value) {
         ops_by_from_to[value].assign(range, vector<op_eff_pair>());
@@ -58,9 +60,9 @@ DtgOperators::DtgOperators(int v, const AbstractTask &task) :
 
 void DtgOperators::set_use_black_reachable() {
     use_black_reachable = true;
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Assigning initial values 0 to reachable black values for variable " << task_proxy.get_variables()[var].get_name() << " with range " << range << endl;
-//#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Assigning initial values 0 to reachable black values for variable " << task_proxy.get_variables()[var].get_name() << " with range " << range << endl;
+    }
     reachable_black_vals.assign(range, 0);
     number_reachable_black_vals = 0;
 }
@@ -69,9 +71,9 @@ void DtgOperators::initialize_black(RedBlackHeuristic* base) {
     if (black_initialized)
         return;
     black_initialized = true;
-#ifdef DEBUG_RED_BLACK
-    cout << "Initializing black variable " << task_proxy.get_variables()[var].get_name() << " with domain size " << range << ", allocating vector of size " << task_proxy.get_operators().size() << " for storing relevant action ids" << endl;
-#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Initializing black variable " << task_proxy.get_variables()[var].get_name() << " with domain size " << range << ", allocating vector of size " << task_proxy.get_operators().size() << " for storing relevant action ids" << endl;
+    }
 
     // Allocating the memory for Dijkstra calculation
     dijkstra_distance = new int[range];
@@ -100,9 +102,9 @@ void DtgOperators::clear_all_marks() {
 
 // For red vars: keeping the red sufficient values
 void DtgOperators::clear_sufficient() {
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Clearing sufficient values for variable " << var << " with goal value " << goal_val  << " and number sufficient unachieved values: " << number_sufficient_unachieved_vals << endl;
-//#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Clearing sufficient values for variable " << var << " with goal value " << goal_val  << " and number sufficient unachieved values: " << number_sufficient_unachieved_vals << endl;
+    }
 
     if (!use_sufficient_unachieved || (goal_val == -1 && number_sufficient_unachieved_vals == 0)
              || (goal_val != -1 && number_sufficient_unachieved_vals == 1))
@@ -114,9 +116,9 @@ void DtgOperators::clear_sufficient() {
     red_sufficient_achieved.assign(range, false);
     // Marking goal value
     if (-1 != goal_val) {
-#ifdef DEBUG_RED_BLACK
-        cout << "[RedSufficient Goal]: [" << task_proxy.get_variables()[var].get_fact(goal_val).get_name() << "]" << endl;
-#endif
+    	if (verbosity >= utils::Verbosity::DEBUG) {
+            utils::g_log << "[RedSufficient Goal]: [" << task_proxy.get_variables()[var].get_fact(goal_val).get_name() << "]" << endl;
+        }
         red_sufficient_unachieved_iterators[goal_val] = red_sufficient_unachieved.insert(red_sufficient_unachieved.end(), goal_val);
         number_sufficient_unachieved_vals++;
     }
@@ -127,9 +129,9 @@ bool DtgOperators::is_sufficient_unachieved(int val) const {
 }
 
 void DtgOperators::mark_as_sufficient(int val) {
-//#ifdef DEBUG_RED_BLACK
-//    cout << "mark_as_sufficient(" << val << ")" << endl;
-//#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "mark_as_sufficient(" << val << ")" << endl;
+    }
 
     if (!use_sufficient_unachieved || is_sufficient_unachieved(val))
         return;
@@ -137,26 +139,26 @@ void DtgOperators::mark_as_sufficient(int val) {
     // Only done when no achieved vals were marked yet.
     red_sufficient_unachieved_iterators[val] = red_sufficient_unachieved.insert(red_sufficient_unachieved.end(), val);
     number_sufficient_unachieved_vals++;
-#ifdef DEBUG_RED_BLACK
-    cout << "[RedSufficient]: [" << task_proxy.get_variables()[var].get_fact(val).get_name() << "]" << endl;
-#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "[RedSufficient]: [" << task_proxy.get_variables()[var].get_fact(val).get_name() << "]" << endl;
+    }
 }
 
 
 void DtgOperators::postpone_sufficient_goal() {
-//#ifdef DEBUG_RED_BLACK
-//    cout << "postpone_sufficient_goal for variable " << var << endl;
-//#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "postpone_sufficient_goal for variable " << var << endl;
+    }
     if (!use_sufficient_unachieved)
         return;
     if (-1 == goal_val)
         return;
 
-#ifdef DEBUG_RED_BLACK
-    if (!is_sufficient_unachieved(goal_val)) {
-        cout << "The goal value is not sufficient unachieved!! " << endl;
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        if (!is_sufficient_unachieved(goal_val)) {
+            utils::g_log << "The goal value is not sufficient unachieved!! " << endl;
+        }
     }
-#endif
     // Removing from the beginning
     red_sufficient_unachieved.erase(red_sufficient_unachieved_iterators[goal_val]);
     // Adding to the end
@@ -177,26 +179,26 @@ void DtgOperators::clear_reachable() {
     if (!use_black_reachable || number_reachable_black_vals == 0)
         return;
 
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Assigning initial values 0 to reachable black values for variable " << task_proxy.get_variables()[var].get_name() << " with range " << range << endl;
-//#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Assigning initial values 0 to reachable black values for variable " << task_proxy.get_variables()[var].get_name() << " with range " << range << endl;
+    }
     reachable_black_vals.assign(range, 0);
     number_reachable_black_vals = 0;
-//#ifdef DEBUG_RED_BLACK
-//    cout << "The number of values is now " << reachable_black_vals.size() << endl;
-//#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "The number of values is now " << reachable_black_vals.size() << endl;
+    }
 }
 
 bool DtgOperators::mark_as_reachable(int val) {
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Reachable black vals for variable " << task_proxy.get_variables()[var].get_name() << " are of size " << reachable_black_vals.size() << endl;
-//#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Reachable black vals for variable " << task_proxy.get_variables()[var].get_name() << " are of size " << reachable_black_vals.size() << endl;
+    }
     if (reachable_black_vals[val] > 0)
         return false;
 
-#ifdef DEBUG_RED_BLACK
-    cout << "Reachable black value " << task_proxy.get_variables()[var].get_fact(val).get_name()  << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Reachable black value " << task_proxy.get_variables()[var].get_fact(val).get_name()  << endl;
+    }
 
     reachable_black_vals[val] = 1;
     number_reachable_black_vals++;
@@ -204,10 +206,10 @@ bool DtgOperators::mark_as_reachable(int val) {
 }
 
 void DtgOperators::update_reachable() {
-#ifdef DEBUG_RED_BLACK
-    cout << "Update black reachable, use_black_reachable: " << use_black_reachable << ", " << "number of reachable blacks: " << number_reachable_black_vals << ", out of " << range  << endl;
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Update black reachable, use_black_reachable: " << use_black_reachable << ", " << "number of reachable blacks: " << number_reachable_black_vals << ", out of " << range  << endl;
     //dump_complete_forward_graph();
-#endif
+    }
     if (!use_black_reachable || number_reachable_black_vals == range)
         return;
 
@@ -225,10 +227,10 @@ void DtgOperators::update_reachable() {
         bool all_transitions_enabled = true;
         for (size_t i = 0; i < complete_forward_graph[state].size(); ++i) {
             const GraphEdge& transition = complete_forward_graph[state][i];
-#ifdef DEBUG_RED_BLACK
-            cout << "Transition:  "<< state << " -> " << transition.to << ", operator "
-                    << task_proxy.get_operators()[transition.op_no].get_name() << ", initially enabled: " << transition.initially_enabled  << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "Transition:  "<< state << " -> " << transition.to << ", operator "
+                        << task_proxy.get_operators()[transition.op_no].get_name() << ", initially enabled: " << transition.initially_enabled  << endl;
+            }
 
             if (!transition.initially_enabled &&
                     !base_pointer->op_is_enabled(transition.op_no)) {
@@ -245,9 +247,9 @@ void DtgOperators::update_reachable() {
         if (all_transitions_enabled)
             reachable_black_vals[state] = 2;
     }
-#ifdef DEBUG_RED_BLACK
-    cout << "Finished updating black reachable, number of reachable blacks: " << number_reachable_black_vals << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Finished updating black reachable, number of reachable blacks: " << number_reachable_black_vals << endl;
+    }
 }
 
 
@@ -255,9 +257,9 @@ bool DtgOperators::is_reachable(int val) const {
     if (!use_black_reachable)
         return false;
 
-#ifdef DEBUG_RED_BLACK
-    cout << "Reachability status for " << task_proxy.get_variables()[var].get_fact(val).get_name() << " is " << reachable_black_vals[val] << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Reachability status for " << task_proxy.get_variables()[var].get_fact(val).get_name() << " is " << reachable_black_vals[val] << endl;
+    }
     return reachable_black_vals[val] > 0;
 }
 
@@ -282,9 +284,9 @@ void DtgOperators::clear_initial_data() {
 
 void DtgOperators::clear_black_data_for_red_var() {
     // Clearing all data needed for black vars only
-#ifdef DEBUG_RED_BLACK
-    cout << "Removing unnecessary black data for red variable " << var << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Removing unnecessary black data for red variable " << var << endl;
+    }
     if (dijkstra_distance) {
         delete dijkstra_distance;
         dijkstra_distance = 0;
@@ -310,9 +312,9 @@ void DtgOperators::clear_black_data_for_red_var() {
 bool DtgOperators::mark_achieved_val(int val, bool is_black) {
     // Returns true if the value was not marked yet
 
-#ifdef DEBUG_RED_BLACK
-    cout << "Marking value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << " for " << (is_black ? "black" : "red") << " variable" << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Marking value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << " for " << (is_black ? "black" : "red") << " variable" << endl;
+    }
     assert(val >= 0 && val < range);
 /*
  * Disabled to support maintaining red values for black variables as well
@@ -326,8 +328,8 @@ bool DtgOperators::mark_achieved_val(int val, bool is_black) {
 /* Disabled
     // Error test:
     if (use_sufficient_unachieved && sufficient_unachieved_vals[val] && achieved_vals[val]) {
-        cout << "Something is wrong here!! Value " << val << " of variable " << var << " should not be marked as sufficient unachieved!" << endl;
-        ::exit(1);
+        cerr << "Something is wrong here!! Value " << val << " of variable " << var << " should not be marked as sufficient unachieved!" << endl;
+        utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
     }
 */
     if (!is_black && achieved_vals[val])
@@ -351,18 +353,18 @@ bool DtgOperators::mark_achieved_val(int val, bool is_black) {
             red_sufficient_achieved[val] = true;
         }
     }
-#ifdef DEBUG_RED_BLACK
-    cout << "Marked achieved value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << ", missing value: " << missing_value << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Marked achieved value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << ", missing value: " << missing_value << endl;
+    }
     return true;
 }
 
 void DtgOperators::mark_missing_val(int val) {
     assert(val >= 0 && val < range);
     missing_value = val;
-#ifdef DEBUG_RED_BLACK
-    cout << "Marked missing value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Marked missing value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << endl;
+    }
 }
 
 void DtgOperators::clear_missing_mark() {
@@ -424,9 +426,9 @@ bool DtgOperators::is_condition_included(FactProxy cond, op_eff_pair op_eff) con
 
 bool DtgOperators::is_transition_invertible(int from_value, int to_value) const {
     for (op_eff_pair op_eff : get_ops_from_to(from_value, to_value)) {
-#ifdef DEBUG_RED_BLACK
-        cout << "Checking transition that correspond to operator " << task_proxy.get_operators()[op_eff.first->get_op_no()].get_name() << endl;
-#endif
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            utils::g_log << "Checking transition that correspond to operator " << task_proxy.get_operators()[op_eff.first->get_op_no()].get_name() << endl;
+        }
         if (!is_op_transition_invertible(op_eff, from_value, to_value))
             return false;
     }
@@ -437,15 +439,15 @@ bool DtgOperators::is_op_transition_invertible(op_eff_pair op_eff, int from_valu
     // check if there exists a transition with preconditions contained in pre + eff of this one
     for (op_eff_pair to_op_eff : get_ops_from_to(to_value, from_value)) {
         if (is_transition_invertible_by_op_conditional(op_eff, to_op_eff)) {
-#ifdef DEBUG_RED_BLACK
-            cout << "   Invertible by operator " << task_proxy.get_operators()[to_op_eff.first->get_op_no()].get_name() << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "   Invertible by operator " << task_proxy.get_operators()[to_op_eff.first->get_op_no()].get_name() << endl;
+            }
             return true;
         }
     }
-#ifdef DEBUG_RED_BLACK
-            cout << "   NOT Invertible" << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "   NOT Invertible" << endl;
+    }
     return false;
 }
 
@@ -476,9 +478,9 @@ bool DtgOperators::is_transition_invertible_by_op_conditional(op_eff_pair op_eff
 
 bool DtgOperators::check_invertibility() const {
     bool ret = true;
-#ifdef DEBUG_RED_BLACK
-        cout << "Checking invertibility of variable " << task_proxy.get_variables()[var].get_name() << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Checking invertibility of variable " << task_proxy.get_variables()[var].get_name() << endl;
+    }
 
     // Going over each pair of values, for each transition see if there is an invertible one
     for (int from_value = 0; from_value < range; ++from_value) {
@@ -486,10 +488,10 @@ bool DtgOperators::check_invertibility() const {
             if (from_value == to_value)
                 continue;
 
-#ifdef DEBUG_RED_BLACK
-            cout << "Checking transition: " << task_proxy.get_variables()[var].get_fact(from_value).get_name() << "  -->  "
-                  << task_proxy.get_variables()[var].get_fact(to_value).get_name() << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "Checking transition: " << task_proxy.get_variables()[var].get_fact(from_value).get_name() << "  -->  "
+                    << task_proxy.get_variables()[var].get_fact(to_value).get_name() << endl;
+            }
 
             if (!is_transition_invertible(from_value, to_value)) {
                 ret = false;
@@ -610,10 +612,10 @@ void DtgOperators::calculate_shortest_paths_for_root() {
     if (shortest_paths_calculated)
         return;
     shortest_paths_calculated = true;
-#ifdef DEBUG_RED_BLACK
-    cout << "=================> Variable " << var << " (" << task_proxy.get_variables()[var].get_name() << ") with domain size " << range << " is root, calculating shortest paths in advance" << endl;
-    dump_complete_forward_graph();
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "=================> Variable " << var << " (" << task_proxy.get_variables()[var].get_name() << ") with domain size " << range << " is root, calculating shortest paths in advance" << endl;
+        dump_complete_forward_graph();
+    }
     set_root();
     // All pairs shortest path
     solution = new int*[range];
@@ -634,8 +636,8 @@ void DtgOperators::calculate_shortest_paths_for_root() {
             // Going over the edges
             const GraphEdge& edge = complete_forward_graph[val0][e];
             if (!edge.initially_enabled) {
-                cout << "Edge is not initially enabled for the root variable!! Bug!" << endl;
-                ::exit(1);
+                cerr << "Edge is not initially enabled for the root variable!! Bug!" << endl;
+                utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
             }
             int to_val = edge.to;
             assert(to_val >= 0 && to_val < range);
@@ -643,10 +645,10 @@ void DtgOperators::calculate_shortest_paths_for_root() {
             sol_edges[val0][to_val].push_back(edge.op_no);
         }
     }
-//#ifdef DEBUG_RED_BLACK
-//    cout << "After setting the initial edges, ";
-//    dump_shortest_paths_for_root();
-//#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "After setting the initial edges, ";
+        dump_shortest_paths_for_root();
+    }
 
     for (int k=0; k<range; ++k) {
         for (int i=0; i<range; ++i) {
@@ -659,38 +661,38 @@ void DtgOperators::calculate_shortest_paths_for_root() {
                 int new_dist = solution[i][k] + solution[k][j];
                 if (new_dist < solution[i][j]) {
                     // Update
-//#ifdef DEBUG_RED_BLACK
-//                    cout << "Distance from "<< i << " to " << j << ", old distance: " << solution[i][j] << ", new distance via " << k << ": " << new_dist << ", updating from" << endl;
-//                    dump_shortest_paths_for_root_from_to(i, j);
-//                    cout << "to"<<endl;
-//                    dump_shortest_paths_for_root_from_to(i, k);
-//                    dump_shortest_paths_for_root_from_to(k, j);
-//#endif
+                    if (verbosity >= utils::Verbosity::DEBUG) {
+                        utils::g_log << "Distance from "<< i << " to " << j << ", old distance: " << solution[i][j] << ", new distance via " << k << ": " << new_dist << ", updating from" << endl;
+                        dump_shortest_paths_for_root_from_to(i, j);
+                        utils::g_log << "to"<<endl;
+                        dump_shortest_paths_for_root_from_to(i, k);
+                        dump_shortest_paths_for_root_from_to(k, j);
+                    }
                     solution[i][j] = new_dist;
                     sol_edges[i][j].clear();
                     sol_edges[i][j].reserve(sol_edges[i][k].size() + sol_edges[k][j].size());
                     sol_edges[i][j].insert(sol_edges[i][j].end(), sol_edges[i][k].begin(), sol_edges[i][k].end());
                     sol_edges[i][j].insert(sol_edges[i][j].end(), sol_edges[k][j].begin(), sol_edges[k][j].end());
-//#ifdef DEBUG_RED_BLACK
-//                    cout << "Updated:"<<endl;
-//                    dump_shortest_paths_for_root_from_to(i, j);
-//#endif
+                    if (verbosity >= utils::Verbosity::DEBUG) {
+                        utils::g_log << "Updated:"<<endl;
+                        dump_shortest_paths_for_root_from_to(i, j);
+                    }
                 }
             }
         }
     }
-//#ifdef DEBUG_RED_BLACK
-//    dump_shortest_paths_for_root();
-//#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        dump_shortest_paths_for_root();
+    }
 }
 
 void DtgOperators::free_solution() {
     if (solution == 0)
         return;
     // Freeing memory;
-#ifdef DEBUG_RED_BLACK
-    cout << "=================> Freeing solution for variable " << var << " [" << task_proxy.get_variables()[var].get_name() << "]" << endl;
-#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "=================> Freeing solution for variable " << var << " [" << task_proxy.get_variables()[var].get_name() << "]" << endl;
+    }
     for (int val0=0; val0<range; ++val0) {
         if (solution[val0])
             delete [] solution[val0];
@@ -704,9 +706,9 @@ void DtgOperators::free_solution_edges_for_root() {
     if (sol_edges == 0)
         return;
     // Freeing memory;
-#ifdef DEBUG_RED_BLACK
-    cout << "=================> Freeing solution edges for variable " << var << " [" << task_proxy.get_variables()[var].get_name() << "]" << endl;
-#endif
+	if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "=================> Freeing solution edges for variable " << var << " [" << task_proxy.get_variables()[var].get_name() << "]" << endl;
+    }
     for (int val0=0;val0<range;++val0) {
         if (sol_edges[val0])
             delete [] sol_edges[val0];
@@ -718,27 +720,27 @@ void DtgOperators::free_solution_edges_for_root() {
 void DtgOperators::add_edge_to_complete_forward_graph(int from, int to, int op_no, int op_cost, bool no_red_prec) {
     if (is_red_connected && !ops_sufficient[op_no])
         return;
-#ifdef DEBUG_RED_BLACK
-//    cout << "Creating the edge: to=" << to << ", op_no="<< op_no << ", op_cost=" << op_cost << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Creating the edge: to=" << to << ", op_no="<< op_no << ", op_cost=" << op_cost << endl;
+    }
     GraphEdge edge(to, op_no, op_cost, no_red_prec);
-#ifdef DEBUG_RED_BLACK
-//    cout << "Forward graph size " << complete_forward_graph.size() << ", range: " << range << endl;
-//    cout << "Adding to forward graph: from=" << from << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Forward graph size " << complete_forward_graph.size() << ", range: " << range << endl;
+        utils::g_log << "Adding to forward graph: from=" << from << endl;
+    }
     complete_forward_graph[from].push_back(edge);
-#ifdef DEBUG_RED_BLACK
-//    cout << "Done adding to forward graph" << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Done adding to forward graph" << endl;
+    }
 }
 
 void DtgOperators::calculate_shortest_paths_ignore_prevail_conditions() {
     if (shortest_paths_calculated)
         return;
     shortest_paths_calculated = true;
-#ifdef DEBUG_RED_BLACK
-    cout << "=================> Calculating shortest paths in advance for variable " << var << " (" << task_proxy.get_variables()[var].get_name() << ") with domain size " << range << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "=================> Calculating shortest paths in advance for variable " << var << " (" << task_proxy.get_variables()[var].get_name() << ") with domain size " << range << endl;
+    }
     // All pairs shortest path
     solution = new int*[range];
 
@@ -751,9 +753,9 @@ void DtgOperators::calculate_shortest_paths_ignore_prevail_conditions() {
                 solution[val0][val1] = numeric_limits<int>::max();
             }
         }
-#ifdef DEBUG_RED_BLACK
-        cout << "----------> complete_forward_graph size: " << complete_forward_graph.size() << endl;
-#endif
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            utils::g_log << "----------> complete_forward_graph size: " << complete_forward_graph.size() << endl;
+        }
 
         // Now going over the forward graph, setting the initial values
         for (size_t e = 0; e < complete_forward_graph[val0].size(); ++e) {
@@ -785,8 +787,8 @@ void DtgOperators::calculate_shortest_paths_ignore_prevail_conditions() {
 
 int DtgOperators::get_shortest_distance_ignore_prevail_conditions(int from, int to) const {
     if (solution == 0) {
-        cout << "Should not be called here! Bug!" << endl;
-        ::exit(1);
+        cerr << "Should not be called here! Bug!" << endl;
+        utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
     }
     assert(from >= 0 && from < range);
     assert(to >= 0 && to < range);
@@ -794,34 +796,34 @@ int DtgOperators::get_shortest_distance_ignore_prevail_conditions(int from, int 
 }
 
 void DtgOperators::dump_shortest_paths_for_root() const {
-    cout << "The shortest paths are as follows"<< endl;
+    utils::g_log << "The shortest paths are as follows"<< endl;
     for (int i=0;i<range;++i) {
-        cout << "From value " << i << ":" <<endl;
+        utils::g_log << "From value " << i << ":" <<endl;
         for (int j=0;j<range;++j) {
-            cout << "To value " << j << ":" <<endl;
+            utils::g_log << "To value " << j << ":" <<endl;
             dump_shortest_paths_for_root_from_to(i, j);
-            cout << "-----------------------------------------------------------------------" << endl;
+            utils::g_log << "-----------------------------------------------------------------------" << endl;
         }
     }
 }
 
 void DtgOperators::dump_complete_forward_graph() const {
-    cout << "Complete forward graph:"<< endl;
+    utils::g_log << "Complete forward graph:"<< endl;
     for (int state=0; state<range; ++state) {
         const vector<GraphEdge>& transitions = complete_forward_graph[state];
 
-        cout << "From value " << get_value_name(state) << ":" <<endl;
+        utils::g_log << "From value " << get_value_name(state) << ":" <<endl;
         for (GraphEdge transition : transitions) {
-            cout << "To value " << get_value_name(transition.to) << ": " << task_proxy.get_operators()[transition.op_no].get_name() << ", initially enabled: " << transition.initially_enabled << endl;
+            utils::g_log << "To value " << get_value_name(transition.to) << ": " << task_proxy.get_operators()[transition.op_no].get_name() << ", initially enabled: " << transition.initially_enabled << endl;
         }
-        cout << "-----------------------------------------------------------------------" << endl;
+        utils::g_log << "-----------------------------------------------------------------------" << endl;
     }
 }
 
 void DtgOperators::dump_shortest_paths_for_root_from_to(int i, int j) const {
     for (size_t op_no = 0; op_no < sol_edges[i][j].size(); ++op_no) {
         int op_ind = sol_edges[i][j][op_no];
-        cout << task_proxy.get_operators()[op_ind].get_name() << endl;
+        utils::g_log << task_proxy.get_operators()[op_ind].get_name() << endl;
     }
 }
 
@@ -831,20 +833,20 @@ const vector<int>& DtgOperators::get_shortest_path_for_root() {
 
 const vector<int>& DtgOperators::get_shortest_path_for_root_from_to(int from, int to) {
     if (sol_edges == 0) {
-        cout << "Should not be called here! Bug!" << endl;
-        ::exit(1);
+        cerr << "Should not be called here! Bug!" << endl;
+        utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
     }
 
-#ifdef DEBUG_RED_BLACK
-    cout << "Getting the shortest path from " << from << " to " << to << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Getting the shortest path from " << from << " to " << to << endl;
+    }
     assert(from >= 0 && from < range);
     assert(to >= 0 && to < range);
     if (from == to) {
         // Nothing to do here, but this method should not be called in this case
-#ifdef DEBUG_RED_BLACK
-    cout << "Warning: should not be called for current == missing" << endl;
-#endif
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            utils::g_log << "Warning: should not be called for current == missing" << endl;
+        }
         plan.clear();
         return plan;
     }
@@ -866,8 +868,8 @@ int DtgOperators::get_current_shortest_path_cost_to(int to) const {
 
     // Returns the cost of the currently calculated shortest path
     if (dijkstra_distance == 0) {
-        cout << "Should not be called here! Bug!" << endl;
-        ::exit(1);
+        cerr << "Should not be called here! Bug!" << endl;
+        utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
     }
 
 
@@ -911,10 +913,10 @@ const vector<int>& DtgOperators::calculate_shortest_path_from_to(int from, int t
         return get_shortest_path_for_root_from_to(from, to);
     }
 
-#ifdef DEBUG_RED_BLACK
-    cout << "Calculating the shortest path from " << task_proxy.get_variables()[var].get_fact(from).get_name() << " to " << task_proxy.get_variables()[var].get_fact(to).get_name() << endl;
-    //dump_complete_forward_graph();
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Calculating the shortest path from " << task_proxy.get_variables()[var].get_fact(from).get_name() << " to " << task_proxy.get_variables()[var].get_fact(to).get_name() << endl;
+        //dump_complete_forward_graph();
+    }
     std::fill_n(dijkstra_distance, range, numeric_limits<int>::max());
     priority_queues::AdaptiveQueue<int> queue;
     dijkstra_distance[from] = 0;
@@ -928,9 +930,9 @@ const vector<int>& DtgOperators::calculate_shortest_path_from_to(int from, int t
         queue.push(0, from);
         dijkstra_search(queue);
     }
-#ifdef DEBUG_RED_BLACK
-    cout << "Done calculating, the value is " << dijkstra_distance[to] << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Done calculating, the value is " << dijkstra_distance[to] << endl;
+    }
     plan.clear();
 
     if (dijkstra_distance[to] == numeric_limits<int>::max()) {
@@ -993,9 +995,9 @@ void DtgOperators::dijkstra_search(priority_queues::AdaptiveQueue<int> &queue) {
 // dijkstra_distance is used for holding the g values
 // When the
 void DtgOperators::astar_search(priority_queues::AdaptiveQueue<int> &queue, int goal) {
-#ifdef DEBUG_RED_BLACK
-    cout << "Starting A* search!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Starting A* search!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+    }
     while (!queue.empty()) {
         pair<int, int> top_pair = queue.pop();
         int f_val = top_pair.first;
@@ -1008,25 +1010,25 @@ void DtgOperators::astar_search(priority_queues::AdaptiveQueue<int> &queue, int 
         if (g_val + solution[state][goal] < f_val)
             continue;
 
-#ifdef DEBUG_RED_BLACK
-        cout << "State " << state << ", reached by operator " << dijkstra_ops[state] << endl;
-        if (dijkstra_ops[state] != -1)
-               cout << task_proxy.get_operators()[dijkstra_ops[state]].get_name() << endl;
-#endif
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            utils::g_log << "State " << state << ", reached by operator " << dijkstra_ops[state] << endl;
+            if (dijkstra_ops[state] != -1)
+                utils::g_log << task_proxy.get_operators()[dijkstra_ops[state]].get_name() << endl;
+        }
 
         for (size_t i = 0; i < complete_forward_graph[state].size(); ++i) {
             const GraphEdge& transition = complete_forward_graph[state][i];
             if (!is_transition_enabled(transition, state)) {
-#ifdef DEBUG_RED_BLACK
-                cout << "[NOT ENABLED!]: ";
-                cout << task_proxy.get_operators()[transition.op_no].get_name() << endl;
-#endif
+                if (verbosity >= utils::Verbosity::DEBUG) {
+                    utils::g_log << "[NOT ENABLED!]: ";
+                    utils::g_log << task_proxy.get_operators()[transition.op_no].get_name() << endl;
+                }
                 continue;
             }
-#ifdef DEBUG_RED_BLACK
-            cout << "[ENABLED]: ";
-            cout << task_proxy.get_operators()[transition.op_no].get_name() << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "[ENABLED]: ";
+                utils::g_log << task_proxy.get_operators()[transition.op_no].get_name() << endl;
+            }
 
 
             int successor = transition.to;
@@ -1039,16 +1041,16 @@ void DtgOperators::astar_search(priority_queues::AdaptiveQueue<int> &queue, int 
             }
         }
     }
-#ifdef DEBUG_RED_BLACK
-    cout << "Finished A* search!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Finished A* search!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+    }   
 }
 
 bool DtgOperators::is_transition_enabled(const GraphEdge& trans, int from) const {
 //    if (only_current_transitions) {
-#ifdef DEBUG_RED_BLACK
-    cout << "Current transition status: " << transitions_status << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Current transition status: " << transitions_status << endl;
+    }
     if (transitions_status == ONLY_CURRENT_TRANSITIONS || transitions_status == ENABLED_DURING_RUN) {
         vector<int> path;
         // Getting the current path to "from"
@@ -1057,41 +1059,41 @@ bool DtgOperators::is_transition_enabled(const GraphEdge& trans, int from) const
         // adding the current transition to the end of the path
         path.push_back(trans.op_no);
 
-#ifdef DEBUG_RED_BLACK
-        for (int op_no : path) {
-            cout << task_proxy.get_operators()[op_no].get_name() << endl;
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            for (int op_no : path) {
+                utils::g_log << task_proxy.get_operators()[op_no].get_name() << endl;
+            }
         }
-#endif
 
         if (is_red_connected) {
-#ifdef DEBUG_RED_BLACK
-            cout << "Checking whether the whole path is applicable (the first part must be) "  << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "Checking whether the whole path is applicable (the first part must be) "  << endl;
+            }
             // Checking whether the whole path is applicable (the first part must be)
             return base_pointer->is_currently_applicable(path);
         }
-#ifdef DEBUG_RED_BLACK
-        cout << "Skipping black variables for applicability check "  << endl;
-#endif
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            utils::g_log << "Skipping black variables for applicability check "  << endl;
+        }
 
         // Skipping black variables for applicability check
         if (transitions_status == ONLY_CURRENT_TRANSITIONS) {
-#ifdef DEBUG_RED_BLACK
-            cout << "is_currently_applicable?"  << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "is_currently_applicable?"  << endl;
+            }
             return base_pointer->is_currently_applicable(path, true);
         }
         // We get here when transitions_status == ENABLED_DURING_RUN
-#ifdef DEBUG_RED_BLACK
-        cout << "We get here when transitions_status == " << ENABLED_DURING_RUN << endl;
-        cout << "is_currently_RB_applicable?"  << endl;
-#endif
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            utils::g_log << "We get here when transitions_status == " << ENABLED_DURING_RUN << endl;
+            utils::g_log << "is_currently_RB_applicable?"  << endl;
+        }
         return base_pointer->is_currently_RB_applicable(path);
     }
     if (transitions_status == ENABLED_BEFORE_RUN) {
         return trans.initially_enabled || base_pointer->op_is_enabled(trans.op_no);
     }
-    cout << "Unknown transitions status" << endl;
+    utils::g_log << "Unknown transitions status" << endl;
     return false;
 }
 

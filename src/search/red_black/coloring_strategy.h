@@ -32,6 +32,7 @@ class ColoringStrategy {
     BlackDAG black_dag;
     bool shortest_paths_calculated;
     bool set_conflicting_to_red;
+    const utils::Verbosity verbosity;
     bool use_connected;
 
     vector<bool> black_vars;

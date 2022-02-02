@@ -28,6 +28,7 @@ class RedBlackTaskCore {
 
     vector<bool> invertible_vars;  // Keeps invertible variables until black variables are set
     size_t num_invertible_vars;
+    const utils::Verbosity verbosity;
 
     void create_extended_DTGs(const AbstractTask &task);
     void prepare_DTGs_for_invertibility_check();
@@ -36,7 +37,7 @@ class RedBlackTaskCore {
     void free_initial_data();
 
 public:
-    RedBlackTaskCore(const AbstractTask &task);
+    RedBlackTaskCore(const AbstractTask &task, const utils::Verbosity verbosity);
 
     void initialize();
     DtgOperators* get_dtg(VariableProxy var) const { return dtgs_by_transition[var.get_id()]; }

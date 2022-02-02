@@ -9,9 +9,10 @@ using namespace std;
 namespace red_black {
 RedBlackTask::RedBlackTask(const Options &opts, const AbstractTask &task) :
                 task_proxy(task),
+                verbosity(opts.get<utils::Verbosity>("verbosity")),
                 coloring(opts, task),
                 dump_conflicting_conditional_effects(opts.get<bool>("dump_conflicting_conditional_effects")),
-                core(task) {
+                core(task, verbosity) {
 
     // Setting to false by default, changed if the result is actually not disconnected
     use_black_dag = false;
@@ -33,7 +34,7 @@ RedBlackTask::RedBlackTask(const Options &opts, const AbstractTask &task) :
 
 // initialization
 void RedBlackTask::initialize() {
-    cout << "Initializing Red-Black task..." << endl;
+    utils::g_log << "Initializing Red-Black task..." << endl;
     core.initialize();
 
     if (get_num_invertible_vars() > 0) {
@@ -58,15 +59,15 @@ void RedBlackTask::initialize() {
                         if (val1 == val2)
                             continue;
                         // Two effects on the same variable
-                        cout << "Operator " << op.get_name() << ", two effects on the same variable, different values" << endl;
+                        utils::g_log << "Operator " << op.get_name() << ", two effects on the same variable, different values" << endl;
                         for (FactProxy fact : e1.get_conditions()) {
-                            cout << fact.get_name() << " ";
+                            utils::g_log << fact.get_name() << " ";
                         }
-                        cout << "=> " << e1.get_fact().get_name() << endl;
+                        utils::g_log << "=> " << e1.get_fact().get_name() << endl;
                         for (FactProxy fact : e2.get_conditions()) {
-                            cout << fact.get_name() << " ";
+                            utils::g_log << fact.get_name() << " ";
                         }
-                        cout << "=> " << e2.get_fact().get_name() << endl;
+                        utils::g_log << "=> " << e2.get_fact().get_name() << endl;
                     }
                 }
             }
@@ -76,7 +77,7 @@ void RedBlackTask::initialize() {
         initialize_connected();
         print_statistics();
     }
-    cout << "Finished initializing Red-Black task at time step [t=" << utils::g_timer << "]" << endl;
+    utils::g_log << "Finished initializing Red-Black task" << endl;
 }
 
 void RedBlackTask::free_mem() {
@@ -121,7 +122,7 @@ void RedBlackTask::prepare_operators_for_counting_achieved_preconditions() {
     // By now the black variables are set.
 
     // First, separating black pre/effs for operators
-//    cout << "Separating black pre/effs for operators" << endl;
+//    utils::g_log << "Separating black pre/effs for operators" << endl;
 
     for (size_t op_no = 0; op_no < task_proxy.get_operators().size(); ++op_no) {
         get_rb_sas_operator(op_no)->set_black_pre_eff(coloring.get_black_variables());
@@ -136,51 +137,50 @@ void RedBlackTask::prepare_operators_for_counting_achieved_preconditions() {
         ops_eff_by_pre.assign(task_proxy.get_variables().size(), vector<vector<OperatorEffectPair> >());
         for (VariableProxy var : red_variables) {
             ops_eff_by_pre[var.get_id()].assign(var.get_domain_size(),vector<OperatorEffectPair>());
-#ifdef DEBUG_RED_BLACK
-            cout << "Var id: " << var.get_id() << ", values: " << var.get_domain_size() << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "Var id: " << var.get_id() << ", values: " << var.get_domain_size() << endl;
+            }
 
-#ifdef DEBUG_RED_BLACK
-            cout << "Number of values per variables in ops_eff_by_pre " << ops_eff_by_pre[var.get_id()].size() << endl;
-#endif
-
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "Number of values per variables in ops_eff_by_pre " << ops_eff_by_pre[var.get_id()].size() << endl;
+            }
         }
     }
 
-    cout << "Counting red preconditions.." << endl;
+    utils::g_log << "Counting red preconditions.." << endl;
     ops_num_reached_red_preconditions.assign(task_proxy.get_operators().size(), 0);
     if (conditional_effects_task) {
         ops_num_reached_red_effect_conditions.assign(task_proxy.get_operators().size(), CountByEffect());
     }
 
-#ifdef DEBUG_RED_BLACK
-    cout << "Number of operators: " << task_proxy.get_operators().size() << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Number of operators: " << task_proxy.get_operators().size() << endl;
+    }
     for (size_t op_no = 0; op_no < task_proxy.get_operators().size(); ++op_no) {
-#ifdef DEBUG_RED_BLACK
-        cout << "Op: "  << op_no << endl;
-        OperatorProxy real_op = task_proxy.get_operators()[op_no];
-        cout << real_op.get_name() << endl;
-#endif
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            utils::g_log << "Op: "  << op_no << endl;
+            OperatorProxy real_op = task_proxy.get_operators()[op_no];
+            utils::g_log << real_op.get_name() << endl;
+        }
         for (FactProxy fact : get_rb_sas_operator(op_no)->get_red_precondition()) {
-#ifdef DEBUG_RED_BLACK
-            cout << "Fact: " << fact.get_name() << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "Fact: " << fact.get_name() << endl;
+            }
             VariableProxy var = fact.get_variable();
             int val = fact.get_value();
-#ifdef DEBUG_RED_BLACK
-            cout << "Variable: " << var.get_id() << ", value: " << val << endl;
-            vector<int>& ops_to_add_to = ops_by_pre[var.get_id()][val];
-            cout << "Number of operators so far: " << ops_to_add_to.size() << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "Variable: " << var.get_id() << ", value: " << val << endl;
+                vector<int>& ops_to_add_to = ops_by_pre[var.get_id()][val];
+                utils::g_log << "Number of operators so far: " << ops_to_add_to.size() << endl;
+            }
             ops_by_pre[var.get_id()][val].push_back(op_no);
         }
         if (conditional_effects_task) {
 
             // Getting the red conditions
-#ifdef DEBUG_RED_BLACK
-            cout << "Getting the red conditions " << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "Getting the red conditions " << endl;
+            }
             for (EffectProxy eff : get_rb_sas_operator(op_no)->get_red_effect()) {
                 for (FactProxy fact : get_rb_sas_operator(op_no)->get_red_condition(eff.get_fact().get_pair())) {
                     add_red_eff_condition_op_pair(op_no, eff, fact);
@@ -201,34 +201,34 @@ void RedBlackTask::prepare_operators_for_counting_achieved_preconditions() {
                 }
                 */
             }
-#ifdef DEBUG_RED_BLACK
-            cout << "Got the red conditions " << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "Got the red conditions " << endl;
+            }
         }
     }
-#ifdef DEBUG_RED_BLACK
-    cout << "Finished prepare_operators_for_counting_achieved_preconditions " << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Finished prepare_operators_for_counting_achieved_preconditions " << endl;
+    }
 }
 
 void RedBlackTask::add_red_eff_condition_op_pair(int op_no, EffectProxy eff, FactProxy fact) {
-#ifdef DEBUG_RED_BLACK
-    cout << "Adding red effect condition op pair for the fact " << fact.get_name() << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Adding red effect condition op pair for the fact " << fact.get_name() << endl;
+    }
     VariableProxy var = fact.get_variable();
     int val = fact.get_value();
-#ifdef DEBUG_RED_BLACK
-    cout << "Var id: " << var.get_id() << ", value: " << val << " out of " << var.get_domain_size() << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Var id: " << var.get_id() << ", value: " << val << " out of " << var.get_domain_size() << endl;
+    }
 
-#ifdef DEBUG_RED_BLACK
-    cout << "Number of values per variables in ops_eff_by_pre " << ops_eff_by_pre[var.get_id()].size() << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Number of values per variables in ops_eff_by_pre " << ops_eff_by_pre[var.get_id()].size() << endl;
+    }
 
     ops_eff_by_pre[var.get_id()][val].push_back(make_pair(op_no, eff.get_fact()));
-#ifdef DEBUG_RED_BLACK
-    cout << "DONE Adding red effect condition op pair" << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "DONE Adding red effect condition op pair" << endl;
+    }
 }
 
 void RedBlackTask::print_statistics() const {
@@ -254,56 +254,56 @@ void RedBlackTask::print_statistics() const {
         }
     }
 
-    cout << "---------------------------------------------------------------------------------------" << endl;
+    utils::g_log << "---------------------------------------------------------------------------------------" << endl;
     VariablesProxy variables = task_proxy.get_variables();
     for (VariableProxy var : variables) {
-        cout << get_variable_name_and_domain(var)<< " is " << (is_invertible(var) ? "" : "not ") << "invertible, marked";
+        utils::g_log << get_variable_name_and_domain(var)<< " is " << (is_invertible(var) ? "" : "not ") << "invertible, marked";
 
         if (is_black(var)) {
             if (max_side_effect_for_black < side_effects[var.get_id()].size())
                 max_side_effect_for_black = side_effects[var.get_id()].size();
             count_black++;
-            cout << " black";
+            utils::g_log << " black";
             if (almost_roots[var.get_id()])
                 count_almost_root++;
         } else {
-            cout << " red";
+            utils::g_log << " red";
         }
         if (get_cg_predecessors(var).size() == 0) {
             if (is_black(var)) {
                 count_root++;
             }
-            cout << " [root]";
+            utils::g_log << " [root]";
         } else {
-            cout << " [" << side_effects[var.get_id()].size() << " side effects]";
+            utils::g_log << " [" << side_effects[var.get_id()].size() << " side effects]";
         }
 
         if (get_connectivity_status(var) == ALL_PAIRS_CONNECTED) {
             count_all_pairs_connected++;
-            cout << ", all pairs connected";
+            utils::g_log << ", all pairs connected";
         } else if (get_connectivity_status(var) == ALL_CONNECTED_TO_GOAL) {
             count_all_connected_to_goal++;
-            cout << ", all values are connected to goal";
+            utils::g_log << ", all values are connected to goal";
         }
-        cout << endl;
+        utils::g_log << endl;
     }
-    cout << "---------------------------------------------------------------------------------------" << endl;
-    cout << "Total number of black variables is " << count_black << endl;
-    cout << "Total number of black root variables is " << count_root << endl;
-    cout << "Total number of variables is " << task_proxy.get_variables().size() << endl;
+    utils::g_log << "---------------------------------------------------------------------------------------" << endl;
+    utils::g_log << "Total number of black variables is " << count_black << endl;
+    utils::g_log << "Total number of black root variables is " << count_root << endl;
+    utils::g_log << "Total number of variables is " << task_proxy.get_variables().size() << endl;
 
-    cout << "Total number of variables with all pairs of values connected is " << count_all_pairs_connected << endl;
-    cout << "Total number of variables with all values connected to goal is " << count_all_connected_to_goal << endl;
-    cout << "Total number of black variables with strongly connected parents only is " << count_almost_root << endl;
-    cout << "Maximal number of side effects for black variable is " << max_side_effect_for_black << endl;
-    cout << "---------------------------------------------------------------------------------------" << endl;
+    utils::g_log << "Total number of variables with all pairs of values connected is " << count_all_pairs_connected << endl;
+    utils::g_log << "Total number of variables with all values connected to goal is " << count_all_connected_to_goal << endl;
+    utils::g_log << "Total number of black variables with strongly connected parents only is " << count_almost_root << endl;
+    utils::g_log << "Maximal number of side effects for black variable is " << max_side_effect_for_black << endl;
+    utils::g_log << "---------------------------------------------------------------------------------------" << endl;
     if (count_black == 0) {
-        cout << "No black variables - running FF heuristic!" << endl;
-        cout << "---------------------------------------------------------------------------------------" << endl;
+        utils::g_log << "No black variables - running FF heuristic!" << endl;
+        utils::g_log << "---------------------------------------------------------------------------------------" << endl;
     }
-    cout << "Black DAG usage status: " << use_black_dag << endl;
+    utils::g_log << "Black DAG usage status: " << (use_black_dag ? "yes" : "no") << endl;
     if (use_black_dag) {
-        cout << "Causal links between black variables were found. Using black DAG" << endl;
+        utils::g_log << "Causal links between black variables were found. Using black DAG" << endl;
     }
 }
 
@@ -337,7 +337,7 @@ void RedBlackTask::initialize_connected() {
         set_use_connected(false);
     }
 
-    cout << "Use connected is set to " << (is_use_connected() ? "True" : "False") << endl;
+    utils::g_log << "Use connected is set to " << (is_use_connected() ? "True" : "False") << endl;
     if (is_use_connected()) {
         // Setting the red variables
         for (VariableProxy var : red_variables) {
@@ -362,16 +362,16 @@ void RedBlackTask::set_red_black_indices() {
     vector<int> ids_for_vars(variables.size(),-1);
     for (VariableProxy var : variables) {
         if (!is_black(var)) {
-//#ifdef DEBUG_RED_BLACK
-//            cout << "Adding red variable with id: " << var.get_id() << endl;
-//#endif
+            //if (verbosity >= utils::Verbosity::DEBUG) {
+            //            utils::g_log << "Adding red variable with id: " << var.get_id() << endl;
+            //}
             red_variables.push_back(var);
             continue;
         }
         ids_for_vars[var.get_id()] = black_variables.size();
-//#ifdef DEBUG_RED_BLACK
-//        cout << "Adding black variable with id: " << var.get_id() << " and black index: " << ids_for_vars[var.get_id()] << endl;
-//#endif
+        //if (verbosity >= utils::Verbosity::DEBUG) {
+        //        utils::g_log << "Adding black variable with id: " << var.get_id() << " and black index: " << ids_for_vars[var.get_id()] << endl;
+        //}
         black_variables.push_back(var);
     }
     // Creating the graph
@@ -383,61 +383,61 @@ void RedBlackTask::set_red_black_indices() {
             VariableProxy to_var = variables[succ_id];
             if (!is_black(to_var))
                 continue;
-#ifdef DEBUG_RED_BLACK
-            cout << "Adding edge to the graph for black variable: " << succ_id << ", index: " << ids_for_vars[succ_id] << endl;
-#endif
+            if (verbosity >= utils::Verbosity::DEBUG) {
+                utils::g_log << "Adding edge to the graph for black variable: " << succ_id << ", index: " << ids_for_vars[succ_id] << endl;
+            }
             graph_nodes.push_back(ids_for_vars[succ_id]);
         }
-#ifdef DEBUG_RED_BLACK
-        cout << "Graph: from node: " << graph.size() << endl;
-#endif
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            utils::g_log << "Graph: from node: " << graph.size() << endl;
+        }
         graph.push_back(graph_nodes);
-#ifdef DEBUG_RED_BLACK
-        for (int nodes : graph_nodes)
-            cout << "   to nodes: " << nodes << endl;
-#endif
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            for (int nodes : graph_nodes)
+                utils::g_log << "   to nodes: " << nodes << endl;
+        }
     }
 
     topological_sort::TopologicalSort ts(graph);
     vector<int> res;
     if (!ts.get_result(res)) {
         // Not DAG!!
-        cout << "The black part is not DAG! Bug!" << endl;
+        utils::g_log << "The black part is not DAG! Bug!" << endl;
         utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
     }
     // Replacing black indices with the new order
     vector<VariableProxy> tmp_indices;
     tmp_indices.swap(black_variables);
-#ifdef DEBUG_RED_BLACK
-    cout << "Num blacks: " << tmp_indices.size() << endl;
-#endif
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Num blacks: " << tmp_indices.size() << endl;
+    }
     for (int idx : res) {
-#ifdef DEBUG_RED_BLACK
-        cout << "Var id: " << idx << endl;
-#endif
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            utils::g_log << "Var id: " << idx << endl;
+        }
         VariableProxy var = tmp_indices[idx];
         black_variables.push_back(var);
     }
 
-#ifdef DEBUG_RED_BLACK
-    cout << "Original order:" << endl;
-    for (VariableProxy var : tmp_indices) {
-        cout << var.get_id() << "  ";
+    if (verbosity >= utils::Verbosity::DEBUG) {
+        utils::g_log << "Original order:" << endl;
+        for (VariableProxy var : tmp_indices) {
+            utils::g_log << var.get_id() << "  ";
+        }
+        utils::g_log << endl << "New order:" << endl;
+        for (VariableProxy var : black_variables) {
+            utils::g_log << var.get_id() << "  ";
+        }
+        utils::g_log << endl << "------------------------------------------------------------------" << endl;
     }
-    cout << endl << "New order:" << endl;
-    for (VariableProxy var : black_variables) {
-        cout << var.get_id() << "  ";
-    }
-    cout << endl << "------------------------------------------------------------------" << endl;
-#endif
 
     // Setting use_black_dag to true if there is an edge between black variables.
     // Keeping black dag edges.
     black_dag_edges.assign(variables.size(), vector<bool>());
     for (VariableProxy var : black_variables) {
-#ifdef DEBUG_RED_BLACK
-        cout << "black_dag_edges size: " << black_dag_edges.size() << ", variable id: " << var.get_id() << endl;
-#endif
+        if (verbosity >= utils::Verbosity::DEBUG) {
+            utils::g_log << "black_dag_edges size: " << black_dag_edges.size() << ", variable id: " << var.get_id() << endl;
+        }
         black_dag_edges[var.get_id()].assign(variables.size(), false);
         for (int succ_id : get_cg_successors(var)) {
             VariableProxy to_var = variables[succ_id];
@@ -500,9 +500,9 @@ int RedBlackTask::get_num_reached_red_effect_conditions(int op_no, FactProxy eff
 
 
 void RedBlackTask::mark_red_sufficient(int op_no) {
-//#ifdef DEBUG_RED_BLACK
-//    cout << "mark_red_sufficient precondition of operator " << op_no << endl;
-//#endif
+    //if (verbosity >= utils::Verbosity::DEBUG) {
+    //    utils::g_log << "mark_red_sufficient precondition of operator " << op_no << endl;
+    //}
 
     for (FactProxy fact : get_rb_sas_operator(op_no)->get_red_precondition()) {
         VariableProxy var = fact.get_variable();
@@ -512,9 +512,9 @@ void RedBlackTask::mark_red_sufficient(int op_no) {
 }
 
 void RedBlackTask::mark_red_sufficient(int op_no, FactPair eff) {
-//#ifdef DEBUG_RED_BLACK
-//    cout << "mark_red_sufficient condition of operator " << op_no  << ", effect " << eff.get_name() << endl;
-//#endif
+    //if (verbosity >= utils::Verbosity::DEBUG) {
+    //    utils::g_log << "mark_red_sufficient condition of operator " << op_no  << ", effect " << eff.get_name() << endl;
+    //}
     for (FactProxy fact : get_rb_sas_operator(op_no)->get_red_condition(eff)) {
         VariableProxy var = fact.get_variable();
         int val = fact.get_value();
@@ -558,54 +558,54 @@ void RedBlackTask::reset_all_marks() {
 }
 
 void RedBlackTask::set_new_marks_for_state(const State &state) {
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Setting new marks for state" << endl;
-//    state.dump_pddl();
-//#endif
+    //if (verbosity >= utils::Verbosity::DEBUG) {
+    //    utils::g_log << "Setting new marks for state" << endl;
+    //    state.dump_pddl();
+    //}
 
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Marking achieved by the state vals" << endl;
-//#endif
+    //if (verbosity >= utils::Verbosity::DEBUG) {
+    //    utils::g_log << "Marking achieved by the state vals" << endl;
+    //}
     for (FactProxy fact : state) {
         VariableProxy var = fact.get_variable();
         int val = fact.get_value();
         get_dtg(var)->mark_achieved_val(val, is_black(var));
     }
 
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Marking red preconditions" << endl;
-//#endif
+    //if (verbosity >= utils::Verbosity::DEBUG) {
+    //    utils::g_log << "Marking red preconditions" << endl;
+    //}
     for (VariableProxy var : red_variables) {
         mark_red_precondition(var, state[var].get_value());
     }
 }
 
 void RedBlackTask::set_new_marks_for_state_fact_following(const State &state) {
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Marking black state vals as reachable" << endl;
-//#endif
+    //if (verbosity >= utils::Verbosity::DEBUG) {
+    //    utils::g_log << "Marking black state vals as reachable" << endl;
+    //}
     for (VariableProxy var : black_variables) {
         FactProxy fact = state[var];
         int val = fact.get_value();
-//#ifdef DEBUG_RED_BLACK
-//        cout << "Black variable " <<  fact.get_name() << ", var: " << var.get_id() << ", value: " << val << " is marked as reachable" << endl;
-//#endif
+        //if (verbosity >= utils::Verbosity::DEBUG) {
+        //        utils::g_log << "Black variable " <<  fact.get_name() << ", var: " << var.get_id() << ", value: " << val << " is marked as reachable" << endl;
+        //}
 
         get_dtg(var)->mark_as_reachable(val);
-//#ifdef DEBUG_RED_BLACK
-//        cout << "done" << endl;
-//#endif
+        //if (verbosity >= utils::Verbosity::DEBUG) {
+        //        utils::g_log << "done" << endl;
+        //}
     }
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Clearing red sufficient unachieved values" << endl;
-//#endif
+    //if (verbosity >= utils::Verbosity::DEBUG) {
+    //    utils::g_log << "Clearing red sufficient unachieved values" << endl;
+    //}
     red_sufficient_unachieved_iterators.reserve(task_proxy.get_variables().size());
     red_sufficient_unachieved.clear();
 
     for (VariableProxy var : red_variables) {
-//#ifdef DEBUG_RED_BLACK
-//        cout << "Check whether there are sufficient unachieved values for this red, if so adding it to the list" << endl;
-//#endif
+        //if (verbosity >= utils::Verbosity::DEBUG) {
+        //        utils::g_log << "Check whether there are sufficient unachieved values for this red, if so adding it to the list" << endl;
+        //}
         if (0 < get_dtg(var)->num_sufficient_unachieved()) {
             red_sufficient_unachieved_iterators[var.get_id()] = red_sufficient_unachieved.insert(red_sufficient_unachieved.end(), var.get_id());
         }
@@ -613,22 +613,22 @@ void RedBlackTask::set_new_marks_for_state_fact_following(const State &state) {
 }
 
 void RedBlackTask::reset_all_marks_fact_following() {
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Clearing sufficient values" << endl;
-//#endif
+    //if (verbosity >= utils::Verbosity::DEBUG) {
+    //    utils::g_log << "Clearing sufficient values" << endl;
+    //}
     VariablesProxy variables = task_proxy.get_variables();
     for (VariableProxy var : variables) {
         get_dtg(var)->clear_sufficient();
     }
 
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Clearing black reachable values" << endl;
-//#endif
+    //if (verbosity >= utils::Verbosity::DEBUG) {
+    //    utils::g_log << "Clearing black reachable values" << endl;
+    //}
 
     for (VariableProxy var : black_variables) {
-//#ifdef DEBUG_RED_BLACK
-//        cout << "For black variable " << var.get_name() << endl;
-//#endif
+        //if (verbosity >= utils::Verbosity::DEBUG) {
+        //        utils::g_log << "For black variable " << var.get_name() << endl;
+        //}
         get_dtg(var)->clear_reachable();
     }
 }
@@ -656,12 +656,12 @@ void RedBlackTask::update_marks_fact_following(int op_no) {
 
 
 void RedBlackTask::prepare_for_red_fact_following() {
-    cout << "Preparing for red fact following.." << endl;
+    utils::g_log << "Preparing for red fact following.." << endl;
     for (VariableProxy var : red_variables) {
         get_dtg(var)->set_follow_red_facts();
     }
 
-    cout << "Setting use black reachable for black variables.." << endl;
+    utils::g_log << "Setting use black reachable for black variables.." << endl;
     for (VariableProxy var : black_variables) {
         get_dtg(var)->set_use_black_reachable();
     }
@@ -689,7 +689,7 @@ void RedBlackTask::keep_operators_by_effects() {
     // Setting the operators by effects for red variables only.
     // By now the black variables are set and ops_num_red_preconditions are calculated
     // ops_by_eff keeps the operators that have no red preconditions, to start with
-    cout << "Keeping achieving operators for red facts.." << endl;
+    utils::g_log << "Keeping achieving operators for red facts.." << endl;
     ops_by_eff.assign(task_proxy.get_variables().size(), vector<vector<int> >());
     for (VariableProxy var : red_variables) {
         ops_by_eff[var.get_id()].assign(var.get_domain_size(), vector<int>());
@@ -729,35 +729,35 @@ void RedBlackTask::set_black_successors_by_ops() {
 
 // This method is called multiple times per state evaluation
 bool RedBlackTask::achieving_black_pre_may_delete_achieved_red_sufficient(int op_no) const {
-//#ifdef DEBUG_RED_BLACK
-//    cout << "Check whether achieving action precondition may require deleting already achieved red values" << endl;
-//    get_rb_sas_operator(op_no)->dump();
-//#endif
+    //if (verbosity >= utils::Verbosity::DEBUG) {
+    //    utils::g_log << "Check whether achieving action precondition may require deleting already achieved red values" << endl;
+    //    get_rb_sas_operator(op_no)->dump();
+    //}
     for (FactProxy fact : get_rb_sas_operator(op_no)->get_black_precondition()) {
         VariableProxy var = fact.get_variable();
         int val = fact.get_value();
         if (val == get_dtg(var)->get_current_value())
             continue;
 
-//#ifdef DEBUG_RED_BLACK
-//        cout << "Checking for black variable " << var.get_name() << endl;
-//#endif
+        //if (verbosity >= utils::Verbosity::DEBUG) {
+        //        utils::g_log << "Checking for black variable " << var.get_name() << endl;
+        //}
         // This black variable has a value that is to be achieved. If changing it may result in deleting red sufficient achieved value, return true
         for (FactProxy red_fact : black_var_deletes[var.get_id()]) {
             VariableProxy red_var = red_fact.get_variable();
             int red_val = red_fact.get_value();
-//#ifdef DEBUG_RED_BLACK
-//            cout << "Red variable " << red_var.get_name() << " value " << red_val;
-//#endif
+            //if (verbosity >= utils::Verbosity::DEBUG) {
+            //            utils::g_log << "Red variable " << red_var.get_name() << " value " << red_val;
+            //}
             if (get_dtg(red_var)->is_sufficient_achieved(red_val)) {
-//#ifdef DEBUG_RED_BLACK
-//                cout << " sufficient achieved" << endl;
-//#endif
+                //if (verbosity >= utils::Verbosity::DEBUG) {
+                //                utils::g_log << " sufficient achieved" << endl;
+                //}
                 return true;
             }
-//#ifdef DEBUG_RED_BLACK
-//            cout << " either not sufficient or not achieved" << endl;
-//#endif
+            //if (verbosity >= utils::Verbosity::DEBUG) {
+            //            utils::g_log << " either not sufficient or not achieved" << endl;
+            //}
         }
     }
     return false;

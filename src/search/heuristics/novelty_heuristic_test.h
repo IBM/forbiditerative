@@ -37,6 +37,7 @@ class NoveltyHeuristicTest : public Heuristic {
 	int multiplier;
 
     OperatorID reached_by_op_id;
+    const utils::Verbosity verbosity;
     SearchStatistics statistics;
 
     std::vector<std::vector<std::vector<int> > > novelty_per_variable_value;
