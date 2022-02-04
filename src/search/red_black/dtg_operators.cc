@@ -149,10 +149,12 @@ void DtgOperators::postpone_sufficient_goal() {
 	if (verbosity >= utils::Verbosity::DEBUG) {
         utils::g_log << "postpone_sufficient_goal for variable " << var << endl;
     }
-    if (!use_sufficient_unachieved)
+    if (!use_sufficient_unachieved) {
         return;
-    if (-1 == goal_val)
+    }
+    if (-1 == goal_val) {
         return;
+    }
 
 	if (verbosity >= utils::Verbosity::DEBUG) {
         if (!is_sufficient_unachieved(goal_val)) {
@@ -176,8 +178,9 @@ int DtgOperators::num_sufficient_unachieved() const {
 
 // For black vars: keeping the black reachable values
 void DtgOperators::clear_reachable() {
-    if (!use_black_reachable || number_reachable_black_vals == 0)
+    if (!use_black_reachable || number_reachable_black_vals == 0) {
         return;
+    }
 
 	if (verbosity >= utils::Verbosity::DEBUG) {
         utils::g_log << "Assigning initial values 0 to reachable black values for variable " << task_proxy.get_variables()[var].get_name() << " with range " << range << endl;
@@ -193,8 +196,9 @@ bool DtgOperators::mark_as_reachable(int val) {
 	if (verbosity >= utils::Verbosity::DEBUG) {
         utils::g_log << "Reachable black vals for variable " << task_proxy.get_variables()[var].get_name() << " are of size " << reachable_black_vals.size() << endl;
     }
-    if (reachable_black_vals[val] > 0)
+    if (reachable_black_vals[val] > 0) {
         return false;
+    }
 
     if (verbosity >= utils::Verbosity::DEBUG) {
         utils::g_log << "Reachable black value " << task_proxy.get_variables()[var].get_fact(val).get_name()  << endl;
@@ -210,14 +214,16 @@ void DtgOperators::update_reachable() {
         utils::g_log << "Update black reachable, use_black_reachable: " << use_black_reachable << ", " << "number of reachable blacks: " << number_reachable_black_vals << ", out of " << range  << endl;
     //dump_complete_forward_graph();
     }
-    if (!use_black_reachable || number_reachable_black_vals == range)
+    if (!use_black_reachable || number_reachable_black_vals == range) {
         return;
+    }
 
     // Based on currently reachable, just mark until nothing else left to mark
     vector<int> frontier, next;
     for (int s=0; s < range; ++s) {
-        if (reachable_black_vals[s] == 1)
+        if (reachable_black_vals[s] == 1) {
             frontier.push_back(s);
+        }
     }
 
     while (frontier.size() > 0 && number_reachable_black_vals < range) {
@@ -244,8 +250,9 @@ void DtgOperators::update_reachable() {
 
             }
         }
-        if (all_transitions_enabled)
+        if (all_transitions_enabled) {
             reachable_black_vals[state] = 2;
+        }
     }
     if (verbosity >= utils::Verbosity::DEBUG) {
         utils::g_log << "Finished updating black reachable, number of reachable blacks: " << number_reachable_black_vals << endl;
@@ -254,8 +261,9 @@ void DtgOperators::update_reachable() {
 
 
 bool DtgOperators::is_reachable(int val) const {
-    if (!use_black_reachable)
+    if (!use_black_reachable) {
         return false;
+    }
 
     if (verbosity >= utils::Verbosity::DEBUG) {
         utils::g_log << "Reachability status for " << task_proxy.get_variables()[var].get_fact(val).get_name() << " is " << reachable_black_vals[val] << endl;
@@ -299,8 +307,9 @@ void DtgOperators::clear_black_data_for_red_var() {
         delete dijkstra_prev;
         dijkstra_prev = 0;
     }
-    for (size_t i=0; i < complete_forward_graph.size(); ++i)
+    for (size_t i=0; i < complete_forward_graph.size(); ++i) {
         complete_forward_graph[i].clear();
+    }
 
     complete_forward_graph.clear();
 
@@ -332,8 +341,9 @@ bool DtgOperators::mark_achieved_val(int val, bool is_black) {
         utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
     }
 */
-    if (!is_black && achieved_vals[val])
+    if (!is_black && achieved_vals[val]) {
         return false;
+    }
 
     if (!achieved_vals[val]) {
         achieved_vals[val] = true;
@@ -372,11 +382,13 @@ void DtgOperators::clear_missing_mark() {
 }
 
 bool DtgOperators::is_change_needed() const {
-    if (missing_value == -1)
+    if (missing_value == -1) {
         return false;
+    }
 
-    if (current_value == missing_value)
+    if (current_value == missing_value) {
         return false;
+    }
 
     return true;
 }
@@ -398,28 +410,33 @@ bool DtgOperators::is_condition_included(FactProxy cond, op_eff_pair op_eff) con
 
     // Check precondition
     for (FactProxy fact : op_eff.first->get_red_precondition()) {
-        if (fact == cond)
+        if (fact == cond) {
             return true;
+        }
     }
     EffectProxy curr_eff = op_eff.second;
     // Check effect condition
     EffectConditionsProxy conditions = curr_eff.get_conditions();
     for (FactProxy fact : conditions) {
-        if (fact == cond)
+        if (fact == cond) {
             return true;
+        }
     }
     // Check effects
     OperatorProxy op = task_proxy.get_operators()[op_eff.first->get_op_no()];
     EffectsProxy effects = op.get_effects();
     for (EffectProxy eff : effects) {
-        if (eff.get_conditions().size() > 0)
+        if (eff.get_conditions().size() > 0) {
             continue;
-        if (cond == eff.get_fact())
+        }
+        if (cond == eff.get_fact()) {
             return true;
+        }
     }
     // Check curr effect
-    if (curr_eff.get_conditions().size() > 0 && cond == curr_eff.get_fact())
+    if (curr_eff.get_conditions().size() > 0 && cond == curr_eff.get_fact()) {
         return true;
+    }
 
     return false;
 }
@@ -429,8 +446,9 @@ bool DtgOperators::is_transition_invertible(int from_value, int to_value) const 
         if (verbosity >= utils::Verbosity::DEBUG) {
             utils::g_log << "Checking transition that correspond to operator " << task_proxy.get_operators()[op_eff.first->get_op_no()].get_name() << endl;
         }
-        if (!is_op_transition_invertible(op_eff, from_value, to_value))
+        if (!is_op_transition_invertible(op_eff, from_value, to_value)) {
             return false;
+        }
     }
     return true;
 }
@@ -485,8 +503,9 @@ bool DtgOperators::check_invertibility() const {
     // Going over each pair of values, for each transition see if there is an invertible one
     for (int from_value = 0; from_value < range; ++from_value) {
         for (int to_value = 0; to_value < range; ++to_value) {
-            if (from_value == to_value)
+            if (from_value == to_value) {
                 continue;
+            }
 
             if (verbosity >= utils::Verbosity::DEBUG) {
                 utils::g_log << "Checking transition: " << task_proxy.get_variables()[var].get_fact(from_value).get_name() << "  -->  "
@@ -513,8 +532,9 @@ bool DtgOperators::check_connected_from_to(int from_value, int to_value) {
             continue;
         vector<FactProxy> side_cond;
         for (FactProxy fact : op->get_red_precondition()) {
-            if (var == fact.get_variable().get_id())
+            if (var == fact.get_variable().get_id()) {
                 continue;
+            }
             side_cond.push_back(fact);
         }
         if (side_cond.size() == 0) { // No prevail,
@@ -523,8 +543,9 @@ bool DtgOperators::check_connected_from_to(int from_value, int to_value) {
             return true;
         }
         // Currently restricted to one variable
-        if (side_cond.size() == 1)
+        if (side_cond.size() == 1) {
             prevails.push_back(side_cond);
+        }
     }
     // Checking whether prevails cover the whole domain.
     // Currently restricted to one variable
@@ -544,24 +565,29 @@ bool DtgOperators::check_connected_from_to(int from_value, int to_value) {
             for (op_eff_pair op_pair : get_ops_from_to(from_value, to_value)) {
                 sas_operator op = op_pair.first;
                 // Blacks are not set yet, so all pre and eff are stored in red
-                if (op->get_red_effect().size() > 1) // Skipping ops with side effects
+                if (op->get_red_effect().size() > 1)  { // Skipping ops with side effects
                     continue;
+                }
                 vector<FactProxy> side_cond;
                 for (FactProxy fact : op->get_red_precondition()) {
-                    if (var == fact.get_variable().get_id())
+                    if (var == fact.get_variable().get_id()) {
                         continue;
+                    }
                     side_cond.push_back(fact);
                 }
                 // Currently restricted to one variable
-                if (side_cond.size() != 1)
+                if (side_cond.size() != 1) {
                     continue;
+                }
 
                 FactProxy side_fact = side_cond[0];
-                if (cvar != side_fact.get_variable()) // Wrong parent, skipping
+                if (cvar != side_fact.get_variable()) { // Wrong parent, skipping
                     continue;
+                }
 
-                if (pre_values[side_fact.get_value()]) // Value already covered, skipping
+                if (pre_values[side_fact.get_value()]) { // Value already covered, skipping
                     continue;
+                }
 
                 int op_no = op->get_op_no();
                 ops_sufficient[op_no] = true;
@@ -579,10 +605,12 @@ ConnectivityStatus DtgOperators::check_connectivity() {
     vector<vector<int> > graph(range, vector<int>());
     for (int val = 0; val < range; ++val) {
         for (int to_val = 0; to_val < range; ++to_val) {
-            if (val == to_val)
+            if (val == to_val) {
                 continue;
-            if (check_connected_from_to(val, to_val))
+            }
+            if (check_connected_from_to(val, to_val)) {
                 graph[val].push_back(to_val);
+            }
         }
     }
 
@@ -594,23 +622,27 @@ ConnectivityStatus DtgOperators::check_connectivity() {
     }
 
     // If goal is not defined, returning NEITHER, although technically we should return ALL_CONNECTED_TO_GOAL.
-    if (goal_val == -1)
+    if (goal_val == -1) {
         return NEITHER;
+    }
 
     transitive_closure::TransitiveClosure TC(graph);
     for (int val = 0; val < range; ++val) {
-        if (val == goal_val)
+        if (val == goal_val) {
             continue;
+        }
 
-        if (!TC.is_connected(val, goal_val))
+        if (!TC.is_connected(val, goal_val)) {
             return NEITHER;
+        }
     }
     return ALL_CONNECTED_TO_GOAL;
 }
 
 void DtgOperators::calculate_shortest_paths_for_root() {
-    if (shortest_paths_calculated)
+    if (shortest_paths_calculated) {
         return;
+    }
     shortest_paths_calculated = true;
     if (verbosity >= utils::Verbosity::DEBUG) {
         utils::g_log << "=================> Variable " << var << " (" << task_proxy.get_variables()[var].get_name() << ") with domain size " << range << " is root, calculating shortest paths in advance" << endl;
@@ -652,12 +684,13 @@ void DtgOperators::calculate_shortest_paths_for_root() {
 
     for (int k=0; k<range; ++k) {
         for (int i=0; i<range; ++i) {
-            if (solution[i][k] == numeric_limits<int>::max())  // In this case, no update is possible
+            if (solution[i][k] == numeric_limits<int>::max()) { // In this case, no update is possible
                 continue;
+            }
             for (int j=0; j<range; ++j) {
-                if (solution[k][j] == numeric_limits<int>::max())  // In this case, no update is possible
+                if (solution[k][j] == numeric_limits<int>::max()) { // In this case, no update is possible
                     continue;
-
+                }
                 int new_dist = solution[i][k] + solution[k][j];
                 if (new_dist < solution[i][j]) {
                     // Update
@@ -687,15 +720,17 @@ void DtgOperators::calculate_shortest_paths_for_root() {
 }
 
 void DtgOperators::free_solution() {
-    if (solution == 0)
+    if (solution == 0) {
         return;
+    }
     // Freeing memory;
 	if (verbosity >= utils::Verbosity::DEBUG) {
         utils::g_log << "=================> Freeing solution for variable " << var << " [" << task_proxy.get_variables()[var].get_name() << "]" << endl;
     }
     for (int val0=0; val0<range; ++val0) {
-        if (solution[val0])
+        if (solution[val0]) {
             delete [] solution[val0];
+        }
     }    
     delete [] solution;
     solution = 0;
@@ -703,23 +738,26 @@ void DtgOperators::free_solution() {
 
 
 void DtgOperators::free_solution_edges_for_root() {
-    if (sol_edges == 0)
+    if (sol_edges == 0) {
         return;
+    }
     // Freeing memory;
 	if (verbosity >= utils::Verbosity::DEBUG) {
         utils::g_log << "=================> Freeing solution edges for variable " << var << " [" << task_proxy.get_variables()[var].get_name() << "]" << endl;
     }
     for (int val0=0;val0<range;++val0) {
-        if (sol_edges[val0])
+        if (sol_edges[val0]) {
             delete [] sol_edges[val0];
+        }
     }
     delete [] sol_edges;
     sol_edges = 0;
 }
 
 void DtgOperators::add_edge_to_complete_forward_graph(int from, int to, int op_no, int op_cost, bool no_red_prec) {
-    if (is_red_connected && !ops_sufficient[op_no])
+    if (is_red_connected && !ops_sufficient[op_no]) {
         return;
+    }
     if (verbosity >= utils::Verbosity::DEBUG) {
         utils::g_log << "Creating the edge: to=" << to << ", op_no="<< op_no << ", op_cost=" << op_cost << endl;
     }
@@ -735,8 +773,9 @@ void DtgOperators::add_edge_to_complete_forward_graph(int from, int to, int op_n
 }
 
 void DtgOperators::calculate_shortest_paths_ignore_prevail_conditions() {
-    if (shortest_paths_calculated)
+    if (shortest_paths_calculated) {
         return;
+    }
     shortest_paths_calculated = true;
     if (verbosity >= utils::Verbosity::DEBUG) {
         utils::g_log << "=================> Calculating shortest paths in advance for variable " << var << " (" << task_proxy.get_variables()[var].get_name() << ") with domain size " << range << endl;
@@ -769,12 +808,13 @@ void DtgOperators::calculate_shortest_paths_ignore_prevail_conditions() {
 
     for (int k=0;k<range;++k) {
         for (int i=0;i<range;++i) {
-            if (solution[i][k] == numeric_limits<int>::max())  // In this case, no update is possible
+            if (solution[i][k] == numeric_limits<int>::max()) { // In this case, no update is possible
                 continue;
+            }
             for (int j=0;j<range;++j) {
-                if (solution[k][j] == numeric_limits<int>::max())  // In this case, no update is possible
+                if (solution[k][j] == numeric_limits<int>::max()) { // In this case, no update is possible
                     continue;
-
+                }
                 int new_dist = solution[i][k] + solution[k][j];
                 if (new_dist < solution[i][j]) {
                     // Update
@@ -889,8 +929,9 @@ const vector<int>& DtgOperators::calculate_shortest_path(const vector<int>& valu
     int to_value;
     for (size_t i=0; i < values.size(); ++i) {
         to_value = values[i];
-        if (from_value == to_value)
+        if (from_value == to_value) {
             continue;
+        }
         const vector<int>& missing = calculate_shortest_path_from_to(from_value, to_value);
         if (missing.size() == 0) {
             // No plan exists - need to return empty plan here
@@ -970,13 +1011,14 @@ void DtgOperators::dijkstra_search(priority_queues::AdaptiveQueue<int> &queue) {
         int state = top_pair.second;
         int state_distance = dijkstra_distance[state];
         assert(state_distance <= dist);
-        if (state_distance < dist)
+        if (state_distance < dist) {
             continue;
+        }
         for (size_t i = 0; i < complete_forward_graph[state].size(); ++i) {
             const GraphEdge& transition = complete_forward_graph[state][i];
-            if (!is_transition_enabled(transition, state))
+            if (!is_transition_enabled(transition, state)) {
                 continue;
-
+            }
             int successor = transition.to;
             int successor_cost = state_distance + transition.cost;
             if (dijkstra_distance[successor] > successor_cost) {
@@ -1004,11 +1046,13 @@ void DtgOperators::astar_search(priority_queues::AdaptiveQueue<int> &queue, int 
         int state = top_pair.second;
         int g_val = dijkstra_distance[state];
         // If goal is reached, we can stop
-        if (state == goal)
+        if (state == goal) {
             return;
+        }
         assert(g_val <= f_val);
-        if (g_val + solution[state][goal] < f_val)
+        if (g_val + solution[state][goal] < f_val) {
             continue;
+        }
 
         if (verbosity >= utils::Verbosity::DEBUG) {
             utils::g_log << "State " << state << ", reached by operator " << dijkstra_ops[state] << endl;

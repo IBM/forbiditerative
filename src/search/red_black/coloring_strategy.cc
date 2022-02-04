@@ -169,9 +169,9 @@ void ColoringStrategy::set_black_variables_vertex_cover(std::vector<int>& red_va
 
 void ColoringStrategy::precalculate_variables(bool force_computation) {
     // In some cases, here the black indices are not set yet
-    if (shortest_paths_calculated)
+    if (shortest_paths_calculated) {
         return;
-
+    }
 	if (verbosity >= utils::Verbosity::NORMAL) {
         utils::g_log  << "Adding edges to forward graph, for the later calculation of missing values" << endl;
     }
@@ -190,8 +190,9 @@ void ColoringStrategy::precalculate_variables(bool force_computation) {
 
                 utils::g_log  << "Effect variable " << var.get_name() << " is " << (is_black(var) ? "black" : "red") << endl;
             }
-            if (!is_black(var) && !is_use_connected())  // Only for black vars
+            if (!is_black(var) && !is_use_connected()) { // Only for black vars
                 continue;
+            }
     		if (verbosity >= utils::Verbosity::DEBUG) {
                 utils::g_log  << "Use connected: " << (is_use_connected() ? "yes" : "no") << endl;
             }
@@ -217,16 +218,14 @@ void ColoringStrategy::precalculate_variables(bool force_computation) {
                 pre_value_max = pre_value + 1;
             }
             for (int value = pre_value_min; value < pre_value_max; ++value) {
-                if (value == post_value)
+                if (value == post_value) {
                     continue;
-
+                }
         		if (verbosity >= utils::Verbosity::DEBUG) {
-
                     utils::g_log  << "Adding edge to complete forward graph, value: " << value << ", to value: " << post_value << ", for operator: " << op_no << " with cost " << op_cost << " with " << (is_root ? "no " : "") << "red preconditions" << endl;
                 }
                 get_dtg(var)->add_edge_to_complete_forward_graph(value, post_value, op_no, op_cost, is_root );
         		if (verbosity >= utils::Verbosity::DEBUG) {
-
                     utils::g_log  << "Added edge from " << value << " to " << post_value << " for operator " << op_no << " with cost " << op_cost << " with " << (is_root ? "no " : "") << "red preconditions" << endl;
                 }
             }
@@ -325,9 +324,9 @@ void ColoringStrategy::paint_red_by_vertex_cover(vector<int>& order, int* elemen
         }
         // Getting the next node according to the selected method to be marked red
         int best_node = get_best_index(order, elements);
-        if (-1 == best_node)
+        if (-1 == best_node) {
             break;
-
+        }
 
     	if (verbosity >= utils::Verbosity::DEBUG) {
             utils::g_log  << "Best node found: " << best_node << endl;
@@ -340,9 +339,9 @@ void ColoringStrategy::paint_red_by_vertex_cover(vector<int>& order, int* elemen
         get_cg_neighbours(neigh, best_var);
         for (int neighbour : neigh) {
             VariableProxy neigh_var = task_proxy.get_variables()[neighbour];
-            if (!is_black(neigh_var))
+            if (!is_black(neigh_var)) {
                 continue;
-
+            }
             // Decreasing the degree
             elements[neighbour]--;
         }
@@ -366,25 +365,26 @@ void ColoringStrategy::set_black_variables_while_DAG() {
     vector<vector<int> > adj_matrix(variables.size(), vector<int>());
     vector<vector<int> > bidirectional_edges(variables.size(), vector<int>());
     for (VariableProxy var : variables) {
-        if (!is_black(var))
+        if (!is_black(var)) {
             continue;
-
+        }
         adj_matrix[var.get_id()].assign(variables.size(), 0);
         for(int succ : get_cg_successors(var)) {
             VariableProxy to_var = variables[succ];
-            if (is_black(to_var))
+            if (is_black(to_var)) {
                 adj_matrix[var.get_id()][to_var.get_id()] = 1;
+            }
         }
     }
     // Checking whether there is a pair of vars with single edge between them
     for (VariableProxy var1 : variables) {
-        if (!is_black(var1))
+        if (!is_black(var1)) {
             continue;
-
+        }
         for (VariableProxy var2 : variables) {
-            if (!is_black(var2) || var1 == var2)
+            if (!is_black(var2) || var1 == var2) {
                 continue;
-
+            }
             if (adj_matrix[var1.get_id()][var2.get_id()] + adj_matrix[var2.get_id()][var1.get_id()] == 2) {
                 bidirectional_edges[var1.get_id()].push_back(var2.get_id());
             }
@@ -404,8 +404,9 @@ void ColoringStrategy::recompute_number_of_black_variables() {
     VariablesProxy variables = task_proxy.get_variables();
 
     for (VariableProxy var : variables) {
-        if (is_black(var))
+        if (is_black(var)) {
             number_of_black_variables++;
+        }
     }
 }
 
@@ -418,9 +419,9 @@ void ColoringStrategy::set_DAG_blacks(vector<bool>& blacks, const vector<vector<
     while (true) {
         // Getting the next vertex for painting black
         int vert = get_DAG_next_node_level(curr_unassigned);
-        if (vert == -1)
+        if (vert == -1) {
             break;
-
+        }
         assert (!blacks[vert]);
         curr_unassigned[vert] = false;
 
@@ -443,9 +444,9 @@ void ColoringStrategy::set_DAG_blacks(vector<bool>& blacks, const vector<vector<
 int ColoringStrategy::get_DAG_next_node_level(const vector<bool>& curr_unassigned) const {
     // By level heuristic
     for (size_t i = 0; i < curr_unassigned.size(); ++i) {
-        if (curr_unassigned[i])
+        if (curr_unassigned[i]) {
             return i;
-
+        }
     }
     return -1;
 }
@@ -454,15 +455,17 @@ int ColoringStrategy::get_DAG_next_node_level(const vector<bool>& curr_unassigne
 int ColoringStrategy::get_best_index(vector<int>& order, int* elements) {
 
     // If stopping when DAG is obtained, here we need to check whether the remaining part is already a DAG
-    if ((black_dag == FROM_COLORING) && is_already_DAG(black_vars))
+    if ((black_dag == FROM_COLORING) && is_already_DAG(black_vars)) {
         return -1;
+    }
     return get_index_of_leftmost_nonzero(order, elements);
 }
 
 int ColoringStrategy::get_index_of_leftmost_nonzero(vector<int>& order, int* elements) const {
     for (int var : order) {
-        if (elements[var] <= 0)
+        if (elements[var] <= 0) {
             continue;
+        }
         return var;
     }
     return -1;
@@ -476,9 +479,9 @@ bool ColoringStrategy::is_already_DAG(const vector<bool>& blacks) const {
     vector<int> ids_for_vars(task_proxy.get_variables().size(),-1);
 
     for (size_t i = 0; i < blacks.size(); ++i) {
-        if (!blacks[i])
+        if (!blacks[i]) {
             continue;
-
+        }
         ids_for_vars[i] = black_ids.size();
         black_ids.push_back(i);
     }
@@ -488,9 +491,9 @@ bool ColoringStrategy::is_already_DAG(const vector<bool>& blacks) const {
     for (size_t i=0; i < black_ids.size(); ++i) {
         VariableProxy var = task_proxy.get_variables()[black_ids[i]];
         for(int succ : get_cg_successors(var)) {
-            if (!blacks[succ])
+            if (!blacks[succ]) {
                 continue;
-
+            }
             int to_id = ids_for_vars[succ];
 
             graph[i].push_back(to_id);
@@ -504,12 +507,14 @@ bool ColoringStrategy::is_already_DAG(const vector<bool>& blacks) const {
 
 bool ColoringStrategy::is_disconnected(const vector<bool>& blacks) const {
     for (size_t i = 0; i < blacks.size(); ++i) {
-        if (!blacks[i])
+        if (!blacks[i]) {
             continue;
+        }
         VariableProxy var = task_proxy.get_variables()[i];
         for(int succ : get_cg_successors(var)) {
-            if (blacks[succ])
+            if (blacks[succ]) {
                 return false;
+            }
         }
     }
     return true;
@@ -529,13 +534,14 @@ bool ColoringStrategy::are_black_variables_connected() {
     VariablesProxy variables = task_proxy.get_variables();
 
     for (VariableProxy var : variables) {
-        if (!is_black(var))
+        if (!is_black(var)) {
             continue;
-
+        }
         for(int succ : get_cg_successors(var)) {
             VariableProxy to_var = variables[succ];
-            if (is_black(to_var))
+            if (is_black(to_var)) {
                 return true;
+            }
         }
     }
     return false;
@@ -547,27 +553,27 @@ bool ColoringStrategy::are_black_variables_singly_connected() {
 
     vector<vector<int> > adj_matrix(variables.size(), vector<int>());
     for (VariableProxy var : variables) {
-        if (!is_black(var))
+        if (!is_black(var)) {
             continue;
-
+        }
         adj_matrix[var.get_id()].assign(variables.size(), 0);
         for(int succ : get_cg_successors(var)) {
             VariableProxy to_var = variables[succ];
-            if (is_black(to_var))
+            if (is_black(to_var)) {
                 adj_matrix[var.get_id()][succ] = 1;
-
+            }
         }
     }
     // Checking whether there is a pair of vars with single edge between them
     for (VariableProxy var : variables) {
-        if (!is_black(var))
+        if (!is_black(var)) {
             continue;
-
+        }
         for (size_t j = var.get_id()+1; j <  variables.size(); ++j) {
             VariableProxy to_var = variables[j];
-            if (!is_black(to_var))
+            if (!is_black(to_var)) {
                 continue;
-
+            }
             if (adj_matrix[var.get_id()][j] + adj_matrix[j][var.get_id()] == 1) {
                 return true;
             }
