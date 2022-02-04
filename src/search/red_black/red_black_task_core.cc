@@ -80,7 +80,7 @@ void RedBlackTaskCore::prepare_DTGs_for_invertibility_check() {
     // Step 2: Add ops by transition.
     red_black_sas_operators.resize(task_proxy.get_operators().size());
     for (size_t op_no = 0; op_no < task_proxy.get_operators().size(); ++op_no) {
-        RedBlackOperator* rb_sas_op = new RedBlackOperator(op_no, task_proxy);
+        shared_ptr<RedBlackOperator> rb_sas_op = make_shared<RedBlackOperator>(op_no, task_proxy);
         red_black_sas_operators[op_no] = rb_sas_op;
         // Adding operator index to each proposition of the precondition
 

@@ -58,7 +58,7 @@ public:
 
 };
 
-typedef const RedBlackOperator* sas_operator;
+typedef std::shared_ptr<const RedBlackOperator> sas_operator;
 
 }
 #endif

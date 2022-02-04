@@ -41,7 +41,7 @@ class ColoringStrategy {
 
 
     DtgOperators* get_dtg(VariableProxy v) const { return red_black_task_core->get_dtg(v); }
-    RedBlackOperator* get_rb_sas_operator(int op_no) const { return red_black_task_core->get_rb_sas_operator(op_no); }
+    shared_ptr<RedBlackOperator> get_rb_sas_operator(int op_no) const { return red_black_task_core->get_rb_sas_operator(op_no); }
     bool is_invertible(VariableProxy var) const { return red_black_task_core->is_invertible(var); }
     size_t get_num_invertible_vars() const { return red_black_task_core->get_num_invertible_vars(); }
 

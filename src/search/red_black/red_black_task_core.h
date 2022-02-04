@@ -22,7 +22,7 @@ class RedBlackTaskCore {
     TaskProxy task_proxy;
     vector<DtgOperators *> dtgs_by_transition;
     // Keeping sas operators for faster checks
-    vector<RedBlackOperator*> red_black_sas_operators;
+    vector<shared_ptr<RedBlackOperator>> red_black_sas_operators;
     //TODO: Check if can be freed after initialization
     vector<ConnectivityStatus> connectivity_status;
 
@@ -41,7 +41,7 @@ public:
 
     void initialize();
     DtgOperators* get_dtg(VariableProxy var) const { return dtgs_by_transition[var.get_id()]; }
-    RedBlackOperator* get_rb_sas_operator(int op_no) const { return red_black_sas_operators[op_no]; }
+    shared_ptr<RedBlackOperator> get_rb_sas_operator(int op_no) const { return red_black_sas_operators[op_no]; }
 
     // Called from RedBlackHeuristic
     void free_mem();

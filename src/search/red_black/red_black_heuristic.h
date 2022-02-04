@@ -81,7 +81,7 @@ class RedBlackHeuristic: public ff_heuristic::FFHeuristic {
     int get_next_action();
 
     DtgOperators* get_dtg(VariableProxy v) const { return red_black_task.get_dtg(v); }
-    RedBlackOperator* get_rb_sas_operator(int op_no) const { return red_black_task.get_rb_sas_operator(op_no); }
+    shared_ptr<RedBlackOperator> get_rb_sas_operator(int op_no) const { return red_black_task.get_rb_sas_operator(op_no); }
 
     bool is_black(VariableProxy var) const { return red_black_task.is_black(var); }
 

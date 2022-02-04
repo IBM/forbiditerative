@@ -85,7 +85,7 @@ public:
     VariableProxy get_black_variable(size_t index) const { return black_variables[index]; }
     bool is_black(VariableProxy var) const { return coloring.is_black(var); }
     DtgOperators* get_dtg(VariableProxy v) const { return core.get_dtg(v); }
-    RedBlackOperator* get_rb_sas_operator(int op_no) const { return core.get_rb_sas_operator(op_no); }
+    shared_ptr<RedBlackOperator> get_rb_sas_operator(int op_no) const { return core.get_rb_sas_operator(op_no); }
     ConnectivityStatus get_connectivity_status(VariableProxy var) const { return core.get_connectivity_status(var); }
     const vector<int>& get_ops_by_pre(VariableProxy var, int val) const { return ops_by_pre[var.get_id()][val]; }
     const vector<OperatorEffectPair>& get_ops_eff_by_pre(VariableProxy var, int val) const { return ops_eff_by_pre[var.get_id()][val]; }
