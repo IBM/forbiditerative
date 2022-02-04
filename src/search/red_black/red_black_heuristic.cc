@@ -24,7 +24,7 @@ RedBlackHeuristic::RedBlackHeuristic(const Options &opts)
         connected_state_buffer(0),
         black_state_buffer(0),
         ff_cost(0),
-        red_black_task(opts, *task),
+        red_black_task(opts, task),
         conditional_effects_task(red_black_task.has_conditional_effects()),
         applicability_status(true),
         solution_found_by_heuristic(false),

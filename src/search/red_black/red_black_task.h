@@ -70,7 +70,7 @@ class RedBlackTask {
     void add_red_eff_condition_op_pair(int op_no, EffectProxy eff, FactProxy fact);
 
 public:
-    RedBlackTask(const options::Options &options, const AbstractTask &task);
+    RedBlackTask(const options::Options &options, const std::shared_ptr<AbstractTask> task);
 
     void initialize();
     size_t number_of_black_variables() const { return black_variables.size(); }

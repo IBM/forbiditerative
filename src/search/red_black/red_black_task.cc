@@ -7,8 +7,8 @@
 using namespace std;
 
 namespace red_black {
-RedBlackTask::RedBlackTask(const Options &opts, const AbstractTask &task) :
-                task_proxy(task),
+RedBlackTask::RedBlackTask(const Options &opts, const std::shared_ptr<AbstractTask> task) :
+                task_proxy(*task),
                 verbosity(opts.get<utils::Verbosity>("verbosity")),
                 coloring(opts, task),
                 dump_conflicting_conditional_effects(opts.get<bool>("dump_conflicting_conditional_effects")),

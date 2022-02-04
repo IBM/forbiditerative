@@ -22,14 +22,14 @@ class RedBlackTaskCore {
     size_t num_invertible_vars;
     const utils::Verbosity verbosity;
 
-    void create_extended_DTGs(const AbstractTask &task);
+    void create_extended_DTGs(const std::shared_ptr<AbstractTask> task);
     void prepare_DTGs_for_invertibility_check();
     void check_invertibility();
     void check_connectivity();
     void free_initial_data();
 
 public:
-    RedBlackTaskCore(const AbstractTask &task, const utils::Verbosity verbosity);
+    RedBlackTaskCore(const std::shared_ptr<AbstractTask> task, const utils::Verbosity verbosity);
 
     void initialize();
     std::shared_ptr<DtgOperators> get_dtg(VariableProxy var) const { return dtgs_by_transition[var.get_id()]; }

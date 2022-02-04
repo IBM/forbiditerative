@@ -4,8 +4,8 @@
 using namespace std;
 
 namespace red_black {
-RedBlackTaskCore::RedBlackTaskCore(const AbstractTask &task, const utils::Verbosity verbosity) :
-                task_proxy(task),
+RedBlackTaskCore::RedBlackTaskCore(const std::shared_ptr<AbstractTask> task, const utils::Verbosity verbosity) :
+                task_proxy(*task),
                 num_invertible_vars(0),
                 verbosity(verbosity) {
     // Creating the dtgs for all variables
@@ -62,7 +62,7 @@ void RedBlackTaskCore::free_mem() {
     connectivity_status.clear();
 }
 
-void RedBlackTaskCore::create_extended_DTGs(const AbstractTask &task) {
+void RedBlackTaskCore::create_extended_DTGs(const std::shared_ptr<AbstractTask> task) {
     utils::g_log << "Initializing extended DTGs" << endl;
     // Creating the extended DTGs from actions
 

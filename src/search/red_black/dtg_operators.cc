@@ -16,8 +16,8 @@ namespace red_black {
 bool DtgOperators::use_astar = false; 
 utils::Verbosity DtgOperators::verbosity = utils::Verbosity::SILENT;
 
-DtgOperators::DtgOperators(int v, const AbstractTask &task) :
-                task_proxy(task),
+DtgOperators::DtgOperators(int v, const std::shared_ptr<AbstractTask> task) :
+                task_proxy(*task),
                 var(v),
                 is_root(false),
                 range(task_proxy.get_variables()[var].get_domain_size()),

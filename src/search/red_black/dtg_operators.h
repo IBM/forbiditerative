@@ -135,7 +135,7 @@ class DtgOperators {
     bool is_transition_invertible_by_op_conditional(op_eff_pair op_eff, op_eff_pair by_op_eff) const;
 
 public:
-    DtgOperators(int v, const AbstractTask &task);
+    DtgOperators(int v, const std::shared_ptr<AbstractTask> task);
     virtual ~DtgOperators();
 
     static bool use_astar;

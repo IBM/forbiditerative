@@ -64,7 +64,7 @@ class ColoringStrategy {
 
     void set_black_variables(RedBlackTaskCore* core);
 public:
-    ColoringStrategy(const options::Options &options, const AbstractTask &task);
+    ColoringStrategy(const options::Options &options, const std::shared_ptr<AbstractTask> task);
 
     void initialize(RedBlackTaskCore* core);
 

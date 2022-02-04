@@ -12,8 +12,8 @@ namespace red_black {
 bool pair_compare ( const pair<int,int>& l, const pair<int,int>& r) { return l.first < r.first; }
 bool pair_compare_double ( const pair<double,int>& l, const pair<double,int>& r) { return l.first < r.first; }
 
-ColoringStrategy::ColoringStrategy(const Options &opts, const AbstractTask &task) :
-        task_proxy(task),
+ColoringStrategy::ColoringStrategy(const Options &opts, const std::shared_ptr<AbstractTask> task) :
+        task_proxy(*task),
         red_black_task_core(0),
         number_of_black_variables(0),
         black_dag(opts.get<BlackDAG>("dag")),
