@@ -8,25 +8,17 @@
 #include "../option_parser.h"
 
 #include <vector>
-#include <set>
-#include <cassert>
-#include <time.h>
-#include <cstdlib>
-#include <stdio.h>
-#include <iostream>
-
-using namespace std;
 
 namespace red_black {
 class RedBlackTaskCore {
     TaskProxy task_proxy;
-    vector<DtgOperators *> dtgs_by_transition;
+    std::vector<std::shared_ptr<DtgOperators>> dtgs_by_transition;
     // Keeping sas operators for faster checks
-    vector<shared_ptr<RedBlackOperator>> red_black_sas_operators;
+    std::vector<std::shared_ptr<RedBlackOperator>> red_black_sas_operators;
     //TODO: Check if can be freed after initialization
-    vector<ConnectivityStatus> connectivity_status;
+    std::vector<ConnectivityStatus> connectivity_status;
 
-    vector<bool> invertible_vars;  // Keeps invertible variables until black variables are set
+    std::vector<bool> invertible_vars;  // Keeps invertible variables until black variables are set
     size_t num_invertible_vars;
     const utils::Verbosity verbosity;
 
@@ -40,8 +32,8 @@ public:
     RedBlackTaskCore(const AbstractTask &task, const utils::Verbosity verbosity);
 
     void initialize();
-    DtgOperators* get_dtg(VariableProxy var) const { return dtgs_by_transition[var.get_id()]; }
-    shared_ptr<RedBlackOperator> get_rb_sas_operator(int op_no) const { return red_black_sas_operators[op_no]; }
+    std::shared_ptr<DtgOperators> get_dtg(VariableProxy var) const { return dtgs_by_transition[var.get_id()]; }
+    std::shared_ptr<RedBlackOperator> get_rb_sas_operator(int op_no) const { return red_black_sas_operators[op_no]; }
 
     // Called from RedBlackHeuristic
     void free_mem();

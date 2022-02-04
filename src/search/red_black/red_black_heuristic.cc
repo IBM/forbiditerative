@@ -2,7 +2,6 @@
 #include "red_black_operator.h"
 #include "../option_parser.h"
 #include "../plugin.h"
-#include "../utils/timer.h"
 #include "../utils/system.h"
 #include "../utils/logging.h"
 
@@ -12,10 +11,9 @@
 #include "../heuristics/ff_heuristic.h"
 #include "../tasks/root_task.h"
 
-#include <time.h>
-#include <cstdlib>
-#include <stdio.h>
-#include <iostream>
+#include <list>
+#include <string>
+#include <cassert>
 
 using namespace std;
 
@@ -1399,7 +1397,7 @@ int RedBlackHeuristic::compute_sequential_relaxed_plan(const State &state) {
     // The number of operators is calculated in the next step and decreased during the semi-relaxed computation (mostly for the iterative version)
     ff_cost = 0;
 
-    for (PropID goal_id : goal_propositions)
+    for (relaxation_heuristic::PropID goal_id : goal_propositions)
         get_relaxed_plan(state, goal_id);
 
     relaxed_plan.assign(task_proxy.get_operators().size(), false);
@@ -1497,17 +1495,17 @@ void RedBlackHeuristic::apply_operator(OperatorProxy op) {
 }
 
 void RedBlackHeuristic::get_relaxed_plan(const State &state,
-        PropID goal_id) {
-    Proposition *goal = get_proposition(goal_id); 
+        relaxation_heuristic::PropID goal_id) {
+    relaxation_heuristic::Proposition *goal = get_proposition(goal_id); 
     if (!goal->marked) { // Only consider each subgoal once.
         goal->marked = true;
-        OpID op_id = goal->reached_by;
-        if (op_id != NO_OP) { // We have not yet chained back to a start node.
-            UnaryOperator *unary_op = get_operator(op_id);
+        relaxation_heuristic::OpID op_id = goal->reached_by;
+        if (op_id != relaxation_heuristic::NO_OP) { // We have not yet chained back to a start node.
+            relaxation_heuristic::UnaryOperator *unary_op = get_operator(op_id);
             bool is_preferred = true;
-            for (PropID precond : get_preconditions(op_id)) {
+            for (relaxation_heuristic::PropID precond : get_preconditions(op_id)) {
                 get_relaxed_plan(state, precond);
-                if (get_proposition(precond)->reached_by != NO_OP) {
+                if (get_proposition(precond)->reached_by != relaxation_heuristic::NO_OP) {
                     is_preferred = false;
                 }
             }
@@ -1516,7 +1514,7 @@ void RedBlackHeuristic::get_relaxed_plan(const State &state,
             if (operator_no != -1) {
                 // This is not an axiom.
                 if (conditional_effects_task && red_black_task.operator_has_red_conditional_effects(operator_no)) {
-                    PropID effect_id = unary_op->effect;
+                    relaxation_heuristic::PropID effect_id = unary_op->effect;
                     propositions_per_operator[operator_no][effect_id] = true;
                 }
                 // Putting the operator in the right place, by its cost value (including the h_add of the preconditions)

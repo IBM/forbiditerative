@@ -1,7 +1,7 @@
 #include "red_black_task.h"
 #include "../option_parser.h"
 #include "../plugin.h"
-#include "../utils/timer.h"
+
 #include "../algorithms/topological_sort.h"
 
 using namespace std;

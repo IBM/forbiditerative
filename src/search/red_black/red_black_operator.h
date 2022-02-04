@@ -3,20 +3,12 @@
 
 #include <vector>
 #include <map>
-#include <set>
-#include <cassert>
 
 #include "../task_proxy.h"
 #include "../abstract_task.h"
 
 namespace red_black {
 class RedBlackOperator {
-
-
-    //typedef pair<int, int> assignment;
-    //typedef set<assignment> partial_assignment;
-    //typedef pair<partial_assignment, partial_assignment> sas_action;
-
     std::vector<FactProxy> red_precondition, black_precondition;
     std::vector<EffectProxy> red_effect, black_effect;
     std::vector<FactProxy> red_precondition_not_prevail;

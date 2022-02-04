@@ -5,11 +5,10 @@
 #include "red_black_operator.h"
 #include "../abstract_task.h"
 
-#include <cassert>
 #include <vector>
 #include <list>
+#include <string>
 
-using namespace std;
 
 namespace red_black {
 typedef std::pair<sas_operator, EffectProxy> op_eff_pair;
@@ -57,21 +56,21 @@ class DtgOperators {
     bool is_root;
     int range;
     int goal_val;
-    vector<vector<vector<op_eff_pair>>> ops_by_from_to; // Deleted/cleared for all variables after initialization
+    std::vector<std::vector<std::vector<op_eff_pair>>> ops_by_from_to; // Deleted/cleared for all variables after initialization
 
 //    // For directed required part invertible
 //    bool directed_required_part_invertible;
-//    vector<bool> required_part; // Deleted for all variables after initialization
+//    std::vector<bool> required_part; // Deleted for all variables after initialization
 //    bool required_part_found;
 //    set<int> requested; // Deleted for all variables after initialization
 //    int entry_value;
 
     // For calculating the shortest paths for black and storing the achieved values for red
-    vector<bool> achieved_vals;
+    std::vector<bool> achieved_vals;
 
-    list<int> red_sufficient_unachieved, default_list;
-    vector<bool> red_sufficient_achieved;
-    vector<list<int>::iterator> red_sufficient_unachieved_iterators;
+    std::list<int> red_sufficient_unachieved, default_list;
+    std::vector<bool> red_sufficient_achieved;
+    std::vector<std::list<int>::iterator> red_sufficient_unachieved_iterators;
 
     RedBlackHeuristic* base_pointer;
 
@@ -81,7 +80,7 @@ class DtgOperators {
     bool use_black_reachable;
 
     // For marking reachable black vals
-    vector<int> reachable_black_vals;
+    std::vector<int> reachable_black_vals;
     int number_reachable_black_vals;
 
     int current_value;
@@ -90,45 +89,45 @@ class DtgOperators {
     int* dijkstra_ops; // Deleted for red variables after initialization
     int* dijkstra_prev; // Deleted for red variables after initialization
 
-    vector<int>** sol_edges; // Deleted for red variables after initialization
+    std::vector<int>** sol_edges; // Deleted for red variables after initialization
     int** solution; // Deleted for all variables after initialization
 
-    vector<vector<GraphEdge> > complete_forward_graph;  // Deleted for red variables after initialization
+    std::vector<std::vector<GraphEdge> > complete_forward_graph;  // Deleted for red variables after initialization
 
     TransitionEnablementStatus transitions_status;
 
     bool black_initialized;
     bool shortest_paths_calculated;
 
-    vector<int> plan;
-    vector<bool> ops_sufficient;
+    std::vector<int> plan;
+    std::vector<bool> ops_sufficient;
     bool is_red_connected;
-    void restore_path_from_dijkstra_ops(int to_state, vector<int>& path) const;
+    void restore_path_from_dijkstra_ops(int to_state, std::vector<int>& path) const;
 
     // Used for checking invertibility, once, in the initialization. Not used during the search for heuristic computation.
     bool is_transition_invertible(int from_value, int to_value) const;
-    const vector<op_eff_pair>& get_ops_from_to(int from, int to) const;
+    const std::vector<op_eff_pair>& get_ops_from_to(int from, int to) const;
 
     void dijkstra_search(priority_queues::AdaptiveQueue<int> &queue);  // This one works on the complete forward graph
     void astar_search(priority_queues::AdaptiveQueue<int> &queue, int goal);  // This one works on the complete forward graph
 
-    const vector<int>& get_shortest_path_for_root();
-    const vector<int>& get_shortest_path_for_root_from_to(int from, int to);
+    const std::vector<int>& get_shortest_path_for_root();
+    const std::vector<int>& get_shortest_path_for_root_from_to(int from, int to);
 
     void set_root() { is_root = true; }
     void dump_shortest_paths_for_root() const;
     void dump_shortest_paths_for_root_from_to(int i, int j) const;
 
     void dump_complete_forward_graph() const;
-    string get_value_name(int value) const { return task_proxy.get_variables()[var].get_fact(value).get_name(); }
+    std::string get_value_name(int value) const { return task_proxy.get_variables()[var].get_fact(value).get_name(); }
 
     bool is_transition_enabled(const GraphEdge& trans, int from) const;
 
     // For delaying the goal achievement
     bool check_connected_from_to(int from, int to);
 
-//    bool is_condition_included(FactProxy cond, const vector<FactProxy> &pre) const;
-//    bool is_condition_included(FactProxy cond, const vector<EffectProxy> &effs) const;
+//    bool is_condition_included(FactProxy cond, const std::vector<FactProxy> &pre) const;
+//    bool is_condition_included(FactProxy cond, const std::vector<EffectProxy> &effs) const;
     bool is_condition_included(FactProxy cond, op_eff_pair op_eff) const;
 
     bool is_op_transition_invertible(op_eff_pair op_eff, int from_value, int to_value) const;
@@ -169,7 +168,7 @@ public:
     void clear_sufficient();
     void mark_as_sufficient(int val);
     int num_sufficient_unachieved() const;
-    const list<int>& get_sufficient_unachieved() const;
+    const std::list<int>& get_sufficient_unachieved() const;
     // Heuristic moving the sufficient goal values to the end
     void postpone_sufficient_goal();
     bool is_sufficient_unachieved(int val) const;
@@ -188,12 +187,12 @@ public:
     void clear_missing_mark();
     bool is_change_needed() const;
 
-    const vector<int>& calculate_shortest_path();
-    const vector<int>& calculate_shortest_path(const vector<int>& values);
-    const vector<int>& calculate_shortest_path_from_to(int from, int to);
-    const vector<int>& calculate_shortest_path_to(int to);
+    const std::vector<int>& calculate_shortest_path();
+    const std::vector<int>& calculate_shortest_path(const std::vector<int>& values);
+    const std::vector<int>& calculate_shortest_path_from_to(int from, int to);
+    const std::vector<int>& calculate_shortest_path_to(int to);
 
-    const vector<int>& get_current_shortest_path() const { return plan; }
+    const std::vector<int>& get_current_shortest_path() const { return plan; }
     void clear_calculated_path() { plan.clear(); }
 
     int get_current_shortest_path_cost() const;
@@ -213,7 +212,7 @@ public:
     void set_transitions_enablement_status(TransitionEnablementStatus curr) { transitions_status = curr; }
     TransitionEnablementStatus get_transitions_enablement_status() { return transitions_status; }
 
-    const vector<bool>& get_sufficient_achieved() const { return red_sufficient_achieved; }
+    const std::vector<bool>& get_sufficient_achieved() const { return red_sufficient_achieved; }
     bool is_sufficient_achieved(int val) const { return red_sufficient_achieved[val]; }
 
 /* For later implementation of other reversibility approximations

@@ -1,8 +1,6 @@
 #include "red_black_task_core.h"
 #include "../option_parser.h"
 
-#include "../utils/timer.h"
-
 using namespace std;
 
 namespace red_black {
@@ -55,10 +53,10 @@ void RedBlackTaskCore::initialize() {
 }
 
 void RedBlackTaskCore::free_mem() {
-    for (DtgOperators* dtg : dtgs_by_transition) {
-        if (dtg)
-            delete dtg;
-    }
+    // for (std::shared_ptr<DtgOperators> dtg : dtgs_by_transition) {
+    //     if (dtg)
+    //         delete dtg;
+    // }
     dtgs_by_transition.clear();
     invertible_vars.clear();
     connectivity_status.clear();
@@ -70,7 +68,7 @@ void RedBlackTaskCore::create_extended_DTGs(const AbstractTask &task) {
 
     VariablesProxy variables = task_proxy.get_variables();
     for (VariableProxy var : variables) {
-        dtgs_by_transition.push_back(new DtgOperators(var.get_id(), task));
+        dtgs_by_transition.push_back(make_shared<DtgOperators>(var.get_id(), task));
     }
 }
 

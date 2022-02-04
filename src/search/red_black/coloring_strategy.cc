@@ -2,9 +2,9 @@
 
 #include "../option_parser.h"
 #include "../plugin.h"
-#include "../utils/timer.h"
-
 #include "../algorithms/topological_sort.h"
+
+#include <cassert>
 
 using namespace std;
 

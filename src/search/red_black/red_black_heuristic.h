@@ -7,14 +7,9 @@
 #include "../task_utils/causal_graph.h"
 #include "red_black_task.h"
 
-#include <cassert>
 #include <iostream>
 #include <sstream>
-#include <string>
 #include <vector>
-#include <set>
-#include <list>
-using namespace std;
 
 namespace red_black {
 enum ActionApplicationResult {
@@ -23,14 +18,8 @@ enum ActionApplicationResult {
     ACTION_SELF_LOOP
 };
 
-using relaxation_heuristic::Proposition;
-using relaxation_heuristic::PropID;
-using relaxation_heuristic::OpID;
-using relaxation_heuristic::NO_OP;
-using relaxation_heuristic::UnaryOperator;
-
 class RedBlackHeuristic: public ff_heuristic::FFHeuristic {
-    vector<int> current_applicable_sequence;
+    std::vector<int> current_applicable_sequence;
 
     int* connected_state_buffer;
     int* black_state_buffer;
@@ -58,14 +47,14 @@ class RedBlackHeuristic: public ff_heuristic::FFHeuristic {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     int resolve_conflicts();
     int resolve_conflicts_disconnected();
-    const vector<int>& get_path_for_var(VariableProxy var);
+    const std::vector<int>& get_path_for_var(VariableProxy var);
     int resolve_conflicts_DAG();
-    void add_path_for_var_from_to(VariableProxy var, int from, int to, vector<int>& curr_sequence);
-    const vector<int>& get_path_for_var_from_to(VariableProxy var, int from, int to);
+    void add_path_for_var_from_to(VariableProxy var, int from, int to, std::vector<int>& curr_sequence);
+    const std::vector<int>& get_path_for_var_from_to(VariableProxy var, int from, int to);
     int get_black_prv(int op_no, VariableProxy var) const { return get_rb_sas_operator(op_no)->get_black_precondition_value(var); }
 
-    bool is_path_achieving_action_precondition_by_step(const vector<int>& ops, int op_no, size_t index) const;
-    bool is_path_achieving_var_val_by_step(const vector<int>& ops, FactProxy varval, size_t index) const;
+    bool is_path_achieving_action_precondition_by_step(const std::vector<int>& ops, int op_no, size_t index) const;
+    bool is_path_achieving_var_val_by_step(const std::vector<int>& ops, FactProxy varval, size_t index) const;
 
     int get_next_action_reg(bool skip_black_pre_may_delete_red_sufficient_achieved = false);
     int get_operator_estimated_conflict_cost_black_reachability(int op_no, FactProxy eff) const;
@@ -80,8 +69,8 @@ class RedBlackHeuristic: public ff_heuristic::FFHeuristic {
     void set_new_marks_for_state(const State &state);
     int get_next_action();
 
-    DtgOperators* get_dtg(VariableProxy v) const { return red_black_task.get_dtg(v); }
-    shared_ptr<RedBlackOperator> get_rb_sas_operator(int op_no) const { return red_black_task.get_rb_sas_operator(op_no); }
+    std::shared_ptr<DtgOperators> get_dtg(VariableProxy v) const { return red_black_task.get_dtg(v); }
+    std::shared_ptr<RedBlackOperator> get_rb_sas_operator(int op_no) const { return red_black_task.get_rb_sas_operator(op_no); }
 
     bool is_black(VariableProxy var) const { return red_black_task.is_black(var); }
 
@@ -120,7 +109,7 @@ class RedBlackHeuristic: public ff_heuristic::FFHeuristic {
     bool is_fact_true_in_current_state(FactProxy fact) const;
     bool effect_does_fire(EffectProxy eff) const;
 
-    void get_relaxed_plan(const State &state, PropID goal_id);
+    void get_relaxed_plan(const State &state, relaxation_heuristic::PropID goal_id);
 
     void remove_all_operators_from_parallel_relaxed_plan();
 
@@ -154,8 +143,8 @@ public:
     bool op_is_enabled(int op_no) const;
     bool op_is_currently_red_applicable(int op_no) const;
     bool op_is_currently_applicable_ignore_var(int op_no, VariableProxy var) const;
-    bool is_currently_applicable(const vector<int>& ops, bool skip_black=false);
-    bool is_currently_RB_applicable(const vector<int>& ops) const;
+    bool is_currently_applicable(const std::vector<int>& ops, bool skip_black=false);
+    bool is_currently_RB_applicable(const std::vector<int>& ops) const;
 
     // Michael: For checking overall applicability
     virtual bool found_solution() const override {

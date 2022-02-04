@@ -1,5 +1,6 @@
 #include "red_black_operator.h"
 #include "../utils/logging.h"
+
 #include <map>
 
 using namespace std;

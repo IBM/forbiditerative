@@ -7,9 +7,10 @@
 
 #include <cassert>
 #include <limits>
-#include <cstdlib>
 #include <algorithm>
 #include <vector>
+
+using namespace std;
 
 namespace red_black {
 bool DtgOperators::use_astar = false; 
