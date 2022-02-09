@@ -93,6 +93,7 @@ The code extends the Fast Downward planning system. The license for the
 extension is specified in the LICENSE file.
 
 ## Fast Downward
+<img src="misc/images/fast-downward.svg" width="800" alt="Fast Downward">
 
 Fast Downward is a domain-independent classical planning system.
 

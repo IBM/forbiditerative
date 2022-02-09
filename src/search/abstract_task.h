@@ -52,7 +52,6 @@ inline void feed(HashState &hash_state, const FactPair &fact) {
 }
 }
 
-
 class AbstractTask : public subscriber::SubscriberService<AbstractTask> {
     void dump_operator_pre_post_to_SAS(std::ostream& os, int pre, FactPair eff, const std::vector<FactPair>& eff_cond) const;
 	void dump_operators_to_SAS(std::ostream &os) const;
@@ -116,7 +115,7 @@ public:
       it should create the new vector in a local variable and then swap it with
       the parameter.
     */
-    virtual void convert_state_values(
+    virtual void convert_ancestor_state_values(
         std::vector<int> &values,
         const AbstractTask *ancestor_task) const = 0;
 

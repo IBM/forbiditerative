@@ -9,6 +9,9 @@
 
 namespace landmarks {
 class LandmarkFactoryRpgSasp : public LandmarkFactoryRelaxation {
+    const bool disjunctive_landmarks;
+    const bool use_orders;
+    const bool only_causal_landmarks;
     std::list<LandmarkNode *> open_landmarks;
     std::vector<std::vector<int>> disjunction_classes;
 
@@ -22,24 +25,25 @@ class LandmarkFactoryRpgSasp : public LandmarkFactoryRelaxation {
     void add_dtg_successor(int var_id, int pre, int post);
     void find_forward_orders(const VariablesProxy &variables,
                              const std::vector<std::vector<int>> &lvl_var,
-                             LandmarkNode *lmp);
+                             LandmarkNode *lm_node);
     void add_lm_forward_orders();
 
-    void get_greedy_preconditions_for_lm(const TaskProxy &task_proxy,
-                                         const LandmarkNode *lmp,
-                                         const OperatorProxy &op,
-                                         std::unordered_map<int, int> &result) const;
-    void compute_shared_preconditions(const TaskProxy &task_proxy,
-                                      std::unordered_map<int, int> &shared_pre,
-                                      std::vector<std::vector<int>> &lvl_var,
-                                      LandmarkNode *bp);
+    void get_greedy_preconditions_for_lm(
+        const TaskProxy &task_proxy, const Landmark &landmark,
+        const OperatorProxy &op,
+        std::unordered_map<int, int> &result) const;
+    void compute_shared_preconditions(
+        const TaskProxy &task_proxy,
+        std::unordered_map<int, int> &shared_pre,
+        std::vector<std::vector<int>> &lvl_var, const Landmark &landmark);
     void compute_disjunctive_preconditions(
         const TaskProxy &task_proxy,
         std::vector<std::set<FactPair>> &disjunctive_pre,
-        std::vector<std::vector<int>> &lvl_var, LandmarkNode *bp);
+        std::vector<std::vector<int>> &lvl_var,
+        const Landmark &landmark);
 
     int min_cost_for_landmark(const TaskProxy &task_proxy,
-                              LandmarkNode *bp,
+                              const Landmark &landmark,
                               std::vector<std::vector<int>> &lvl_var);
     virtual void generate_relaxed_landmarks(
         const std::shared_ptr<AbstractTask> &task,
@@ -58,9 +62,12 @@ class LandmarkFactoryRpgSasp : public LandmarkFactoryRelaxation {
                              const std::unordered_set<int> &exclude);
 
     void build_disjunction_classes(const TaskProxy &task_proxy);
+
+    void discard_disjunctive_landmarks();
 public:
     explicit LandmarkFactoryRpgSasp(const options::Options &opts);
 
+    virtual bool computes_reasonable_orders() const override;
     virtual bool supports_conditional_effects() const override;
 };
 }

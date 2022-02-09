@@ -12,6 +12,9 @@ class OperatorProxy;
 class State;
 class TaskProxy;
 
+namespace utils {
+class LogProxy;
+}
 
 class SearchNode {
     State state;
@@ -43,7 +46,7 @@ public:
     void close();
     void mark_as_dead_end();
 
-    void dump(const TaskProxy &task_proxy) const;
+    void dump(const TaskProxy &task_proxy, utils::LogProxy &log) const;
 };
 
 
@@ -61,8 +64,9 @@ class SearchSpace {
                           const std::vector<std::vector<EffectProxy>>& plan_firing_effects,
                           size_t to_index, FactProxy cond, std::ostream& os, bool coma, const TaskProxy &task_proxy) const;
 
+    utils::LogProxy &log;
 public:
-    explicit SearchSpace(StateRegistry &state_registry);
+    SearchSpace(StateRegistry &state_registry, utils::LogProxy &log);
 
     SearchNode get_node(const State &state);
     void trace_path(const State &goal_state,

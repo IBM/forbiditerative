@@ -1,5 +1,6 @@
 #include "landmark_factory_merged.h"
 
+#include "landmark.h"
 #include "landmark_graph.h"
 
 #include "../option_parser.h"
@@ -16,24 +17,23 @@ namespace landmarks {
 class LandmarkNode;
 
 LandmarkFactoryMerged::LandmarkFactoryMerged(const Options &opts)
-    : LandmarkFactory(opts),
-      lm_factories(opts.get_list<shared_ptr<LandmarkFactory>>("lm_factories")) {
+    : lm_factories(opts.get_list<shared_ptr<LandmarkFactory>>("lm_factories")) {
 }
 
-LandmarkNode *LandmarkFactoryMerged::get_matching_landmark(const LandmarkNode &lm) const {
-    if (!lm.disjunctive && !lm.conjunctive) {
-        const FactPair &lm_fact = lm.facts[0];
+LandmarkNode *LandmarkFactoryMerged::get_matching_landmark(const Landmark &landmark) const {
+    if (!landmark.disjunctive && !landmark.conjunctive) {
+        const FactPair &lm_fact = landmark.facts[0];
         if (lm_graph->contains_simple_landmark(lm_fact))
             return &lm_graph->get_simple_landmark(lm_fact);
         else
             return 0;
-    } else if (lm.disjunctive) {
-        set<FactPair> lm_facts(lm.facts.begin(), lm.facts.end());
+    } else if (landmark.disjunctive) {
+        set<FactPair> lm_facts(landmark.facts.begin(), landmark.facts.end());
         if (lm_graph->contains_identical_disjunctive_landmark(lm_facts))
-            return &lm_graph->get_disjunctive_landmark(lm.facts[0]);
+            return &lm_graph->get_disjunctive_landmark(landmark.facts[0]);
         else
             return 0;
-    } else if (lm.conjunctive) {
+    } else if (landmark.conjunctive) {
         cerr << "Don't know how to handle conjunctive landmarks yet" << endl;
         utils::exit_with(ExitCode::SEARCH_UNSUPPORTED);
     }
@@ -53,55 +53,41 @@ void LandmarkFactoryMerged::generate_landmarks(
     utils::g_log << "Adding simple landmarks" << endl;
     for (size_t i = 0; i < lm_graphs.size(); ++i) {
         const LandmarkGraph::Nodes &nodes = lm_graphs[i]->get_nodes();
-        for (auto &lm : nodes) {
-            const LandmarkNode &node = *lm;
-            const FactPair &lm_fact = node.facts[0];
-            if (!node.conjunctive && !node.disjunctive && !lm_graph->contains_landmark(lm_fact)) {
-                LandmarkNode &new_node = lm_graph->add_simple_landmark(lm_fact);
-                new_node.is_true_in_goal = node.is_true_in_goal;
-                new_node.possible_achievers.insert(
-                    node.possible_achievers.begin(), node.possible_achievers.end());
-                new_node.first_achievers.insert(
-                    node.first_achievers.begin(), node.first_achievers.end());
-                new_node.is_derived = node.is_derived;
+        // TODO: loop over landmarks instead
+        for (auto &lm_node : nodes) {
+            const Landmark &landmark = lm_node->get_landmark();
+            if (landmark.conjunctive) {
+                cerr << "Don't know how to handle conjunctive landmarks yet" << endl;
+                utils::exit_with(ExitCode::SEARCH_UNSUPPORTED);
+            } else if (landmark.disjunctive) {
+                continue;
+            } else if (!lm_graph->contains_landmark(landmark.facts[0])) {
+                Landmark copy(landmark);
+                lm_graph->add_landmark(move(copy));
             }
         }
     }
 
-    /*
-      TODO: It seems that disjunctive landmarks are only added if none of the
-       facts it is made of is also there as a simple landmark. This should
-       either be more general (add only if none of its subset is already there)
-       or it should be done only upon request (e.g., heuristics that consider
-       orders might want to keep all landmarks).
-    */
     utils::g_log << "Adding disjunctive landmarks" << endl;
     for (size_t i = 0; i < lm_graphs.size(); ++i) {
         const LandmarkGraph::Nodes &nodes = lm_graphs[i]->get_nodes();
-        for (auto &lm : nodes) {
-            const LandmarkNode &node = *lm;
-            if (node.disjunctive) {
-                set<FactPair> lm_facts;
-                bool exists = false;
-                for (const FactPair &lm_fact: node.facts) {
-                    if (lm_graph->contains_landmark(lm_fact)) {
-                        exists = true;
-                        break;
-                    }
-                    lm_facts.insert(lm_fact);
-                }
+        for (auto &lm_node : nodes) {
+            const Landmark &landmark = lm_node->get_landmark();
+            if (landmark.disjunctive) {
+/*
+  TODO: It seems that disjunctive landmarks are only added if none of the
+   facts it is made of is also there as a simple landmark. This should
+   either be more general (add only if none of its subset is already there)
+   or it should be done only upon request (e.g., heuristics that consider
+   orders might want to keep all landmarks).
+*/
+                bool exists =
+                    any_of(landmark.facts.begin(), landmark.facts.end(),
+                           [&](const FactPair &lm_fact) {return lm_graph->contains_landmark(lm_fact);});
                 if (!exists) {
-                    LandmarkNode &new_node = lm_graph->add_disjunctive_landmark(lm_facts);
-                    new_node.is_true_in_goal = node.is_true_in_goal;
-                    new_node.possible_achievers.insert(
-                        node.possible_achievers.begin(), node.possible_achievers.end());
-                    new_node.first_achievers.insert(
-                        node.first_achievers.begin(), node.first_achievers.end());
-                    new_node.is_derived = node.is_derived;
+                    Landmark copy(landmark);
+                    lm_graph->add_landmark(move(copy));
                 }
-            } else if (node.conjunctive) {
-                cerr << "Don't know how to handle conjunctive landmarks yet" << endl;
-                utils::exit_with(ExitCode::SEARCH_UNSUPPORTED);
             }
         }
     }
@@ -110,12 +96,12 @@ void LandmarkFactoryMerged::generate_landmarks(
     for (size_t i = 0; i < lm_graphs.size(); ++i) {
         const LandmarkGraph::Nodes &nodes = lm_graphs[i]->get_nodes();
         for (auto &from_orig : nodes) {
-            LandmarkNode *from = get_matching_landmark(*from_orig);
+            LandmarkNode *from = get_matching_landmark(from_orig->get_landmark());
             if (from) {
                 for (const auto &to : from_orig->children) {
-                    const LandmarkNode &to_orig = *to.first;
+                    const LandmarkNode *to_orig = to.first;
                     EdgeType e_type = to.second;
-                    LandmarkNode *to_node = get_matching_landmark(to_orig);
+                    LandmarkNode *to_node = get_matching_landmark(to_orig->get_landmark());
                     if (to_node) {
                         edge_add(*from, *to_node, e_type);
                     } else {
@@ -127,29 +113,21 @@ void LandmarkFactoryMerged::generate_landmarks(
             }
         }
     }
-
-    TaskProxy task_proxy(*task);
-    generate(task_proxy);
+    postprocess();
 }
 
-void LandmarkFactoryMerged::generate(const TaskProxy &task_proxy) {
+void LandmarkFactoryMerged::postprocess() {
     lm_graph->set_landmark_ids();
-
-    /*
-      TODO: causal, disjunctive and/or conjunctive landmarks as well as orders
-       have been removed in the individual landmark graphs. Since merging
-       landmark graphs doesn't introduce any of these, it should not be
-       necessary to do so again here, so these steps are omitted. For
-       reasonable orders, acyclicity of the landmark graph and the costs of
-       landmarks we should also determine this.
-    */
-    if (reasonable_orders) {
-        utils::g_log << "approx. reasonable orders" << endl;
-        approximate_reasonable_orders(task_proxy, false);
-        utils::g_log << "approx. obedient reasonable orders" << endl;
-        approximate_reasonable_orders(task_proxy, true);
-    }
     mk_acyclic_graph();
+}
+
+bool LandmarkFactoryMerged::computes_reasonable_orders() const {
+    for (const shared_ptr<LandmarkFactory> &lm_factory : lm_factories) {
+        if (lm_factory->computes_reasonable_orders()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool LandmarkFactoryMerged::supports_conditional_effects() const {
@@ -171,13 +149,9 @@ static shared_ptr<LandmarkFactory> _parse(OptionParser &parser) {
         "orderings take precedence in the usual manner "
         "(gn > nat > reas > o_reas). ");
     parser.document_note(
-        "Relevant options",
-        "Depends on landmarks");
-    parser.document_note(
         "Note",
         "Does not currently support conjunctive landmarks");
     parser.add_list_option<shared_ptr<LandmarkFactory>>("lm_factories");
-    _add_options_to_parser(parser);
     Options opts = parser.parse();
 
     opts.verify_list_non_empty<shared_ptr<LandmarkFactory>>("lm_factories");
