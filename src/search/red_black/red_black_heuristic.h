@@ -6,6 +6,7 @@
 #include "red_black_operator.h"
 #include "../task_utils/causal_graph.h"
 #include "red_black_task.h"
+#include "../utils/logging.h"
 
 #include <iostream>
 #include <sstream>
@@ -36,7 +37,7 @@ class RedBlackHeuristic: public ff_heuristic::FFHeuristic {
     bool solution_found_by_heuristic;
     const bool extract_plan;
     bool initialized;
-    const utils::Verbosity verbosity;
+    utils::LogProxy log;
 
     int *curr_state_buffer;
     void initialize();
@@ -84,7 +85,7 @@ class RedBlackHeuristic: public ff_heuristic::FFHeuristic {
     bool is_currently_mixed_effects(int op_no) const;
 
     bool op_all_red_preconditions_reached(int op_no) const;
-    bool op_all_red_conditions_reached(int op_no, FactProxy eff) const;
+    bool op_all_red_conditions_reached(int op_no, FactProxy eff, utils::LogProxy &clog) const;
     int get_num_reached_red_preconditions(int op_no) const { return red_black_task.get_num_reached_red_preconditions(op_no); }
     int get_num_reached_red_effect_conditions(int op_no, FactProxy eff) const { return red_black_task.get_num_reached_red_effect_conditions(op_no, eff); }
     bool op_all_black_preconditions_reachable(int op_no) const;
@@ -95,8 +96,8 @@ class RedBlackHeuristic: public ff_heuristic::FFHeuristic {
     void clear_red_precondition_marks() { red_black_task.clear_red_precondition_marks(); }
     void clear_black_marks() { red_black_task.clear_black_marks(); }
 
-    void dump_current_semi_relaxed_state(bool dump_fact = false) const;
-    void dump_current_relaxed_state() const;
+    void dump_current_semi_relaxed_state(utils::LogProxy &clog, bool dump_fact = false) const;
+    void dump_current_relaxed_state(utils::LogProxy &clog) const;
     void apply_action_to_current_state(int op_no);
     ActionApplicationResult apply_action_to_semi_relaxed_state(int op_no, bool check_applicability = true);
     bool effect_fires_in_semi_relaxed_state(EffectProxy eff) const;

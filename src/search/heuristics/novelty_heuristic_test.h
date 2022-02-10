@@ -3,6 +3,7 @@
 
 #include "../heuristic.h"
 #include "../search_statistics.h"
+#include "../utils/logging.h"
 
 #include <vector>
 #include <memory>
@@ -37,15 +38,15 @@ class NoveltyHeuristicTest : public Heuristic {
 	int multiplier;
 
     OperatorID reached_by_op_id;
-    const utils::Verbosity verbosity;
+    utils::LogProxy log;
     SearchStatistics statistics;
 
     std::vector<std::vector<std::vector<int> > > novelty_per_variable_value;
     std::vector<std::vector<int> >  novelty_per_operator;
     int get_value_for_fact(const FactProxy& fact, int heuristic_index) const;
     void update_value_for_fact(const FactProxy& fact, int heuristic_index, int value);
-    int get_estimate_novel(int curr_value, int heur_value) const ;
-    int get_estimate_non_novel(int curr_value, int heur_value) const ;
+    int get_estimate_novel(int curr_value, int heur_value, utils::LogProxy &log) const ;
+    int get_estimate_non_novel(int curr_value, int heur_value, utils::LogProxy &log) const ;
     int compute_aggregated_score(std::vector<int>& values) const;
     void update_maximal_value(int value);
 

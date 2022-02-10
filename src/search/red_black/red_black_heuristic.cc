@@ -30,12 +30,11 @@ RedBlackHeuristic::RedBlackHeuristic(const Options &opts)
         solution_found_by_heuristic(false),
         extract_plan(opts.get<bool>("extract_plan")),
         initialized(false),
-        verbosity(opts.get<utils::Verbosity>("verbosity")),
+        log(utils::get_log_from_options(opts)),
         curr_state_buffer(0) {
     // Currently, initialization is moved to the constructor
-    utils::g_log << "Initializing Red-Black Fact Following heuristic..." << endl;
+    log << "Initializing Red-Black Fact Following heuristic..." << endl;
     DtgOperators::use_astar = opts.get<bool>("astar");
-    DtgOperators::verbosity = opts.get<utils::Verbosity>("verbosity");
     task_properties::verify_no_axioms(task_proxy);
 
 }
@@ -48,7 +47,7 @@ void RedBlackHeuristic::initialize() {
     if (initialized)
         return;
 
-    utils::g_log << "Extract plan from the heuristic: " << (extract_plan ? "yes" : "no") << endl;
+    log << "Extract plan from the heuristic: " << (extract_plan ? "yes" : "no") << endl;
 
     if (extract_plan) {
         curr_state_buffer = new int[task_proxy.get_variables().size()];
@@ -80,7 +79,7 @@ void RedBlackHeuristic::initialize() {
     if (red_black_task.number_of_black_variables() == 0) {
         // Releasing the allocated memory, nothing more to do...
         free_mem();
-        utils::g_log << "No black variables found -- running FF heuristic." << endl;
+        log << "No black variables found -- running FF heuristic." << endl;
     } else {
         // Removing unnecessary data after blacks are set
         red_black_task.free_red_data();
@@ -94,7 +93,7 @@ void RedBlackHeuristic::initialize() {
         red_black_task.prepare_for_red_fact_following_next_red_action_test();
 
         // Precalculating black paths/values (in case it was not done before)
-        utils::g_log << "Initializing black variables..." << endl;
+        log << "Initializing black variables..." << endl;
         VariablesProxy variables = task_proxy.get_variables();
         for (VariableProxy var : variables) {
             if (is_black(var) || red_black_task.is_use_connected()) {
@@ -104,7 +103,7 @@ void RedBlackHeuristic::initialize() {
         red_black_task.precalculate_variables(false);
     }
 
-    utils::g_log << "Finished initializing Red-Black Fact Following heuristic" << endl;
+    log << "Finished initializing Red-Black Fact Following heuristic" << endl;
     initialized = true;
 }
 
@@ -146,9 +145,9 @@ int RedBlackHeuristic::compute_heuristic(const State &ancestor_state) {
 
     State state = convert_ancestor_state(ancestor_state);
 
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "====================================================================================================" << endl;
-        utils::g_log << "Getting heuristic value for state: " << state.get_id() << endl;
+    if (log.is_at_least_debug()) {
+        log << "====================================================================================================" << endl;
+        log << "Getting heuristic value for state: " << state.get_id() << endl;
         task_properties::dump_pddl(state);
     }
     // Checking goal condition
@@ -174,13 +173,13 @@ int RedBlackHeuristic::compute_heuristic(const State &ancestor_state) {
     }
 
     int res = get_red_black_plan_cost(state);
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Red-black plan value: "  << res << endl;
+    if (log.is_at_least_debug()) {
+        log << "Red-black plan value: "  << res << endl;
     }
 
     if (res != DEAD_END && extract_plan && applicability_status) {
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Checking goal via state" << endl;
+        if (log.is_at_least_debug()) {
+            log << "Checking goal via state" << endl;
         //    dump_state_buffer_pddl(curr_state_buffer);
         }
         check_goal_via_state();
@@ -204,25 +203,25 @@ int RedBlackHeuristic::get_red_black_plan_cost(const State &state) {
     reset_all_marks();
     set_new_marks_for_state(state);
 
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Getting the next action for red-black plan" << endl;
+    if (log.is_at_least_debug()) {
+        log << "Getting the next action for red-black plan" << endl;
     }
     while (true) {
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Current semi-relaxed state is" << endl;
-            dump_current_semi_relaxed_state(true);
+        if (log.is_at_least_debug()) {
+            log << "Current semi-relaxed state is" << endl;
+            dump_current_semi_relaxed_state(log, true);
         }
         int op_no = get_next_action();
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Next action index: " << op_no << endl;
+        if (log.is_at_least_debug()) {
+            log << "Next action index: " << op_no << endl;
         }
         if (op_no == -1) {
             int suffix = add_red_black_plan_suffix(h_rb);
             return suffix;
         }
 
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            dump_current_semi_relaxed_state(true);
+        if (log.is_at_least_debug()) {
+            dump_current_semi_relaxed_state(log, true);
         }
         // If the action is applicable, apply and continue to the next one
         // Clearing all black marks before the next application
@@ -238,21 +237,21 @@ int RedBlackHeuristic::get_red_black_plan_cost(const State &state) {
                 // Check global applicability and apply
                 apply_action_to_current_state(op_no);
             }
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "[APPLICABLE] "   << op.get_name() << endl;
-                utils::g_log << "Current heuristic value is " << h_rb << endl;
+            if (log.is_at_least_debug()) {
+                log << "[APPLICABLE] "   << op.get_name() << endl;
+                log << "Current heuristic value is " << h_rb << endl;
             }
             update_marks(op_no);
             continue;
         }
         if (app_status == ACTION_SELF_LOOP) {
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "[SELF-LOOP] "   << op.get_name() << endl;
+            if (log.is_at_least_debug()) {
+                log << "[SELF-LOOP] "   << op.get_name() << endl;
             }
             continue;
         }
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "[NOT-APPLICABLE] "   << op.get_name() << endl;
+        if (log.is_at_least_debug()) {
+            log << "[NOT-APPLICABLE] "   << op.get_name() << endl;
         }
 
         // Otherwise, collect the costs from the black dtgs (the missing part is already marked in the relevant dtgs)
@@ -261,8 +260,8 @@ int RedBlackHeuristic::get_red_black_plan_cost(const State &state) {
             return DEAD_END;
 
         h_rb += conflict_cost;
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Current heuristic value is " << h_rb << endl;
+        if (log.is_at_least_debug()) {
+            log << "Current heuristic value is " << h_rb << endl;
         }
 
         // Apply the action - should be applicable now.
@@ -275,21 +274,21 @@ int RedBlackHeuristic::get_red_black_plan_cost(const State &state) {
                 // Check global applicability and apply
                 apply_action_to_current_state(op_no);
             }
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "[APPLICABLE] " << op.get_name() << endl;
-                utils::g_log << "Current heuristic value is " << h_rb << endl;
+            if (log.is_at_least_debug()) {
+                log << "[APPLICABLE] " << op.get_name() << endl;
+                log << "Current heuristic value is " << h_rb << endl;
             }
             update_marks(op_no);
             continue;
         }
         if (app_status == ACTION_SELF_LOOP) {
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "[SELF-LOOP] "  << op.get_name() << endl;
+            if (log.is_at_least_debug()) {
+                log << "[SELF-LOOP] "  << op.get_name() << endl;
             }
             continue;
         }
         // Should not get here!!!
-        utils::g_log << "Still not applicable!!! Bug!" << endl;
+        log << "Still not applicable!!! Bug!" << endl;
         utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
     }
 }
@@ -299,8 +298,8 @@ int RedBlackHeuristic::add_red_black_plan_suffix(int h_val) {
     if (check_semi_relaxed_goal_reached_and_set_missing_black()) {
         return h_val;
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Applying the following actions to achieve the black goals." << endl;
+    if (log.is_at_least_debug()) {
+        log << "Applying the following actions to achieve the black goals." << endl;
     }
 
     // Otherwise, collect the costs from the black dtgs (the missing part is already marked in the relevant dtgs)
@@ -310,8 +309,8 @@ int RedBlackHeuristic::add_red_black_plan_suffix(int h_val) {
         return DEAD_END;
     }
     h_val += conflict_cost;
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Current heuristic value is " << h_val << endl;
+    if (log.is_at_least_debug()) {
+        log << "Current heuristic value is " << h_val << endl;
     }
     return h_val;
 }
@@ -334,27 +333,27 @@ bool RedBlackHeuristic::is_currently_mixed_effects(int op_no) const {
 
 bool RedBlackHeuristic::op_all_red_preconditions_reached(int op_no) const {
     // red precondition is reached and the red condition of the effect is reached
-    //if (verbosity >= utils::Verbosity::DEBUG) {
-    //    utils::g_log << "Reached red pre: " << get_num_reached_red_preconditions(op_no) << "/" << get_num_red_preconditions(op_no) << endl;
+    //if (log.is_at_least_debug()) {
+    //    log << "Reached red pre: " << get_num_reached_red_preconditions(op_no) << "/" << get_num_red_preconditions(op_no) << endl;
     //}
 
     return (get_num_reached_red_preconditions(op_no) == get_num_red_preconditions(op_no));
 }
 
-bool RedBlackHeuristic::op_all_red_conditions_reached(int op_no, FactProxy eff) const {
+bool RedBlackHeuristic::op_all_red_conditions_reached(int op_no, FactProxy eff, utils::LogProxy &clog) const {
     // red precondition is reached and the red condition of the effect is reached
-    if (verbosity >= utils::Verbosity::DEBUG) {
+    if (clog.is_at_least_debug()) {
         OperatorProxy op = task_proxy.get_operators()[op_no];
-        utils::g_log << "Conditions for the effect:" << endl;
+        clog << "Conditions for the effect:" << endl;
         for (EffectProxy op_eff : op.get_effects()) {
             if (op_eff.get_fact() != eff)
                 continue;
             for (FactProxy cond : op_eff.get_conditions()) {
                 if (!is_black(cond.get_variable()))
-                    utils::g_log << cond.get_name() << endl;
+                    clog << cond.get_name() << endl;
             }
         }
-        utils::g_log << "Reached red pre: " << get_num_reached_red_preconditions(op_no) << "/" << get_num_red_preconditions(op_no)
+        clog << "Reached red pre: " << get_num_reached_red_preconditions(op_no) << "/" << get_num_red_preconditions(op_no)
                 << ", Reached red conditions for " << eff.get_name() << ": " << get_num_reached_red_effect_conditions(op_no, eff)
                 << "/" << get_num_red_effect_conditions(op_no, eff) << endl;
     }
@@ -389,14 +388,14 @@ bool RedBlackHeuristic::currently_op_prec_unchanged(int op_no) const {
 
 ActionApplicationResult RedBlackHeuristic::apply_action_to_semi_relaxed_state(int op_no, bool check_applicability) {
 
-    //if (verbosity >= utils::Verbosity::DEBUG) {
-    //    utils::g_log << "apply_action_to_semi_relaxed_state " <<     task_proxy.get_operators()[op_no].get_name() << ", check applicability: " << (check_applicability ? "true" : "false") << endl;
+    //if (log.is_at_least_debug()) {
+    //    log << "apply_action_to_semi_relaxed_state " <<     task_proxy.get_operators()[op_no].get_name() << ", check applicability: " << (check_applicability ? "true" : "false") << endl;
     //}
 
     // The action at this point should have all red preconditions achieved.
     if (check_applicability) {
         if (!op_all_red_preconditions_reached(op_no)) {
-            utils::g_log << "Red preconditions are not achieved! Bug!!" << endl;
+            log << "Red preconditions are not achieved! Bug!!" << endl;
             utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
         }
         // In case the action is not applicable, mark all missing values, then return ACTION_NOT_APPLICABLE.
@@ -410,8 +409,8 @@ ActionApplicationResult RedBlackHeuristic::apply_action_to_semi_relaxed_state(in
 
             if (val != get_dtg(var)->get_current_value()) {
                 missing_values = true;
-                if (verbosity >= utils::Verbosity::DEBUG) {
-                    utils::g_log << "Found missing value for black variable " << var.get_name()
+                if (log.is_at_least_debug()) {
+                    log << "Found missing value for black variable " << var.get_name()
                             << ". Current value is " << get_dtg(var)->get_current_value() << ", while the precondition is " << val << endl;
                 }
 
@@ -420,8 +419,8 @@ ActionApplicationResult RedBlackHeuristic::apply_action_to_semi_relaxed_state(in
         }
 
         if (missing_values) {
-            //if (verbosity >= utils::Verbosity::DEBUG) {
-            //   utils::g_log << "Action not applicable, marking missing values." << endl;
+            //if (log.is_at_least_debug()) {
+            //   log << "Action not applicable, marking missing values." << endl;
             //}
             // Marking the whole precondition to be missing.
             for (FactProxy fact : get_rb_sas_operator(op_no)->get_black_precondition()) {
@@ -433,25 +432,25 @@ ActionApplicationResult RedBlackHeuristic::apply_action_to_semi_relaxed_state(in
             return ACTION_NOT_APPLICABLE;
         }
     }
-    //if (verbosity >= utils::Verbosity::DEBUG) {
-    //    utils::g_log << "Action is applicable, applying and checking for self loop." << endl;
+    //if (log.is_at_least_debug()) {
+    //    log << "Action is applicable, applying and checking for self loop." << endl;
     //}
     // The action is applicable, applying it
     bool is_self_loop = true;
     for (EffectProxy eff : get_rb_sas_operator(op_no)->get_black_effect()) {
         if (!effect_fires_in_semi_relaxed_state(eff)) {
-            //if (verbosity >= utils::Verbosity::DEBUG) {
-            //            utils::g_log << "Black effect for " << eff.get_fact().get_name()  << " does not fire." << endl;
+            //if (log.is_at_least_debug()) {
+            //            log << "Black effect for " << eff.get_fact().get_name()  << " does not fire." << endl;
             //}
             continue;
         }
-        //if (verbosity >= utils::Verbosity::DEBUG) {
-        //        utils::g_log << "Black effect for " << eff.get_fact().get_name()  << " fires." << endl;
+        //if (log.is_at_least_debug()) {
+        //        log << "Black effect for " << eff.get_fact().get_name()  << " fires." << endl;
         //}
         VariableProxy var = eff.get_fact().get_variable();
         int val = eff.get_fact().get_value();
-        //if (verbosity >= utils::Verbosity::DEBUG) {
-        //        utils::g_log << "Effect value: " << var.get_fact(val).get_name()  << ", current value:" << var.get_fact(get_dtg(var)->get_current_value()).get_name()  << endl;
+        //if (log.is_at_least_debug()) {
+        //        log << "Effect value: " << var.get_fact(val).get_name()  << ", current value:" << var.get_fact(get_dtg(var)->get_current_value()).get_name()  << endl;
         //}
         if (val != get_dtg(var)->get_current_value()) {
             is_self_loop = false;
@@ -460,31 +459,31 @@ ActionApplicationResult RedBlackHeuristic::apply_action_to_semi_relaxed_state(in
     }
     for (EffectProxy eff : get_rb_sas_operator(op_no)->get_red_effect()) {
         if (!effect_fires_in_semi_relaxed_state(eff)) {
-            //if (verbosity >= utils::Verbosity::DEBUG) {
-            //            utils::g_log << "Red effect for " << eff.get_fact().get_name()  << " does not fire." << endl;
+            //if (log.is_at_least_debug()) {
+            //            log << "Red effect for " << eff.get_fact().get_name()  << " does not fire." << endl;
             //}
             continue;
         }
-        //if (verbosity >= utils::Verbosity::DEBUG) {
-        //        utils::g_log << "Red effect for " << eff.get_fact().get_name()  << " fires." << endl;
+        //if (log.is_at_least_debug()) {
+        //        log << "Red effect for " << eff.get_fact().get_name()  << " fires." << endl;
         //}
         VariableProxy var = eff.get_fact().get_variable();
         int val = eff.get_fact().get_value();
-        //if (verbosity >= utils::Verbosity::DEBUG) {
-        //        utils::g_log << "Effect value: " << var.get_fact(val).get_name()  << endl;
+        //if (log.is_at_least_debug()) {
+        //        log << "Effect value: " << var.get_fact(val).get_name()  << endl;
         //}
 
         if (get_dtg(var)->mark_achieved_val(val, false)) { // The value was not marked before
             is_self_loop = false;
             mark_red_precondition(var, val);
-            //if (verbosity >= utils::Verbosity::DEBUG) {
-            //            utils::g_log << "Was not achieved before, not self loop." << endl;
+            //if (log.is_at_least_debug()) {
+            //            log << "Was not achieved before, not self loop." << endl;
             //}
         }
-        //if (verbosity >= utils::Verbosity::DEBUG) {
+        //if (log.is_at_least_debug()) {
         //        else
         //            if (is_self_loop)
-        //                utils::g_log << "Was already achieved, self loop." << endl;
+        //                log << "Was already achieved, self loop." << endl;
         //}
     }
     if (is_self_loop)
@@ -512,21 +511,21 @@ void RedBlackHeuristic::apply_action_to_current_state(int op_no) {
     // Check global applicability and apply
     if (!applicability_status)
         return;
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Applying action to the current state: " << endl;
+    if (log.is_at_least_debug()) {
+        log << "Applying action to the current state: " << endl;
     //    dump_state_buffer_pddl(curr_state_buffer);
     }
 
     if (!get_rb_sas_operator(op_no)->is_applicable(curr_state_buffer)) {
-        if (verbosity >= utils::Verbosity::DEBUG) {
+        if (log.is_at_least_debug()) {
             //   dump_state_buffer_pddl(curr_state_buffer);
-            utils::g_log << "[CURRENTLY NOT APPLICABLE]: " << task_proxy.get_operators()[op_no].get_name() << endl;
+            log << "[CURRENTLY NOT APPLICABLE]: " << task_proxy.get_operators()[op_no].get_name() << endl;
         }
         applicability_status = false;
         return;
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "[CURRENTLY APPLICABLE]: " << task_proxy.get_operators()[op_no].get_name() << endl;
+    if (log.is_at_least_debug()) {
+        log << "[CURRENTLY APPLICABLE]: " << task_proxy.get_operators()[op_no].get_name() << endl;
     }
     OperatorProxy op = task_proxy.get_operators()[op_no];
     suffix_plan.push_back(op.get_ancestor_operator_id(tasks::g_root_task.get()));
@@ -534,20 +533,20 @@ void RedBlackHeuristic::apply_action_to_current_state(int op_no) {
 }
 
 bool RedBlackHeuristic::op_is_enabled(int op_no) const {
-    //if (verbosity >= utils::Verbosity::DEBUG) {
-    //    utils::g_log << "Checking whether operator "<< op_no << " is enabled" << endl;
-    //    utils::g_log << task_proxy.get_operators()[op_no].get_name() << endl;
+    //if (log.is_at_least_debug()) {
+    //    log << "Checking whether operator "<< op_no << " is enabled" << endl;
+    //    log << task_proxy.get_operators()[op_no].get_name() << endl;
     //}
     if (!op_all_red_preconditions_reached(op_no)) {
-        //if (verbosity >= utils::Verbosity::DEBUG) {
-        //        utils::g_log << "NO! Not all red preconditions are reached" << endl;
+        //if (log.is_at_least_debug()) {
+        //        log << "NO! Not all red preconditions are reached" << endl;
         //}
         return false;
     }
 
     if (!red_black_task.is_use_black_dag()) {
-        //if (verbosity >= utils::Verbosity::DEBUG) {
-        //        utils::g_log << "YES! Black DAG is not used and all red preconditions are reached" << endl;
+        //if (log.is_at_least_debug()) {
+        //        log << "YES! Black DAG is not used and all red preconditions are reached" << endl;
         //}
         return true;
     }
@@ -557,8 +556,8 @@ bool RedBlackHeuristic::op_is_enabled(int op_no) const {
         if (!black_precondition_is_enabled(fact))
             return false;
     }
-    //if (verbosity >= utils::Verbosity::DEBUG) {
-    //        utils::g_log << "YES! All red preconditions are reached, all black ones are reachable (reached)" << endl;
+    //if (log.is_at_least_debug()) {
+    //        log << "YES! All red preconditions are reached, all black ones are reachable (reached)" << endl;
     //}
     return true;
 }
@@ -744,51 +743,51 @@ bool RedBlackHeuristic::is_semi_relaxed_achieved(VariableProxy var, int val) con
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Methods used for dumping output -- for debug purposes only
-void RedBlackHeuristic::dump_current_semi_relaxed_state(bool dump_fact) const {
+void RedBlackHeuristic::dump_current_semi_relaxed_state(utils::LogProxy &clog, bool dump_fact) const {
     VariablesProxy variables = task_proxy.get_variables();
     for (VariableProxy var : variables) {
         int range = var.get_domain_size();
-//        utils::g_log << var.get_name() << " (" ;
-        utils::g_log << " [" ;
+//        log << var.get_name() << " (" ;
+        clog << " [" ;
 
         if (is_black(var)) {
             int val = get_dtg(var)->get_current_value();
-            utils::g_log << "black] : ";
+            clog << "black] : ";
             if (dump_fact)
-                utils::g_log << var.get_fact(val).get_name();
+                clog << var.get_fact(val).get_name();
             else
-                utils::g_log << val;
+                clog << val;
         } else {
-            utils::g_log << "red] : ";
+            clog << "red] : ";
 
             for (int val=0; val < range; ++val) {
                 // Printing the achieved values
                 if (is_semi_relaxed_achieved(var, val)) {
                     if (dump_fact)
-                        utils::g_log << " " << var.get_fact(val).get_name();
+                        clog << " " << var.get_fact(val).get_name();
                     else
-                        utils::g_log << " " << val;
+                        clog << " " << val;
                 }
             }
         }
-        utils::g_log << endl;
+        clog << endl;
     }
 
 }
 
-void RedBlackHeuristic::dump_current_relaxed_state() const {
+void RedBlackHeuristic::dump_current_relaxed_state(utils::LogProxy &clog) const {
     VariablesProxy variables = task_proxy.get_variables();
     for (VariableProxy var : variables) {
         int range = var.get_domain_size();
-        utils::g_log << var.get_name() << " : " ;
+        clog << var.get_name() << " : " ;
 
         for (int i=0; i < range; ++i) {
             // Printing the achieved values
             if (get_dtg(var)->is_achieved(i))
-                utils::g_log << " " << i;
+                clog << " " << i;
         }
 
-        utils::g_log << endl;
+        clog << endl;
     }
 
 }
@@ -821,8 +820,8 @@ int RedBlackHeuristic::resolve_conflicts_disconnected() {
         assert(ops_no.size() > 0); // Has to be a path for an invertible variable
 
         // Applying the actions
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Applying the following actions to make the previous action applicable" << endl;
+        if (log.is_at_least_debug()) {
+            log << "Applying the following actions to make the previous action applicable" << endl;
         }
         // Here we can actually skip the check for applicability, since if it is not, then there is a bug in the code, so we can leave it for the debug
         for (size_t idx = 0; idx < ops_no.size(); ++idx) {
@@ -830,9 +829,9 @@ int RedBlackHeuristic::resolve_conflicts_disconnected() {
 
             ActionApplicationResult app_status = apply_action_to_semi_relaxed_state(op_no, false);
             if (app_status == ACTION_APPLICABLE) {
-                if (verbosity >= utils::Verbosity::DEBUG) {
-                    utils::g_log << "[APPLICABLE] "   << task_proxy.get_operators()[op_no].get_name() << endl;
-                    dump_current_semi_relaxed_state(true);
+                if (log.is_at_least_debug()) {
+                    log << "[APPLICABLE] "   << task_proxy.get_operators()[op_no].get_name() << endl;
+                    dump_current_semi_relaxed_state(log, true);
                 }
                 black_cost += task_proxy.get_operators()[op_no].get_cost();
                 if (extract_plan) {
@@ -843,9 +842,9 @@ int RedBlackHeuristic::resolve_conflicts_disconnected() {
             }
             // Nothing to do for self loops
         }
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "------------------------------------------------------------------------------------------" << endl;
-            utils::g_log << "[B] Cost for black variable " << red_black_task.get_black_variable(ind).get_name() << ": " << black_cost << endl;
+        if (log.is_at_least_debug()) {
+            log << "------------------------------------------------------------------------------------------" << endl;
+            log << "[B] Cost for black variable " << red_black_task.get_black_variable(ind).get_name() << ": " << black_cost << endl;
         }
         black_part += black_cost;
     }
@@ -857,32 +856,32 @@ const vector<int>& RedBlackHeuristic::get_path_for_var(VariableProxy var) {
     // First, trying to find a sequence based only on current values
     if (applicability_status) {
         get_dtg(var)->set_transitions_enablement_status(ONLY_CURRENT_TRANSITIONS);
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Trying to get an applicable path first" << endl;
+        if (log.is_at_least_debug()) {
+            log << "Trying to get an applicable path first" << endl;
         }
         const vector<int>& ops_to_add = get_dtg(var)->calculate_shortest_path();
         get_dtg(var)->set_transitions_enablement_status(ENABLED_BEFORE_RUN);
         if (ops_to_add.size() > 0) { // Found, returning
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "Got an applicable path." << endl;
+            if (log.is_at_least_debug()) {
+                log << "Got an applicable path." << endl;
             }
             return ops_to_add;
         }
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "No applicable path found." << endl;
+        if (log.is_at_least_debug()) {
+            log << "No applicable path found." << endl;
         }
     }
 
     const vector<int>& ops = get_dtg(var)->calculate_shortest_path();
     if (!applicability_status || !red_black_task.is_use_connected() || !red_black_task.is_almost_root(var)) {
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Either applicability status is false, connected are not used, or the black variable is not almost root. Returning RB plan." << endl;
+        if (log.is_at_least_debug()) {
+            log << "Either applicability status is false, connected are not used, or the black variable is not almost root. Returning RB plan." << endl;
         }
         return ops;
     }
 
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Making an inapplicable sequence applicable. Going over the obtained sequence, adding sequences for red parents" << endl;
+    if (log.is_at_least_debug()) {
+        log << "Making an inapplicable sequence applicable. Going over the obtained sequence, adding sequences for red parents" << endl;
     }
     // Extending the obtained sequence into an actual plan
     current_applicable_sequence.clear();
@@ -893,9 +892,9 @@ const vector<int>& RedBlackHeuristic::get_path_for_var(VariableProxy var) {
     for (size_t i = 0; i < ops.size(); ++i) {
         // For each action, if prv[var] is not reached, adding a sequence of actions reaching it
         int op_no = ops[i];
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Operator: ";
-            utils::g_log << task_proxy.get_operators()[op_no].get_name() << endl;
+        if (log.is_at_least_debug()) {
+            log << "Operator: ";
+            log << task_proxy.get_operators()[op_no].get_name() << endl;
             get_rb_sas_operator(op_no)->dump();
         }
         // Getting the red variable and value that are not currently holding
@@ -905,36 +904,36 @@ const vector<int>& RedBlackHeuristic::get_path_for_var(VariableProxy var) {
             // Adding the sequence of values that moves the red connected var to its precondition
             int from_val = connected_state_buffer[pre_var.get_id()];
             int to_val = fact.get_value();
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "Current red value is " << from_val << " and the needed value is " << to_val << endl;
+            if (log.is_at_least_debug()) {
+                log << "Current red value is " << from_val << " and the needed value is " << to_val << endl;
             }
 
             if (from_val == to_val)
                 continue;
 
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "Getting the shortest path for the red var." << endl;
+            if (log.is_at_least_debug()) {
+                log << "Getting the shortest path for the red var." << endl;
             }
             const vector<int>& pre_ops = get_dtg(pre_var)->calculate_shortest_path_from_to(from_val, to_val);
             if (pre_ops.size() == 0) {
-                utils::g_log << "Bug! Has to be a path that does not change any other value!" << endl;
+                log << "Bug! Has to be a path that does not change any other value!" << endl;
                 utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
             }
             connected_state_buffer[pre_var.get_id()] = to_val;
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "Pushing the path to the end of the sequence." << endl;
+            if (log.is_at_least_debug()) {
+                log << "Pushing the path to the end of the sequence." << endl;
             }
             current_applicable_sequence.insert(current_applicable_sequence.end(),pre_ops.begin(), pre_ops.end());
         }
 
         current_applicable_sequence.push_back(op_no);
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Current state is: " << endl;
+    if (log.is_at_least_debug()) {
+        log << "Current state is: " << endl;
         //dump_state_buffer_fdr(curr_state_buffer);
-        utils::g_log << "Found sequence of actions: " << endl;
+        log << "Found sequence of actions: " << endl;
         for (size_t i = 0; i < current_applicable_sequence.size(); ++i) {
-            utils::g_log << task_proxy.get_operators()[current_applicable_sequence[i]].get_name() << endl;
+            log << task_proxy.get_operators()[current_applicable_sequence[i]].get_name() << endl;
         }
     }
     return current_applicable_sequence;
@@ -1004,8 +1003,8 @@ int RedBlackHeuristic::resolve_conflicts_DAG() {
     // Checking that the sequence is a valid plan, applying.
     for (size_t i = 0; i < op_sequence.size(); ++i) {
         int op_no = op_sequence[i];
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Trying to apply an operator " << op_no << endl;
+        if (log.is_at_least_debug()) {
+            log << "Trying to apply an operator " << op_no << endl;
         }
         // No need to check applicability - all actions are relaxed applicable, and the black sequence is constructed in a way that the black part should be applicable.
         OperatorProxy op = task_proxy.get_operators()[op_no];
@@ -1018,9 +1017,9 @@ int RedBlackHeuristic::resolve_conflicts_DAG() {
                 // Check global applicability and apply
                 apply_action_to_current_state(op_no);
             }
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "[APPLICABLE] "  << op.get_name() << endl;
-                utils::g_log << "Current heuristic value is " << black_part << endl;
+            if (log.is_at_least_debug()) {
+                log << "[APPLICABLE] "  << op.get_name() << endl;
+                log << "Current heuristic value is " << black_part << endl;
             }
             update_marks(op_no);
         }
@@ -1046,8 +1045,8 @@ const vector<int>& RedBlackHeuristic::get_path_for_var_from_to(VariableProxy var
 
     // First, trying to find a sequence based only on current values
     if (applicability_status) {
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Trying to get an applicable path first" << endl;
+        if (log.is_at_least_debug()) {
+            log << "Trying to get an applicable path first" << endl;
         }
         get_dtg(var)->set_transitions_enablement_status(ONLY_CURRENT_TRANSITIONS);
         const vector<int>& ops_to_add = get_dtg(var)->calculate_shortest_path_from_to(from, to);
@@ -1056,16 +1055,16 @@ const vector<int>& RedBlackHeuristic::get_path_for_var_from_to(VariableProxy var
             return ops_to_add;
         }
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Trying to get a path preconditioned by initially enabled values" << endl;
+    if (log.is_at_least_debug()) {
+        log << "Trying to get a path preconditioned by initially enabled values" << endl;
     }
     // If no sequence found, we try to find a sequence based only on transitions enabled before the algorithm run.
     const vector<int>& ops_to_add_before = get_dtg(var)->calculate_shortest_path_from_to(from, to);
     if (ops_to_add_before.size() > 0) { // Found, returning
         return ops_to_add_before;
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "No such path found. Getting a path preconditioned by enabled during run values" << endl;
+    if (log.is_at_least_debug()) {
+        log << "No such path found. Getting a path preconditioned by enabled during run values" << endl;
     }
     // Otherwise, we find a sequence based on transitions enabled by applied operators. Such a sequence always exists.
     get_dtg(var)->set_transitions_enablement_status(ENABLED_DURING_RUN);
@@ -1135,27 +1134,27 @@ int RedBlackHeuristic::get_next_action() {
     int op_no;
     if (applicability_status) {
         // For enhanced applicability: First, trying to get an action achieving whose precondition does not remove achieved red facts
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Trying to get an action achieving whose precondition does not remove achieved red facts " << endl;
+        if (log.is_at_least_debug()) {
+            log << "Trying to get an action achieving whose precondition does not remove achieved red facts " << endl;
         }
         op_no = get_next_action_reg(true);
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Got " << op_no << endl;
+        if (log.is_at_least_debug()) {
+            log << "Got " << op_no << endl;
         }
         if (op_no == -1) {
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "Now trying to get any next action " << endl;
+            if (log.is_at_least_debug()) {
+                log << "Now trying to get any next action " << endl;
             }
             op_no = get_next_action_reg(false);
         }
     } else {
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Applicability status is false, trying to get any next action " << endl;
+        if (log.is_at_least_debug()) {
+            log << "Applicability status is false, trying to get any next action " << endl;
         }
         op_no = get_next_action_reg(false);
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Got " << op_no << endl;
+    if (log.is_at_least_debug()) {
+        log << "Got " << op_no << endl;
     }
     return op_no;
 }
@@ -1167,8 +1166,8 @@ int RedBlackHeuristic::get_next_action_reg(bool skip_black_pre_may_delete_red_su
     // We need to consider only the applicable in R+B actions
     // Actually, we don't need to consider B, only R, since B will be reflected in the conflict cost
     // For speeding up computation, instead of running dijkstra/astar, we check/maintain reachability for B, and estimate conflict ignoring red precs.
-    //if (verbosity >= utils::Verbosity::DEBUG) {
-    //    utils::g_log << "Getting the next action *reg*, skip_black_pre_may_delete_red_sufficient_achieved: " << (skip_black_pre_may_delete_red_sufficient_achieved ? "true" : "false") << endl;
+    //if (log.is_at_least_debug()) {
+    //    log << "Getting the next action *reg*, skip_black_pre_may_delete_red_sufficient_achieved: " << (skip_black_pre_may_delete_red_sufficient_achieved ? "true" : "false") << endl;
     //}
 
     int curr_min_cost = numeric_limits<int>::max();
@@ -1178,8 +1177,8 @@ int RedBlackHeuristic::get_next_action_reg(bool skip_black_pre_may_delete_red_su
     bool all_achieved = true;
     vector<bool> ops_checked(task_proxy.get_operators().size(), false);
 
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Sufficient but unachieved values are: " << endl;
+    if (log.is_at_least_debug()) {
+        log << "Sufficient but unachieved values are: " << endl;
     }
 
     const list<int>& red_sufficient_unachieved = red_black_task.get_red_sufficient_unachieved_variables_list_reg();
@@ -1189,8 +1188,8 @@ int RedBlackHeuristic::get_next_action_reg(bool skip_black_pre_may_delete_red_su
         int curr_unachieved = get_dtg(var)->num_sufficient_unachieved();
         if (curr_unachieved == 0)
             continue;
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "[" << var.get_id() << "] " << ": ";
+        if (log.is_at_least_debug()) {
+            log << "[" << var.get_id() << "] " << ": ";
         }
 
         all_achieved = false;
@@ -1198,40 +1197,40 @@ int RedBlackHeuristic::get_next_action_reg(bool skip_black_pre_may_delete_red_su
         const list<int>& sufficient_unachieved = get_dtg(var)->get_sufficient_unachieved();
         for (list<int>::const_iterator it2 = sufficient_unachieved.begin(); it2 != sufficient_unachieved.end(); ++it2) {
             int val = *it2;
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << " (" << var.get_fact(val).get_name() << ")  ";
+            if (log.is_at_least_debug()) {
+                log << " (" << var.get_fact(val).get_name() << ")  ";
             }
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "Checking operators: " ;
+            if (log.is_at_least_debug()) {
+                log << "Checking operators: " ;
             }
 
             for (int op_no : red_black_task.get_operators_by_effect(var, val)) {
-                if (verbosity >= utils::Verbosity::DEBUG) {
-                    utils::g_log << task_proxy.get_operators()[op_no].get_name() << "  ";
+                if (log.is_at_least_debug()) {
+                    log << task_proxy.get_operators()[op_no].get_name() << "  ";
                 }
                 if (ops_checked[op_no]) {
-                    if (verbosity >= utils::Verbosity::DEBUG) {
-                        utils::g_log << " already checked!   ";
+                    if (log.is_at_least_debug()) {
+                        log << " already checked!   ";
                     }
                     continue;
                 }
                 ops_checked[op_no] = true;
 
                 if (skip_black_pre_may_delete_red_sufficient_achieved && red_black_task.achieving_black_pre_may_delete_achieved_red_sufficient(op_no)) {
-                    if (verbosity >= utils::Verbosity::DEBUG) {
-                        utils::g_log << "skipped - achieving_black_pre_may_delete_achieved_red_sufficient" << "  ";
+                    if (log.is_at_least_debug()) {
+                        log << "skipped - achieving_black_pre_may_delete_achieved_red_sufficient" << "  ";
                     }
                     continue;
                 }
                 if (!op_all_red_preconditions_reached(op_no)) {
-                    if (verbosity >= utils::Verbosity::DEBUG) {
-                        utils::g_log << "skipped - not all red preconditions reached" << "  ";
+                    if (log.is_at_least_debug()) {
+                        log << "skipped - not all red preconditions reached" << "  ";
                     }
                     continue;
                 }
-                if (conditional_effects_task && !op_all_red_conditions_reached(op_no, var.get_fact(val))) {
-                    if (verbosity >= utils::Verbosity::DEBUG) {
-                        utils::g_log << "skipped - not all red conditions reached" << "  ";
+                if (conditional_effects_task && !op_all_red_conditions_reached(op_no, var.get_fact(val), log)) {
+                    if (log.is_at_least_debug()) {
+                        log << "skipped - not all red conditions reached" << "  ";
                     }
                     // Can still be used for another effect
                     ops_checked[op_no] = false;
@@ -1239,23 +1238,23 @@ int RedBlackHeuristic::get_next_action_reg(bool skip_black_pre_may_delete_red_su
                 }
 
                 // Getting the conflict cost for op_no
-                if (verbosity >= utils::Verbosity::DEBUG) {
-                    utils::g_log << "Estimating conflicts cost" << endl;
+                if (log.is_at_least_debug()) {
+                    log << "Estimating conflicts cost" << endl;
                 }
                 // We need to make sure that the conditions of the effect are reached as well, otherwise we could go into infinite loop
                 int cost = get_operator_estimated_conflict_cost_black_reachability(op_no, var.get_fact(val));
                 if (cost == -1) { // skipped - conflict cost too high
-                    if (verbosity >= utils::Verbosity::DEBUG) {
-                        utils::g_log << "skipped - conflict cost too high" << "  ";
+                    if (log.is_at_least_debug()) {
+                        log << "skipped - conflict cost too high" << "  ";
                     }
                     continue;
                 }
 
                 // If there are no conflicts and the action is red-effects only, just return it
                 if (cost == 0 && is_red_effects_only_action(op_no)) {
-                    if (verbosity >= utils::Verbosity::DEBUG) {
-                        utils::g_log << " returned - found red effects only action with 0 conflict: ";
-                        utils::g_log << task_proxy.get_operators()[op_no].get_name() << endl;
+                    if (log.is_at_least_debug()) {
+                        log << " returned - found red effects only action with 0 conflict: ";
+                        log << task_proxy.get_operators()[op_no].get_name() << endl;
                     }
                     return op_no;
                 }
@@ -1270,15 +1269,15 @@ int RedBlackHeuristic::get_next_action_reg(bool skip_black_pre_may_delete_red_su
                 if (cost == curr_min_cost) {
                     // Adding minimal element
                     curr_min_op_id.push_back(op_no);
-                    if (verbosity >= utils::Verbosity::DEBUG) {
-                        utils::g_log << " kept - current minimal with conflict " << cost <<" : ";
-                        utils::g_log << task_proxy.get_operators()[op_no].get_name() << endl;
+                    if (log.is_at_least_debug()) {
+                        log << " kept - current minimal with conflict " << cost <<" : ";
+                        log << task_proxy.get_operators()[op_no].get_name() << endl;
                     }
                     continue;
                 }
-                if (verbosity >= utils::Verbosity::DEBUG) {
-                    utils::g_log << " skipped - not minimal conflict " << cost <<" : ";
-                    utils::g_log << task_proxy.get_operators()[op_no].get_name() << endl;
+                if (log.is_at_least_debug()) {
+                    log << " skipped - not minimal conflict " << cost <<" : ";
+                    log << task_proxy.get_operators()[op_no].get_name() << endl;
                 }
 
             }
@@ -1287,8 +1286,8 @@ int RedBlackHeuristic::get_next_action_reg(bool skip_black_pre_may_delete_red_su
             if (curr_unachieved == 0)
                 break;
         }
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << endl;
+        if (log.is_at_least_debug()) {
+            log << endl;
         }
     }
     // Here we finish going over all variables, and we have the minimal conflict actions
@@ -1297,19 +1296,19 @@ int RedBlackHeuristic::get_next_action_reg(bool skip_black_pre_may_delete_red_su
 
     if (curr_min_op_id.size() == 0 || curr_min_cost == numeric_limits<int>::max()) {
         if (skip_black_pre_may_delete_red_sufficient_achieved) {
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "No suitable actions, starting over." << endl;
+            if (log.is_at_least_debug()) {
+                log << "No suitable actions, starting over." << endl;
             }
             return -1;
         }
-// if (verbosity >= utils::Verbosity::DEBUG) {
+// if (log.is_at_least_debug()) {
         cerr << "Should be at least one element!! Bug! [get_next_action_reg]" << endl;
         utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
 // }
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-    //    utils::g_log << "[get_next_action_reg] Found minimal conflict: " << curr_min_cost << endl;
-        utils::g_log << "Found minimal conflict: " << curr_min_cost << endl;
+    if (log.is_at_least_debug()) {
+    //    log << "[get_next_action_reg] Found minimal conflict: " << curr_min_cost << endl;
+        log << "Found minimal conflict: " << curr_min_cost << endl;
     }
     assert(curr_min_op_id.size() > 0);
     // Going over the found minimal elements, selecting one.
@@ -1319,9 +1318,9 @@ int RedBlackHeuristic::get_next_action_reg(bool skip_black_pre_may_delete_red_su
     for (int op_no : curr_min_op_id) {
         // If the element has only red effects, just return it
         if (is_red_effects_only_action(op_no)) {
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "Found red effects only action with minimal conflict: ";
-                utils::g_log << task_proxy.get_operators()[op_no].get_name() << endl;
+            if (log.is_at_least_debug()) {
+                log << "Found red effects only action with minimal conflict: ";
+                log << task_proxy.get_operators()[op_no].get_name() << endl;
             }
             return op_no;
         }
@@ -1332,17 +1331,17 @@ int RedBlackHeuristic::get_next_action_reg(bool skip_black_pre_may_delete_red_su
     }
     if (mixed_op_no > -1) {
         // There are no red only effects, but there is a mixed effect, returning it (the last one)
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Found mixed effects action with minimal conflict: ";
-            utils::g_log << task_proxy.get_operators()[mixed_op_no].get_name() << endl;
+        if (log.is_at_least_debug()) {
+            log << "Found mixed effects action with minimal conflict: ";
+            log << task_proxy.get_operators()[mixed_op_no].get_name() << endl;
         }
         return mixed_op_no;
     }
     // Otherwise, there are only black only effects, returning the first
     int op_no = curr_min_op_id[0];
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Found black effects only action with minimal conflict: ";
-        utils::g_log << task_proxy.get_operators()[op_no].get_name() << endl;
+    if (log.is_at_least_debug()) {
+        log << "Found black effects only action with minimal conflict: ";
+        log << task_proxy.get_operators()[op_no].get_name() << endl;
     }
     return op_no;
 }
@@ -1576,7 +1575,7 @@ void RedBlackHeuristic::add_options_to_parser(OptionParser &parser) {
                            dag_opts,
                            "DAG creation type",
                            "false");
-    utils::add_verbosity_option_to_parser(parser);
+    utils::add_log_options_to_parser(parser);
 
 }
 

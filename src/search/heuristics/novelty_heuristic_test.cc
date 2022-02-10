@@ -21,9 +21,9 @@ NoveltyHeuristicTest::NoveltyHeuristicTest(const Options &opts)
 	  preferred_operators_from_evals(false),
 	  multiplier(opts.get<int>("multiplier")),
 	  reached_by_op_id(-1),
-      verbosity(opts.get<utils::Verbosity>("verbosity")),
-      statistics(opts.get<utils::Verbosity>("verbosity"))  {
-    utils::g_log  << "Initializing novelty heuristic..." << endl;
+      log(utils::get_log_from_options(opts)),
+      statistics(log)  {
+    log  << "Initializing novelty heuristic..." << endl;
 
     if (cutoff_type == NO_CUTOFF) {
         // In this case, we don't need to store novelty values per operator
@@ -40,13 +40,13 @@ NoveltyHeuristicTest::NoveltyHeuristicTest(const Options &opts)
 		novelty_per_variable_value[var.get_id()].assign(var.get_domain_size(), std::vector<int>(novelty_heuristics.size(), DEAD_END));
 	}
 	if (store_values_for_operators()) {
-		if (verbosity >= utils::Verbosity::NORMAL) {
-	    	utils::g_log  << "Allocating memory for storing heuristic values per operator" << endl;
+		if (log.is_at_least_normal()) {
+	    	log  << "Allocating memory for storing heuristic values per operator" << endl;
 		}
 		OperatorsProxy operators = task_proxy.get_operators();
 		novelty_per_operator.assign(operators.size(), std::vector<int>(novelty_heuristics.size(), DEAD_END));
     }
-	utils::g_log  << "Done initializing novelty heuristic" << endl;
+	log  << "Done initializing novelty heuristic" << endl;
 }
 
 NoveltyHeuristicTest::~NoveltyHeuristicTest() {
@@ -94,8 +94,8 @@ int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
 			if (reached_by_op_id.get_index() >= 0 && store_values_for_operators()) {
 				int curr_value = get_value_for_operator(reached_by_op_id, heuristic_index);
 				if (curr_value == DEAD_END || curr_value > value) {
-					if (verbosity >= utils::Verbosity::DEBUG) {
-						utils::g_log  << "Updating value for operator " << reached_by_op_id << " from " << curr_value << " to " << value << endl;
+					if (log.is_at_least_debug()) {
+						log << "Updating value for operator " << reached_by_op_id << " from " << curr_value << " to " << value << endl;
 					}
 					update_value_for_operator(reached_by_op_id, heuristic_index, value);
 				}
@@ -184,9 +184,9 @@ int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
 			int value = heuristic_values[heuristic_index];
 			if (curr_value == DEAD_END || curr_value > value) {
 				update_value_for_fact(fact, heuristic_index, value);
-				novel_values_for_fact[heuristic_index] = get_estimate_novel(curr_value, value);
+				novel_values_for_fact[heuristic_index] = get_estimate_novel(curr_value, value, log);
 			} else if (curr_value < value) {
-				non_novel_values_for_fact[heuristic_index] = get_estimate_non_novel(curr_value, value);
+				non_novel_values_for_fact[heuristic_index] = get_estimate_non_novel(curr_value, value, log);
 			}
 		}
 		// Deciding per fact
@@ -208,7 +208,7 @@ int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
 		utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
 	}
 	if (dump_value) {
-		utils::g_log  << "NoveltyValue " << ret << endl;
+		log  << "NoveltyValue " << ret << endl;
 	}
 	return ret;
 }
@@ -226,20 +226,20 @@ void NoveltyHeuristicTest::notify_state_transition(
 // bool NoveltyHeuristicTest::is_preferred(OperatorID op_id, int heuristic_index, int heuristic_value) const {
 	
 // 	// Check first if the heuristic thinks the op is preferred
-// 	utils::g_log  << "Checking if the operator " << op_id << " is preferred by the heuristic " << heuristic_index << endl;
+// 	log  << "Checking if the operator " << op_id << " is preferred by the heuristic " << heuristic_index << endl;
 // 	if ( ! novelty_heuristics[heuristic_index]->is_preferred( task_proxy.get_operators()[op_id] ) ) {
-// 		utils::g_log  << "not preferred" << endl;
+// 		log  << "not preferred" << endl;
 // 		return false;
 // 	}
-// 	utils::g_log  << "preferred, now checking if it is novel" << endl;
+// 	log  << "preferred, now checking if it is novel" << endl;
 
 // 	int curr_value = get_value_for_operator(op_id, heuristic_index);
-// 	utils::g_log  << "Currently stored value for operator: " << curr_value << ", new heuristic value: " << heuristic_value << endl;
+// 	log  << "Currently stored value for operator: " << curr_value << ", new heuristic value: " << heuristic_value << endl;
 // 	if (curr_value == DEAD_END || curr_value > heuristic_value) {
-// 		utils::g_log  << "novel" << endl;
+// 		log  << "novel" << endl;
 // 		return true;
 // 	} 
-// 	utils::g_log  << "not novel" << endl;
+// 	log  << "not novel" << endl;
 // 	return false;
 // }
 
@@ -264,7 +264,7 @@ int NoveltyHeuristicTest::compute_aggregated_score(std::vector<int>& values) con
 	return max;
 }
 
-int NoveltyHeuristicTest::get_estimate_novel(int curr_value, int heur_value) const {
+int NoveltyHeuristicTest::get_estimate_novel(int curr_value, int heur_value, utils::LogProxy &clog) const {
 	if (curr_value == DEAD_END) {
 		return multiplier;
 	}
@@ -276,15 +276,15 @@ int NoveltyHeuristicTest::get_estimate_novel(int curr_value, int heur_value) con
 	if (type == SEPARATE_BOTH_AGGREGATE) {
 		// Here, we return a value between 0 and multiplier
 		double diff =  ((double) (curr_value - heur_value)) / novelty_heuristics_largest_value;
-		if (verbosity >= utils::Verbosity::DEBUG) {
-			utils::g_log  << diff << endl;
+		if (clog.is_at_least_debug()) {
+			clog << "Diff: " << diff << endl;
 		}
 		return (int) (multiplier * diff);
 	}
 	utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
 }
 
-int NoveltyHeuristicTest::get_estimate_non_novel(int curr_value, int heur_value) const {
+int NoveltyHeuristicTest::get_estimate_non_novel(int curr_value, int heur_value, utils::LogProxy &clog) const {
 	if (type == BASIC ||
 		type == SEPARATE_NOVEL ||
 		curr_value == heur_value) {
@@ -299,9 +299,9 @@ int NoveltyHeuristicTest::get_estimate_non_novel(int curr_value, int heur_value)
 	if (type == SEPARATE_BOTH_AGGREGATE) {
 		// Here, we return a value between 1 and multiplier
 	    double diff =  ((double) (heur_value - curr_value)) / novelty_heuristics_largest_value;
-		if (verbosity >= utils::Verbosity::DEBUG) {
-			utils::g_log  << diff << endl;
-			utils::g_log  << "h: " << heur_value << " - c: " << curr_value << " =  " << diff << " * multiplier: " << multiplier <<  " / "<< novelty_heuristics_largest_value << " = " << (int) (multiplier * diff)  << endl;
+		if (clog.is_at_least_debug()) {
+			clog << "Diff: " << diff << endl;
+			clog << "h: " << heur_value << " - c: " << curr_value << " =  " << diff << " * multiplier: " << multiplier <<  " / "<< novelty_heuristics_largest_value << " = " << (int) (multiplier * diff)  << endl;
 		}
 		return (int) (multiplier * diff);
 	}
@@ -377,7 +377,7 @@ static shared_ptr<Heuristic> _parse(OptionParser &parser) {
 						"Novelty cutoff type (none) for basic options from heuristic",
 						"no_cutoff");
 
-    utils::add_verbosity_option_to_parser(parser);
+    utils::add_log_options_to_parser(parser);
 
     Options opts = parser.parse();
 

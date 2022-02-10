@@ -52,6 +52,8 @@ enum TransitionEnablementStatus {
 class DtgOperators {
 
     TaskProxy task_proxy;
+    utils::LogProxy log;
+
     int var;
     bool is_root;
     int range;
@@ -105,7 +107,7 @@ class DtgOperators {
     void restore_path_from_dijkstra_ops(int to_state, std::vector<int>& path) const;
 
     // Used for checking invertibility, once, in the initialization. Not used during the search for heuristic computation.
-    bool is_transition_invertible(int from_value, int to_value) const;
+    bool is_transition_invertible(int from_value, int to_value, utils::LogProxy &clog) const;
     const std::vector<op_eff_pair>& get_ops_from_to(int from, int to) const;
 
     void dijkstra_search(priority_queues::AdaptiveQueue<int> &queue);  // This one works on the complete forward graph
@@ -115,13 +117,13 @@ class DtgOperators {
     const std::vector<int>& get_shortest_path_for_root_from_to(int from, int to);
 
     void set_root() { is_root = true; }
-    void dump_shortest_paths_for_root() const;
-    void dump_shortest_paths_for_root_from_to(int i, int j) const;
+    void dump_shortest_paths_for_root(utils::LogProxy &clog) const;
+    void dump_shortest_paths_for_root_from_to(int i, int j, utils::LogProxy &clog) const;
 
-    void dump_complete_forward_graph() const;
+    void dump_complete_forward_graph(utils::LogProxy &clog) const;
     std::string get_value_name(int value) const { return task_proxy.get_variables()[var].get_fact(value).get_name(); }
 
-    bool is_transition_enabled(const GraphEdge& trans, int from) const;
+    bool is_transition_enabled(const GraphEdge& trans, int from, utils::LogProxy &clog) const;
 
     // For delaying the goal achievement
     bool check_connected_from_to(int from, int to);
@@ -130,22 +132,21 @@ class DtgOperators {
 //    bool is_condition_included(FactProxy cond, const std::vector<EffectProxy> &effs) const;
     bool is_condition_included(FactProxy cond, op_eff_pair op_eff) const;
 
-    bool is_op_transition_invertible(op_eff_pair op_eff, int from_value, int to_value) const;
+    bool is_op_transition_invertible(op_eff_pair op_eff, int from_value, int to_value, utils::LogProxy &clog) const;
 //    bool is_transition_invertible_by_op(op_eff_pair op_eff, op_eff_pair by_op_eff) const;
     bool is_transition_invertible_by_op_conditional(op_eff_pair op_eff, op_eff_pair by_op_eff) const;
 
 public:
-    DtgOperators(int v, const std::shared_ptr<AbstractTask> task);
+    DtgOperators(int v, const std::shared_ptr<AbstractTask> task, utils::LogProxy &log);
     virtual ~DtgOperators();
 
     static bool use_astar;
-    static utils::Verbosity verbosity;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     // Used once, in the initialization. Not used during the search for heuristic computation.
     // For all variables
     void add_operator_from_to(int from, int to, sas_operator sas_op, EffectProxy eff);
-    bool check_invertibility() const;
+    bool check_invertibility(utils::LogProxy &clog) const;
     void set_follow_red_facts() { use_sufficient_unachieved = true; }
     void set_use_black_reachable();
 

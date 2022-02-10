@@ -214,8 +214,9 @@ bool LazySearch::check_solution_via_state_and_set_plan(int g, const State &state
         return true;
     }
     // Not checking again in reopen
-    if (reopen)
+    if (reopen) {
         return false;
+    }
     bool ret = false;
     eval_context.get_cache().for_each_evaluator_result(
         [this, &ret, &state, &g](const Evaluator *eval, const EvaluationResult &) {
@@ -229,11 +230,11 @@ bool LazySearch::check_solution_via_state_and_set_plan(int g, const State &state
                 }
                 // Checking whether the solution is under the bound. If not, skipping
                 if (g + h < this->bound) {
-                    if (verbosity >= utils::Verbosity::NORMAL) {
-                        utils::g_log << "Cost to: " << g << ", cost from: " << h << " the total is: " << g+ h << endl;
+                    if (log.is_at_least_normal()) {
+                        log << "Cost to: " << g << ", cost from: " << h << " the total is: " << g+ h << endl;
                     }
                     // Getting the solution
-                    utils::g_log << "Solution found by the heuristic!" << endl;
+                    log << "Solution found by the heuristic!" << endl;
                     Plan total_plan;
                     search_space.trace_path(state, total_plan);
                     total_plan.insert(total_plan.end(), plan_from.begin(), plan_from.end());

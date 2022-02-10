@@ -14,10 +14,10 @@ using namespace std;
 
 namespace red_black {
 bool DtgOperators::use_astar = false; 
-utils::Verbosity DtgOperators::verbosity = utils::Verbosity::SILENT;
 
-DtgOperators::DtgOperators(int v, const std::shared_ptr<AbstractTask> task) :
+DtgOperators::DtgOperators(int v, const std::shared_ptr<AbstractTask> task, utils::LogProxy &log) :
                 task_proxy(*task),
+                log(log),
                 var(v),
                 is_root(false),
                 range(task_proxy.get_variables()[var].get_domain_size()),
@@ -31,8 +31,8 @@ DtgOperators::DtgOperators(int v, const std::shared_ptr<AbstractTask> task) :
                 shortest_paths_calculated(false),
                 is_red_connected(false)    {
 
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Creating variable " << task_proxy.get_variables()[var].get_name() << " with domain size " << range << ", allocating " << range * range << " vectors for sas actions" << endl;
+	if (log.is_at_least_debug()) {
+        log << "Creating variable " << task_proxy.get_variables()[var].get_name() << " with domain size " << range << ", allocating " << range * range << " vectors for sas actions" << endl;
     }
     ops_by_from_to.assign(range,vector<vector<op_eff_pair>>());
     for (int value = 0; value < range; ++value) {
@@ -61,8 +61,8 @@ DtgOperators::DtgOperators(int v, const std::shared_ptr<AbstractTask> task) :
 
 void DtgOperators::set_use_black_reachable() {
     use_black_reachable = true;
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Assigning initial values 0 to reachable black values for variable " << task_proxy.get_variables()[var].get_name() << " with range " << range << endl;
+	if (log.is_at_least_debug()) {
+        log << "Assigning initial values 0 to reachable black values for variable " << task_proxy.get_variables()[var].get_name() << " with range " << range << endl;
     }
     reachable_black_vals.assign(range, 0);
     number_reachable_black_vals = 0;
@@ -72,8 +72,8 @@ void DtgOperators::initialize_black(RedBlackHeuristic* base) {
     if (black_initialized)
         return;
     black_initialized = true;
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Initializing black variable " << task_proxy.get_variables()[var].get_name() << " with domain size " << range << ", allocating vector of size " << task_proxy.get_operators().size() << " for storing relevant action ids" << endl;
+	if (log.is_at_least_debug()) {
+        log << "Initializing black variable " << task_proxy.get_variables()[var].get_name() << " with domain size " << range << ", allocating vector of size " << task_proxy.get_operators().size() << " for storing relevant action ids" << endl;
     }
 
     // Allocating the memory for Dijkstra calculation
@@ -103,8 +103,8 @@ void DtgOperators::clear_all_marks() {
 
 // For red vars: keeping the red sufficient values
 void DtgOperators::clear_sufficient() {
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Clearing sufficient values for variable " << var << " with goal value " << goal_val  << " and number sufficient unachieved values: " << number_sufficient_unachieved_vals << endl;
+	if (log.is_at_least_debug()) {
+        log << "Clearing sufficient values for variable " << var << " with goal value " << goal_val  << " and number sufficient unachieved values: " << number_sufficient_unachieved_vals << endl;
     }
 
     if (!use_sufficient_unachieved || (goal_val == -1 && number_sufficient_unachieved_vals == 0)
@@ -117,8 +117,8 @@ void DtgOperators::clear_sufficient() {
     red_sufficient_achieved.assign(range, false);
     // Marking goal value
     if (-1 != goal_val) {
-    	if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "[RedSufficient Goal]: [" << task_proxy.get_variables()[var].get_fact(goal_val).get_name() << "]" << endl;
+    	if (log.is_at_least_debug()) {
+            log << "[RedSufficient Goal]: [" << task_proxy.get_variables()[var].get_fact(goal_val).get_name() << "]" << endl;
         }
         red_sufficient_unachieved_iterators[goal_val] = red_sufficient_unachieved.insert(red_sufficient_unachieved.end(), goal_val);
         number_sufficient_unachieved_vals++;
@@ -130,8 +130,8 @@ bool DtgOperators::is_sufficient_unachieved(int val) const {
 }
 
 void DtgOperators::mark_as_sufficient(int val) {
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "mark_as_sufficient(" << val << ")" << endl;
+	if (log.is_at_least_debug()) {
+        log << "mark_as_sufficient(" << val << ")" << endl;
     }
 
     if (!use_sufficient_unachieved || is_sufficient_unachieved(val))
@@ -140,15 +140,15 @@ void DtgOperators::mark_as_sufficient(int val) {
     // Only done when no achieved vals were marked yet.
     red_sufficient_unachieved_iterators[val] = red_sufficient_unachieved.insert(red_sufficient_unachieved.end(), val);
     number_sufficient_unachieved_vals++;
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "[RedSufficient]: [" << task_proxy.get_variables()[var].get_fact(val).get_name() << "]" << endl;
+	if (log.is_at_least_debug()) {
+        log << "[RedSufficient]: [" << task_proxy.get_variables()[var].get_fact(val).get_name() << "]" << endl;
     }
 }
 
 
 void DtgOperators::postpone_sufficient_goal() {
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "postpone_sufficient_goal for variable " << var << endl;
+	if (log.is_at_least_debug()) {
+        log << "postpone_sufficient_goal for variable " << var << endl;
     }
     if (!use_sufficient_unachieved) {
         return;
@@ -157,9 +157,9 @@ void DtgOperators::postpone_sufficient_goal() {
         return;
     }
 
-	if (verbosity >= utils::Verbosity::DEBUG) {
+	if (log.is_at_least_debug()) {
         if (!is_sufficient_unachieved(goal_val)) {
-            utils::g_log << "The goal value is not sufficient unachieved!! " << endl;
+            log << "The goal value is not sufficient unachieved!! " << endl;
         }
     }
     // Removing from the beginning
@@ -183,26 +183,26 @@ void DtgOperators::clear_reachable() {
         return;
     }
 
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Assigning initial values 0 to reachable black values for variable " << task_proxy.get_variables()[var].get_name() << " with range " << range << endl;
+	if (log.is_at_least_debug()) {
+        log << "Assigning initial values 0 to reachable black values for variable " << task_proxy.get_variables()[var].get_name() << " with range " << range << endl;
     }
     reachable_black_vals.assign(range, 0);
     number_reachable_black_vals = 0;
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "The number of values is now " << reachable_black_vals.size() << endl;
+	if (log.is_at_least_debug()) {
+        log << "The number of values is now " << reachable_black_vals.size() << endl;
     }
 }
 
 bool DtgOperators::mark_as_reachable(int val) {
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Reachable black vals for variable " << task_proxy.get_variables()[var].get_name() << " are of size " << reachable_black_vals.size() << endl;
+	if (log.is_at_least_debug()) {
+        log << "Reachable black vals for variable " << task_proxy.get_variables()[var].get_name() << " are of size " << reachable_black_vals.size() << endl;
     }
     if (reachable_black_vals[val] > 0) {
         return false;
     }
 
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Reachable black value " << task_proxy.get_variables()[var].get_fact(val).get_name()  << endl;
+    if (log.is_at_least_debug()) {
+        log << "Reachable black value " << task_proxy.get_variables()[var].get_fact(val).get_name()  << endl;
     }
 
     reachable_black_vals[val] = 1;
@@ -211,8 +211,8 @@ bool DtgOperators::mark_as_reachable(int val) {
 }
 
 void DtgOperators::update_reachable() {
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Update black reachable, use_black_reachable: " << use_black_reachable << ", " << "number of reachable blacks: " << number_reachable_black_vals << ", out of " << range  << endl;
+    if (log.is_at_least_debug()) {
+        log << "Update black reachable, use_black_reachable: " << use_black_reachable << ", " << "number of reachable blacks: " << number_reachable_black_vals << ", out of " << range  << endl;
     //dump_complete_forward_graph();
     }
     if (!use_black_reachable || number_reachable_black_vals == range) {
@@ -234,8 +234,8 @@ void DtgOperators::update_reachable() {
         bool all_transitions_enabled = true;
         for (size_t i = 0; i < complete_forward_graph[state].size(); ++i) {
             const GraphEdge& transition = complete_forward_graph[state][i];
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "Transition:  "<< state << " -> " << transition.to << ", operator "
+            if (log.is_at_least_debug()) {
+                log << "Transition:  "<< state << " -> " << transition.to << ", operator "
                         << task_proxy.get_operators()[transition.op_no].get_name() << ", initially enabled: " << transition.initially_enabled  << endl;
             }
 
@@ -255,8 +255,8 @@ void DtgOperators::update_reachable() {
             reachable_black_vals[state] = 2;
         }
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Finished updating black reachable, number of reachable blacks: " << number_reachable_black_vals << endl;
+    if (log.is_at_least_debug()) {
+        log << "Finished updating black reachable, number of reachable blacks: " << number_reachable_black_vals << endl;
     }
 }
 
@@ -266,9 +266,9 @@ bool DtgOperators::is_reachable(int val) const {
         return false;
     }
 
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Reachability status for " << task_proxy.get_variables()[var].get_fact(val).get_name() << " is " << reachable_black_vals[val] << endl;
-    }
+    // if (clog.is_at_least_debug()) {
+    //     clog << "Reachability status for " << task_proxy.get_variables()[var].get_fact(val).get_name() << " is " << reachable_black_vals[val] << endl;
+    // }
     return reachable_black_vals[val] > 0;
 }
 
@@ -293,8 +293,8 @@ void DtgOperators::clear_initial_data() {
 
 void DtgOperators::clear_black_data_for_red_var() {
     // Clearing all data needed for black vars only
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Removing unnecessary black data for red variable " << var << endl;
+    if (log.is_at_least_debug()) {
+        log << "Removing unnecessary black data for red variable " << var << endl;
     }
     if (dijkstra_distance) {
         delete dijkstra_distance;
@@ -322,8 +322,8 @@ void DtgOperators::clear_black_data_for_red_var() {
 bool DtgOperators::mark_achieved_val(int val, bool is_black) {
     // Returns true if the value was not marked yet
 
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Marking value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << " for " << (is_black ? "black" : "red") << " variable" << endl;
+    if (log.is_at_least_debug()) {
+        log << "Marking value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << " for " << (is_black ? "black" : "red") << " variable" << endl;
     }
     assert(val >= 0 && val < range);
 /*
@@ -364,8 +364,8 @@ bool DtgOperators::mark_achieved_val(int val, bool is_black) {
             red_sufficient_achieved[val] = true;
         }
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Marked achieved value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << ", missing value: " << missing_value << endl;
+    if (log.is_at_least_debug()) {
+        log << "Marked achieved value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << ", missing value: " << missing_value << endl;
     }
     return true;
 }
@@ -373,8 +373,8 @@ bool DtgOperators::mark_achieved_val(int val, bool is_black) {
 void DtgOperators::mark_missing_val(int val) {
     assert(val >= 0 && val < range);
     missing_value = val;
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Marked missing value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << endl;
+    if (log.is_at_least_debug()) {
+        log << "Marked missing value: " << task_proxy.get_variables()[var].get_fact(val).get_name() << endl;
     }
 }
 
@@ -442,30 +442,30 @@ bool DtgOperators::is_condition_included(FactProxy cond, op_eff_pair op_eff) con
     return false;
 }
 
-bool DtgOperators::is_transition_invertible(int from_value, int to_value) const {
+bool DtgOperators::is_transition_invertible(int from_value, int to_value, utils::LogProxy &clog) const {
     for (op_eff_pair op_eff : get_ops_from_to(from_value, to_value)) {
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Checking transition that correspond to operator " << task_proxy.get_operators()[op_eff.first->get_op_no()].get_name() << endl;
+        if (clog.is_at_least_debug()) {
+            clog << "Checking transition that correspond to operator " << task_proxy.get_operators()[op_eff.first->get_op_no()].get_name() << endl;
         }
-        if (!is_op_transition_invertible(op_eff, from_value, to_value)) {
+        if (!is_op_transition_invertible(op_eff, from_value, to_value, clog)) {
             return false;
         }
     }
     return true;
 }
 
-bool DtgOperators::is_op_transition_invertible(op_eff_pair op_eff, int from_value, int to_value) const {
+bool DtgOperators::is_op_transition_invertible(op_eff_pair op_eff, int from_value, int to_value, utils::LogProxy &clog) const {
     // check if there exists a transition with preconditions contained in pre + eff of this one
     for (op_eff_pair to_op_eff : get_ops_from_to(to_value, from_value)) {
         if (is_transition_invertible_by_op_conditional(op_eff, to_op_eff)) {
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "   Invertible by operator " << task_proxy.get_operators()[to_op_eff.first->get_op_no()].get_name() << endl;
+            if (clog.is_at_least_debug()) {
+                clog << "   Invertible by operator " << task_proxy.get_operators()[to_op_eff.first->get_op_no()].get_name() << endl;
             }
             return true;
         }
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "   NOT Invertible" << endl;
+    if (clog.is_at_least_debug()) {
+        clog << "   NOT Invertible" << endl;
     }
     return false;
 }
@@ -495,10 +495,10 @@ bool DtgOperators::is_transition_invertible_by_op_conditional(op_eff_pair op_eff
 }
 
 
-bool DtgOperators::check_invertibility() const {
+bool DtgOperators::check_invertibility(utils::LogProxy &clog) const {
     bool ret = true;
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Checking invertibility of variable " << task_proxy.get_variables()[var].get_name() << endl;
+    if (clog.is_at_least_debug()) {
+        clog << "Checking invertibility of variable " << task_proxy.get_variables()[var].get_name() << endl;
     }
 
     // Going over each pair of values, for each transition see if there is an invertible one
@@ -508,12 +508,12 @@ bool DtgOperators::check_invertibility() const {
                 continue;
             }
 
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "Checking transition: " << task_proxy.get_variables()[var].get_fact(from_value).get_name() << "  -->  "
+            if (clog.is_at_least_debug()) {
+                clog << "Checking transition: " << task_proxy.get_variables()[var].get_fact(from_value).get_name() << "  -->  "
                     << task_proxy.get_variables()[var].get_fact(to_value).get_name() << endl;
             }
 
-            if (!is_transition_invertible(from_value, to_value)) {
+            if (!is_transition_invertible(from_value, to_value, clog)) {
                 ret = false;
             }
         }
@@ -645,9 +645,9 @@ void DtgOperators::calculate_shortest_paths_for_root() {
         return;
     }
     shortest_paths_calculated = true;
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "=================> Variable " << var << " (" << task_proxy.get_variables()[var].get_name() << ") with domain size " << range << " is root, calculating shortest paths in advance" << endl;
-        dump_complete_forward_graph();
+    if (log.is_at_least_debug()) {
+        log << "=================> Variable " << var << " (" << task_proxy.get_variables()[var].get_name() << ") with domain size " << range << " is root, calculating shortest paths in advance" << endl;
+        dump_complete_forward_graph(log);
     }
     set_root();
     // All pairs shortest path
@@ -678,9 +678,9 @@ void DtgOperators::calculate_shortest_paths_for_root() {
             sol_edges[val0][to_val].push_back(edge.op_no);
         }
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "After setting the initial edges, ";
-        dump_shortest_paths_for_root();
+    if (log.is_at_least_debug()) {
+        log << "After setting the initial edges, ";
+        dump_shortest_paths_for_root(log);
     }
 
     for (int k=0; k<range; ++k) {
@@ -695,28 +695,28 @@ void DtgOperators::calculate_shortest_paths_for_root() {
                 int new_dist = solution[i][k] + solution[k][j];
                 if (new_dist < solution[i][j]) {
                     // Update
-                    if (verbosity >= utils::Verbosity::DEBUG) {
-                        utils::g_log << "Distance from "<< i << " to " << j << ", old distance: " << solution[i][j] << ", new distance via " << k << ": " << new_dist << ", updating from" << endl;
-                        dump_shortest_paths_for_root_from_to(i, j);
-                        utils::g_log << "to"<<endl;
-                        dump_shortest_paths_for_root_from_to(i, k);
-                        dump_shortest_paths_for_root_from_to(k, j);
+                    if (log.is_at_least_debug()) {
+                        log << "Distance from "<< i << " to " << j << ", old distance: " << solution[i][j] << ", new distance via " << k << ": " << new_dist << ", updating from" << endl;
+                        dump_shortest_paths_for_root_from_to(i, j, log);
+                        log << "to"<<endl;
+                        dump_shortest_paths_for_root_from_to(i, k, log);
+                        dump_shortest_paths_for_root_from_to(k, j, log);
                     }
                     solution[i][j] = new_dist;
                     sol_edges[i][j].clear();
                     sol_edges[i][j].reserve(sol_edges[i][k].size() + sol_edges[k][j].size());
                     sol_edges[i][j].insert(sol_edges[i][j].end(), sol_edges[i][k].begin(), sol_edges[i][k].end());
                     sol_edges[i][j].insert(sol_edges[i][j].end(), sol_edges[k][j].begin(), sol_edges[k][j].end());
-                    if (verbosity >= utils::Verbosity::DEBUG) {
-                        utils::g_log << "Updated:"<<endl;
-                        dump_shortest_paths_for_root_from_to(i, j);
+                    if (log.is_at_least_debug()) {
+                        log << "Updated:"<<endl;
+                        dump_shortest_paths_for_root_from_to(i, j, log);
                     }
                 }
             }
         }
     }
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        dump_shortest_paths_for_root();
+	if (log.is_at_least_debug()) {
+        dump_shortest_paths_for_root(log);
     }
 }
 
@@ -725,8 +725,8 @@ void DtgOperators::free_solution() {
         return;
     }
     // Freeing memory;
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "=================> Freeing solution for variable " << var << " [" << task_proxy.get_variables()[var].get_name() << "]" << endl;
+	if (log.is_at_least_debug()) {
+        log << "=================> Freeing solution for variable " << var << " [" << task_proxy.get_variables()[var].get_name() << "]" << endl;
     }
     for (int val0=0; val0<range; ++val0) {
         if (solution[val0]) {
@@ -743,8 +743,8 @@ void DtgOperators::free_solution_edges_for_root() {
         return;
     }
     // Freeing memory;
-	if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "=================> Freeing solution edges for variable " << var << " [" << task_proxy.get_variables()[var].get_name() << "]" << endl;
+	if (log.is_at_least_debug()) {
+        log << "=================> Freeing solution edges for variable " << var << " [" << task_proxy.get_variables()[var].get_name() << "]" << endl;
     }
     for (int val0=0;val0<range;++val0) {
         if (sol_edges[val0]) {
@@ -759,17 +759,17 @@ void DtgOperators::add_edge_to_complete_forward_graph(int from, int to, int op_n
     if (is_red_connected && !ops_sufficient[op_no]) {
         return;
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Creating the edge: to=" << to << ", op_no="<< op_no << ", op_cost=" << op_cost << endl;
+    if (log.is_at_least_debug()) {
+        log << "Creating the edge: to=" << to << ", op_no="<< op_no << ", op_cost=" << op_cost << endl;
     }
     GraphEdge edge(to, op_no, op_cost, no_red_prec);
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Forward graph size " << complete_forward_graph.size() << ", range: " << range << endl;
-        utils::g_log << "Adding to forward graph: from=" << from << endl;
+    if (log.is_at_least_debug()) {
+        log << "Forward graph size " << complete_forward_graph.size() << ", range: " << range << endl;
+        log << "Adding to forward graph: from=" << from << endl;
     }
     complete_forward_graph[from].push_back(edge);
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Done adding to forward graph" << endl;
+    if (log.is_at_least_debug()) {
+        log << "Done adding to forward graph" << endl;
     }
 }
 
@@ -778,8 +778,8 @@ void DtgOperators::calculate_shortest_paths_ignore_prevail_conditions() {
         return;
     }
     shortest_paths_calculated = true;
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "=================> Calculating shortest paths in advance for variable " << var << " (" << task_proxy.get_variables()[var].get_name() << ") with domain size " << range << endl;
+    if (log.is_at_least_debug()) {
+        log << "=================> Calculating shortest paths in advance for variable " << var << " (" << task_proxy.get_variables()[var].get_name() << ") with domain size " << range << endl;
     }
     // All pairs shortest path
     solution = new int*[range];
@@ -793,8 +793,8 @@ void DtgOperators::calculate_shortest_paths_ignore_prevail_conditions() {
                 solution[val0][val1] = numeric_limits<int>::max();
             }
         }
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "----------> complete_forward_graph size: " << complete_forward_graph.size() << endl;
+        if (log.is_at_least_debug()) {
+            log << "----------> complete_forward_graph size: " << complete_forward_graph.size() << endl;
         }
 
         // Now going over the forward graph, setting the initial values
@@ -836,35 +836,35 @@ int DtgOperators::get_shortest_distance_ignore_prevail_conditions(int from, int 
     return solution[from][to];
 }
 
-void DtgOperators::dump_shortest_paths_for_root() const {
-    utils::g_log << "The shortest paths are as follows"<< endl;
+void DtgOperators::dump_shortest_paths_for_root(utils::LogProxy &clog) const {
+    clog << "The shortest paths are as follows"<< endl;
     for (int i=0;i<range;++i) {
-        utils::g_log << "From value " << i << ":" <<endl;
+        clog << "From value " << i << ":" <<endl;
         for (int j=0;j<range;++j) {
-            utils::g_log << "To value " << j << ":" <<endl;
-            dump_shortest_paths_for_root_from_to(i, j);
-            utils::g_log << "-----------------------------------------------------------------------" << endl;
+            clog << "To value " << j << ":" <<endl;
+            dump_shortest_paths_for_root_from_to(i, j, clog);
+            clog << "-----------------------------------------------------------------------" << endl;
         }
     }
 }
 
-void DtgOperators::dump_complete_forward_graph() const {
-    utils::g_log << "Complete forward graph:"<< endl;
+void DtgOperators::dump_complete_forward_graph(utils::LogProxy &clog) const {
+    clog << "Complete forward graph:"<< endl;
     for (int state=0; state<range; ++state) {
         const vector<GraphEdge>& transitions = complete_forward_graph[state];
 
-        utils::g_log << "From value " << get_value_name(state) << ":" <<endl;
+        clog << "From value " << get_value_name(state) << ":" <<endl;
         for (GraphEdge transition : transitions) {
-            utils::g_log << "To value " << get_value_name(transition.to) << ": " << task_proxy.get_operators()[transition.op_no].get_name() << ", initially enabled: " << transition.initially_enabled << endl;
+            clog << "To value " << get_value_name(transition.to) << ": " << task_proxy.get_operators()[transition.op_no].get_name() << ", initially enabled: " << transition.initially_enabled << endl;
         }
-        utils::g_log << "-----------------------------------------------------------------------" << endl;
+        clog << "-----------------------------------------------------------------------" << endl;
     }
 }
 
-void DtgOperators::dump_shortest_paths_for_root_from_to(int i, int j) const {
+void DtgOperators::dump_shortest_paths_for_root_from_to(int i, int j, utils::LogProxy &clog) const {
     for (size_t op_no = 0; op_no < sol_edges[i][j].size(); ++op_no) {
         int op_ind = sol_edges[i][j][op_no];
-        utils::g_log << task_proxy.get_operators()[op_ind].get_name() << endl;
+        clog << task_proxy.get_operators()[op_ind].get_name() << endl;
     }
 }
 
@@ -878,15 +878,15 @@ const vector<int>& DtgOperators::get_shortest_path_for_root_from_to(int from, in
         utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
     }
 
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Getting the shortest path from " << from << " to " << to << endl;
+    if (log.is_at_least_debug()) {
+        log << "Getting the shortest path from " << from << " to " << to << endl;
     }
     assert(from >= 0 && from < range);
     assert(to >= 0 && to < range);
     if (from == to) {
         // Nothing to do here, but this method should not be called in this case
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Warning: should not be called for current == missing" << endl;
+        if (log.is_at_least_debug()) {
+            log << "Warning: should not be called for current == missing" << endl;
         }
         plan.clear();
         return plan;
@@ -955,8 +955,8 @@ const vector<int>& DtgOperators::calculate_shortest_path_from_to(int from, int t
         return get_shortest_path_for_root_from_to(from, to);
     }
 
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Calculating the shortest path from " << task_proxy.get_variables()[var].get_fact(from).get_name() << " to " << task_proxy.get_variables()[var].get_fact(to).get_name() << endl;
+    if (log.is_at_least_debug()) {
+        log << "Calculating the shortest path from " << task_proxy.get_variables()[var].get_fact(from).get_name() << " to " << task_proxy.get_variables()[var].get_fact(to).get_name() << endl;
         //dump_complete_forward_graph();
     }
     std::fill_n(dijkstra_distance, range, numeric_limits<int>::max());
@@ -972,8 +972,8 @@ const vector<int>& DtgOperators::calculate_shortest_path_from_to(int from, int t
         queue.push(0, from);
         dijkstra_search(queue);
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Done calculating, the value is " << dijkstra_distance[to] << endl;
+    if (log.is_at_least_debug()) {
+        log << "Done calculating, the value is " << dijkstra_distance[to] << endl;
     }
     plan.clear();
 
@@ -1017,7 +1017,7 @@ void DtgOperators::dijkstra_search(priority_queues::AdaptiveQueue<int> &queue) {
         }
         for (size_t i = 0; i < complete_forward_graph[state].size(); ++i) {
             const GraphEdge& transition = complete_forward_graph[state][i];
-            if (!is_transition_enabled(transition, state)) {
+            if (!is_transition_enabled(transition, state, log)) {
                 continue;
             }
             int successor = transition.to;
@@ -1038,8 +1038,8 @@ void DtgOperators::dijkstra_search(priority_queues::AdaptiveQueue<int> &queue) {
 // dijkstra_distance is used for holding the g values
 // When the
 void DtgOperators::astar_search(priority_queues::AdaptiveQueue<int> &queue, int goal) {
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Starting A* search!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+    if (log.is_at_least_debug()) {
+        log << "Starting A* search!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
     }
     while (!queue.empty()) {
         pair<int, int> top_pair = queue.pop();
@@ -1055,24 +1055,24 @@ void DtgOperators::astar_search(priority_queues::AdaptiveQueue<int> &queue, int 
             continue;
         }
 
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "State " << state << ", reached by operator " << dijkstra_ops[state] << endl;
+        if (log.is_at_least_debug()) {
+            log << "State " << state << ", reached by operator " << dijkstra_ops[state] << endl;
             if (dijkstra_ops[state] != -1)
-                utils::g_log << task_proxy.get_operators()[dijkstra_ops[state]].get_name() << endl;
+                log << task_proxy.get_operators()[dijkstra_ops[state]].get_name() << endl;
         }
 
         for (size_t i = 0; i < complete_forward_graph[state].size(); ++i) {
             const GraphEdge& transition = complete_forward_graph[state][i];
-            if (!is_transition_enabled(transition, state)) {
-                if (verbosity >= utils::Verbosity::DEBUG) {
-                    utils::g_log << "[NOT ENABLED!]: ";
-                    utils::g_log << task_proxy.get_operators()[transition.op_no].get_name() << endl;
+            if (!is_transition_enabled(transition, state, log)) {
+                if (log.is_at_least_debug()) {
+                    log << "[NOT ENABLED!]: ";
+                    log << task_proxy.get_operators()[transition.op_no].get_name() << endl;
                 }
                 continue;
             }
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "[ENABLED]: ";
-                utils::g_log << task_proxy.get_operators()[transition.op_no].get_name() << endl;
+            if (log.is_at_least_debug()) {
+                log << "[ENABLED]: ";
+                log << task_proxy.get_operators()[transition.op_no].get_name() << endl;
             }
 
 
@@ -1086,15 +1086,15 @@ void DtgOperators::astar_search(priority_queues::AdaptiveQueue<int> &queue, int 
             }
         }
     }
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Finished A* search!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+    if (log.is_at_least_debug()) {
+        log << "Finished A* search!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
     }   
 }
 
-bool DtgOperators::is_transition_enabled(const GraphEdge& trans, int from) const {
+bool DtgOperators::is_transition_enabled(const GraphEdge& trans, int from, utils::LogProxy &clog) const {
 //    if (only_current_transitions) {
-    if (verbosity >= utils::Verbosity::DEBUG) {
-        utils::g_log << "Current transition status: " << transitions_status << endl;
+    if (clog.is_at_least_debug()) {
+        clog << "Current transition status: " << transitions_status << endl;
     }
     if (transitions_status == ONLY_CURRENT_TRANSITIONS || transitions_status == ENABLED_DURING_RUN) {
         vector<int> path;
@@ -1104,41 +1104,41 @@ bool DtgOperators::is_transition_enabled(const GraphEdge& trans, int from) const
         // adding the current transition to the end of the path
         path.push_back(trans.op_no);
 
-        if (verbosity >= utils::Verbosity::DEBUG) {
+        if (clog.is_at_least_debug()) {
             for (int op_no : path) {
-                utils::g_log << task_proxy.get_operators()[op_no].get_name() << endl;
+                clog << task_proxy.get_operators()[op_no].get_name() << endl;
             }
         }
 
         if (is_red_connected) {
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "Checking whether the whole path is applicable (the first part must be) "  << endl;
+            if (clog.is_at_least_debug()) {
+                clog << "Checking whether the whole path is applicable (the first part must be) "  << endl;
             }
             // Checking whether the whole path is applicable (the first part must be)
             return base_pointer->is_currently_applicable(path);
         }
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "Skipping black variables for applicability check "  << endl;
+        if (clog.is_at_least_debug()) {
+            clog << "Skipping black variables for applicability check "  << endl;
         }
 
         // Skipping black variables for applicability check
         if (transitions_status == ONLY_CURRENT_TRANSITIONS) {
-            if (verbosity >= utils::Verbosity::DEBUG) {
-                utils::g_log << "is_currently_applicable?"  << endl;
+            if (clog.is_at_least_debug()) {
+                clog << "is_currently_applicable?"  << endl;
             }
             return base_pointer->is_currently_applicable(path, true);
         }
         // We get here when transitions_status == ENABLED_DURING_RUN
-        if (verbosity >= utils::Verbosity::DEBUG) {
-            utils::g_log << "We get here when transitions_status == " << ENABLED_DURING_RUN << endl;
-            utils::g_log << "is_currently_RB_applicable?"  << endl;
+        if (clog.is_at_least_debug()) {
+            clog << "We get here when transitions_status == " << ENABLED_DURING_RUN << endl;
+            clog << "is_currently_RB_applicable?"  << endl;
         }
         return base_pointer->is_currently_RB_applicable(path);
     }
     if (transitions_status == ENABLED_BEFORE_RUN) {
         return trans.initially_enabled || base_pointer->op_is_enabled(trans.op_no);
     }
-    utils::g_log << "Unknown transitions status" << endl;
+    clog << "Unknown transitions status" << endl;
     return false;
 }
 

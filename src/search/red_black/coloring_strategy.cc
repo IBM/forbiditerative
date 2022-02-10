@@ -19,7 +19,7 @@ ColoringStrategy::ColoringStrategy(const Options &opts, const std::shared_ptr<Ab
         black_dag(opts.get<BlackDAG>("dag")),
         shortest_paths_calculated(false),
         set_conflicting_to_red(opts.get<bool>("set_conflicting_to_red")),
-        verbosity(opts.get<utils::Verbosity>("verbosity")),
+        log(utils::get_log_from_options(opts)),
         use_connected(true) {
 }
 
@@ -34,7 +34,7 @@ void ColoringStrategy::initialize(RedBlackTaskCore* core) {
 
 void ColoringStrategy::set_black_variables(RedBlackTaskCore* core) {
     red_black_task_core = core;
-	if (verbosity >= utils::Verbosity::NORMAL) {
+	if (log.is_at_least_normal()) {
         utils::g_log  << "Total number of invertible variables is " << get_num_invertible_vars() << endl;
     }
     if (get_num_invertible_vars() == 0) {
@@ -73,7 +73,7 @@ void ColoringStrategy::set_black_variables(RedBlackTaskCore* core) {
     }
 
     // Printing whether there are causal links between invertible variables
-	if (verbosity >= utils::Verbosity::NORMAL) {
+	if (log.is_at_least_normal()) {
         bool black_connected = are_black_variables_connected();
         utils::g_log  << "Invertible variables connection status: " << (black_connected ? "yes" : "no") << endl;
     }
@@ -92,7 +92,7 @@ void ColoringStrategy::set_black_variables(RedBlackTaskCore* core) {
         }
     }
 
-	if (verbosity >= utils::Verbosity::NORMAL) {
+	if (log.is_at_least_normal()) {
         // Printing whether there are causal links between invertible variables after painting leafs red
         utils::g_log  << "Invertible variables without leafs connection status: " << (are_black_variables_connected() ? "yes" : "no") << endl;
         utils::g_log  << "Invertible variables with one directional connection status: " << (are_black_variables_singly_connected() ? "yes" : "no") << endl;
@@ -172,38 +172,38 @@ void ColoringStrategy::precalculate_variables(bool force_computation) {
     if (shortest_paths_calculated) {
         return;
     }
-	if (verbosity >= utils::Verbosity::NORMAL) {
+	if (log.is_at_least_normal()) {
         utils::g_log  << "Adding edges to forward graph, for the later calculation of missing values" << endl;
     }
     // Setting the affecting actions
     for (size_t op_no = 0; op_no < task_proxy.get_operators().size(); ++op_no) {
         // Adding the operator to the complete_forward_graph
         OperatorProxy op = task_proxy.get_operators()[op_no];
-		if (verbosity >= utils::Verbosity::DEBUG) {
+		if (log.is_at_least_debug()) {
             utils::g_log  << "For operator with index " << op_no << "    " << op.get_name() << endl;
         }
         int op_cost = op.get_cost();
         EffectsProxy effects = op.get_effects();
         for (EffectProxy eff : effects) {
             VariableProxy var = eff.get_fact().get_variable();
-    		if (verbosity >= utils::Verbosity::DEBUG) {
+    		if (log.is_at_least_debug()) {
 
                 utils::g_log  << "Effect variable " << var.get_name() << " is " << (is_black(var) ? "black" : "red") << endl;
             }
             if (!is_black(var) && !is_use_connected()) { // Only for black vars
                 continue;
             }
-    		if (verbosity >= utils::Verbosity::DEBUG) {
+    		if (log.is_at_least_debug()) {
                 utils::g_log  << "Use connected: " << (is_use_connected() ? "yes" : "no") << endl;
             }
 
             int pre_value = get_rb_sas_operator(op_no)->get_pre_value_by_effect(eff);
-		    if (verbosity >= utils::Verbosity::DEBUG) {
+		    if (log.is_at_least_debug()) {
                 utils::g_log  << "From value: " << pre_value << endl;
             }
             int post_value = eff.get_fact().get_value();
 
-    		if (verbosity >= utils::Verbosity::DEBUG) {
+    		if (log.is_at_least_debug()) {
                 utils::g_log  << "To value: " << post_value << endl;
             }
 
@@ -221,21 +221,21 @@ void ColoringStrategy::precalculate_variables(bool force_computation) {
                 if (value == post_value) {
                     continue;
                 }
-        		if (verbosity >= utils::Verbosity::DEBUG) {
+        		if (log.is_at_least_debug()) {
                     utils::g_log  << "Adding edge to complete forward graph, value: " << value << ", to value: " << post_value << ", for operator: " << op_no << " with cost " << op_cost << " with " << (is_root ? "no " : "") << "red preconditions" << endl;
                 }
                 get_dtg(var)->add_edge_to_complete_forward_graph(value, post_value, op_no, op_cost, is_root );
-        		if (verbosity >= utils::Verbosity::DEBUG) {
+        		if (log.is_at_least_debug()) {
                     utils::g_log  << "Added edge from " << value << " to " << post_value << " for operator " << op_no << " with cost " << op_cost << " with " << (is_root ? "no " : "") << "red preconditions" << endl;
                 }
             }
         }
-		if (verbosity >= utils::Verbosity::DEBUG) {
+		if (log.is_at_least_debug()) {
             utils::g_log  << "Operator " << op_no << " with " << op.get_effects().size() << " black effects" << endl;
         }
     }
 
-	if (verbosity >= utils::Verbosity::NORMAL) {
+	if (log.is_at_least_normal()) {
         utils::g_log  << "Precalculating all pair shortest paths" << endl;
     }
     VariablesProxy variables = task_proxy.get_variables();
@@ -243,25 +243,25 @@ void ColoringStrategy::precalculate_variables(bool force_computation) {
         precalculate_shortest_paths_for_var(var, force_computation || DtgOperators::use_astar);
     }
     shortest_paths_calculated = true;
-	if (verbosity >= utils::Verbosity::DEBUG) {
+	if (log.is_at_least_debug()) {
         utils::g_log  << "DONE Precalculating all pair shortest paths" << endl;
     }
 }
 
 void ColoringStrategy::precalculate_shortest_paths_for_var(VariableProxy var, bool force_computation) {
     if (shortest_paths_calculated) {
-    	if (verbosity >= utils::Verbosity::NORMAL) {
+    	if (log.is_at_least_normal()) {
             utils::g_log  << "All shortest paths already calculated " << endl;
         }
         return;
     }
-	if (verbosity >= utils::Verbosity::DEBUG) {
+	if (log.is_at_least_debug()) {
         utils::g_log  << "----------> Variable: " << var.get_name() << endl;
         utils::g_log  << "---------->               is " << (is_black(var) ? "black" : "red") << endl;
     }
 
     if (!is_black(var) && is_use_connected()) {
-	    if (verbosity >= utils::Verbosity::DEBUG) {
+	    if (log.is_at_least_debug()) {
             utils::g_log  << "Storing shortest paths and costs for connected red variable " << var.get_name() << endl;
         }
         if (get_cg_predecessors(var).size() == 0) {
@@ -277,7 +277,7 @@ void ColoringStrategy::precalculate_shortest_paths_for_var(VariableProxy var, bo
     }
 
     if (get_cg_predecessors(var).size() == 0) {
-    	if (verbosity >= utils::Verbosity::DEBUG) {
+    	if (log.is_at_least_debug()) {
             utils::g_log  << "Storing shortest paths and costs for root variable " << var.get_name() << endl;
         }
         get_dtg(var)->calculate_shortest_paths_for_root();
@@ -287,7 +287,7 @@ void ColoringStrategy::precalculate_shortest_paths_for_var(VariableProxy var, bo
     if (force_computation) {
         // Storing shortest paths ignoring external preconditions for all black variables
         // Since it is already done for the root variables, skipping them here
-    	if (verbosity >= utils::Verbosity::DEBUG) {
+    	if (log.is_at_least_debug()) {
             utils::g_log  << "Storing shortest paths costs ignoring external preconditions for variable " << var.get_name() << endl;
         }
         get_dtg(var)->calculate_shortest_paths_ignore_prevail_conditions();
@@ -304,7 +304,7 @@ void ColoringStrategy::set_variables_order_by_level_heuristic(vector<int>& order
 void ColoringStrategy::set_variables_order_for_vertex_cover(vector<int>& order) {
     order.clear();
     set_variables_order_by_level_heuristic(order);
-	if (verbosity >= utils::Verbosity::NORMAL) {
+	if (log.is_at_least_normal()) {
         utils::g_log  << "Variables order is set" << endl;
     }
 }
@@ -315,7 +315,7 @@ void ColoringStrategy::paint_red_by_vertex_cover(vector<int>& order, int* elemen
     // Each iteration a node is greedily selected to be considered next, it is removed from the graph and degrees are updated
     // This node is going to be in the vertex cover, so not going to be black.
     while (true) {
-    	if (verbosity >= utils::Verbosity::DEBUG) {
+    	if (log.is_at_least_debug()) {
             utils::g_log  << "Number of edges left:" << endl;
             for (size_t i=0; i < task_proxy.get_variables().size(); ++i) {
                 // Printing the indexes of all variables (number of edges)
@@ -328,7 +328,7 @@ void ColoringStrategy::paint_red_by_vertex_cover(vector<int>& order, int* elemen
             break;
         }
 
-    	if (verbosity >= utils::Verbosity::DEBUG) {
+    	if (log.is_at_least_debug()) {
             utils::g_log  << "Best node found: " << best_node << endl;
         }
         VariableProxy best_var = task_proxy.get_variables()[best_node];

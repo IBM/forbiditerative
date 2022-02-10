@@ -11,8 +11,9 @@ namespace novelty_heuristic {
 NoveltyHeuristic::NoveltyHeuristic(const Options &opts)
     : Heuristic(opts), novelty_heuristic(opts.get<shared_ptr<Evaluator>>("eval")),
         solution_found_by_heuristic(false),
-        statistics(opts.get<utils::Verbosity>("verbosity")) {
-    utils::g_log  << "Initializing novelty heuristic..." << endl;
+        log(utils::get_log_from_options(opts)),
+        statistics(log) {
+    log  << "Initializing novelty heuristic..." << endl;
     // Setting the value to DEAD_END initially.
     VariablesProxy variables = task_proxy.get_variables();
     novelty_per_variable_value.assign(variables.size(), std::vector<int>());
@@ -78,7 +79,7 @@ static shared_ptr<Heuristic> _parse(OptionParser &parser) {
 
     Heuristic::add_options_to_parser(parser);
     parser.add_option<shared_ptr<Evaluator>>("eval", "Heuristic for novelty calculation");
-    utils::add_verbosity_option_to_parser(parser);
+    utils::add_log_options_to_parser(parser);
 
     Options opts = parser.parse();
     if (parser.dry_run())

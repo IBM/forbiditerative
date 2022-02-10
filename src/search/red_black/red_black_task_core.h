@@ -20,7 +20,7 @@ class RedBlackTaskCore {
 
     std::vector<bool> invertible_vars;  // Keeps invertible variables until black variables are set
     size_t num_invertible_vars;
-    const utils::Verbosity verbosity;
+    utils::LogProxy log;
 
     void create_extended_DTGs(const std::shared_ptr<AbstractTask> task);
     void prepare_DTGs_for_invertibility_check();
@@ -29,7 +29,7 @@ class RedBlackTaskCore {
     void free_initial_data();
 
 public:
-    RedBlackTaskCore(const std::shared_ptr<AbstractTask> task, const utils::Verbosity verbosity);
+    RedBlackTaskCore(const std::shared_ptr<AbstractTask> task, utils::LogProxy &log);
 
     void initialize();
     std::shared_ptr<DtgOperators> get_dtg(VariableProxy var) const { return dtgs_by_transition[var.get_id()]; }
