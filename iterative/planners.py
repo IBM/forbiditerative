@@ -1,12 +1,14 @@
 #! /usr/bin/env python
 
-import os, shutil, glob
+import os, shutil
+# import glob
 import logging
 import timers
 from driver import limits
 import math
 
-from planner_call import BaseCostOptimalPlannerCall, ShortestOptimalPlannerCall, BaseSatisficingPlannerCall, CerberusPlannerCall, TopqReformulationPlannerCall, TopkReformulationPlannerCall, DiverseReformulationPlannerCall, AdditionalPlansPlannerCall, make_call
+# from planner_call import BaseCostOptimalPlannerCall, ShortestOptimalPlannerCall, CerberusPlannerCall, TopqReformulationPlannerCall, TopkReformulationPlannerCall, DiverseReformulationPlannerCall, AdditionalPlansPlannerCall, make_call
+import planner_call 
 from . import plan_manager as pm 
 
 class Planner(object): 
@@ -159,7 +161,7 @@ class TopKPlanner(Planner):
         self._report_iteration_step(plan_manager.get_number_valid_plans(up_to_best_known_bound=True), success)
 
     def get_planner_callstring(self, task_manager, plan_manager, time_limit):
-        return self._get_planner_callstring(BaseCostOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=False, consistent=False)
+        return self._get_planner_callstring(planner_call.BaseCostOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=False, consistent=False)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
         plan_file = plan_manager.get_last_processed_plan()
@@ -182,7 +184,7 @@ class TopKPlanner(Planner):
         pcargs["num_total_plans"] = num_remaining_plans
 
         pcargs["reordering"] = self._args.reordering
-        pc = TopkReformulationPlannerCall()
+        pc = planner_call.TopkReformulationPlannerCall()
         command = pc.get_callstring(**pcargs)
 
         logging.info("Reformulating the planning task, forbidding found solutions")
@@ -221,7 +223,7 @@ class TopKViaUnorderedTopQualityPlanner(Planner):
         self._report_iteration_step(plan_manager.get_number_valid_plans(up_to_best_known_bound=True), success)
 
     def get_planner_callstring(self, task_manager, plan_manager, time_limit):
-        return self._get_planner_callstring(ShortestOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=True, consistent=False)
+        return self._get_planner_callstring(planner_call.ShortestOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=True, consistent=False)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
         pcargs = {}
@@ -230,7 +232,7 @@ class TopKViaUnorderedTopQualityPlanner(Planner):
         pcargs["num_plans_to_read"] = plan_manager.get_plan_counter() 
         pcargs["num_previous_plans"] = 0
 
-        pc = TopqReformulationPlannerCall()
+        pc = planner_call.TopqReformulationPlannerCall()
         command = pc.get_callstring(**pcargs)
 
         logging.info("Reformulating the planning task, forbidding found solutions")
@@ -281,7 +283,7 @@ class TopKViaUnorderedTopQualityPlanner(Planner):
         if self._args.symmetries:
             pcargs["use_symmetries"] = True
 
-        pc = AdditionalPlansPlannerCall()
+        pc = planner_call.AdditionalPlansPlannerCall()
         command = pc.get_callstring(**pcargs)
 
         logging.info("Extending the set of found solutions")
@@ -307,7 +309,7 @@ class UnorderedTopQualityPlanner(Planner):
         self._report_iteration_step(plan_manager.get_plan_counter(), success)
 
     def get_planner_callstring(self, task_manager, plan_manager, time_limit):
-        return self._get_planner_callstring(ShortestOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=True, consistent=False)
+        return self._get_planner_callstring(planner_call.ShortestOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=True, consistent=False)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
         pcargs = {}
@@ -318,7 +320,7 @@ class UnorderedTopQualityPlanner(Planner):
         if self._args.symmetries:
             pcargs["use_symmetries"] = True
 
-        pc = TopqReformulationPlannerCall()
+        pc = planner_call.TopqReformulationPlannerCall()
         command = pc.get_callstring(**pcargs)
 
         logging.info("Reformulating the planning task, forbidding found solutions")
@@ -439,7 +441,7 @@ class ExtendedUnorderedTopQualityPlanner(UnorderedTopQualityPlanner):
         if self._args.symmetries:
             pcargs["use_symmetries"] = True
 
-        pc = AdditionalPlansPlannerCall()
+        pc = planner_call.AdditionalPlansPlannerCall()
         command = pc.get_callstring(**pcargs)
 
         logging.info("Extending the plan %s" % plan_file )
@@ -449,7 +451,7 @@ class ExtendedUnorderedTopQualityPlanner(UnorderedTopQualityPlanner):
         if self._args.suppress_planners_output:
             enable_planners_output = False
         try:
-            make_call(command, time_limit, plan_manager.get_plans_folder(), enable_output=enable_planners_output)
+            planner_call.make_call(command, time_limit, plan_manager.get_plans_folder(), enable_output=enable_planners_output)
         except:
             raise
 
@@ -468,7 +470,7 @@ class TopQualityViaTopKPlanner(Planner):
         self._report_iteration_step(plan_manager.get_number_valid_plans(up_to_best_known_bound=True), success)
 
     def get_planner_callstring(self, task_manager, plan_manager, time_limit):
-        return self._get_planner_callstring(BaseCostOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=False, consistent=False)
+        return self._get_planner_callstring(planner_call.BaseCostOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=False, consistent=False)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
         plan_file = plan_manager.get_last_processed_plan()
@@ -492,7 +494,7 @@ class TopQualityViaTopKPlanner(Planner):
         pcargs["num_total_plans"] = num_remaining_plans
 
         pcargs["reordering"] = self._args.reordering
-        pc = TopkReformulationPlannerCall()
+        pc = planner_call.TopkReformulationPlannerCall()
         command = pc.get_callstring(**pcargs)
 
         logging.info("Reformulating the planning task, forbidding found solutions")
@@ -535,7 +537,7 @@ class TopQualityViaUnorderedTopQualityPlanner(Planner):
         self._report_iteration_step(plan_manager.get_number_valid_plans(up_to_best_known_bound=True), success)
 
     def get_planner_callstring(self, task_manager, plan_manager, time_limit):
-        return self._get_planner_callstring(ShortestOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=True, consistent=False)
+        return self._get_planner_callstring(planner_call.ShortestOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=True, consistent=False)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
         pcargs = {}
@@ -544,7 +546,7 @@ class TopQualityViaUnorderedTopQualityPlanner(Planner):
         pcargs["num_plans_to_read"] = plan_manager.get_plan_counter()
         pcargs["num_previous_plans"] = 0
 
-        pc = TopqReformulationPlannerCall()
+        pc = planner_call.TopqReformulationPlannerCall()
         command = pc.get_callstring(**pcargs)
 
         logging.info("Reformulating the planning task, forbidding found solutions")
@@ -609,7 +611,7 @@ class TopQualityViaUnorderedTopQualityPlanner(Planner):
         if self._args.symmetries:
             pcargs["use_symmetries"] = True
 
-        pc = AdditionalPlansPlannerCall()
+        pc = planner_call.AdditionalPlansPlannerCall()
         command = pc.get_callstring(**pcargs)
 
         logging.info("Extending the set of found solutions")
@@ -630,8 +632,7 @@ class TopQualityViaUnorderedTopQualityPlanner(Planner):
 
 class DiversePlanner(Planner):
     def get_planner_call(self):
-        path = os.getenv('DIVERSE_FAST_DOWNWARD_PLANNER_PATH')
-        return CerberusPlannerCall() if path else BaseSatisficingPlannerCall()
+        return planner_call.CerberusPlannerCall()
 
     def get_plan_manager(self, local_folder):
         return pm.PlanManager("sas_plan", local_folder, compute_best_known=False)
@@ -643,7 +644,7 @@ class DiversePlanner(Planner):
         return self._get_planner_callstring(self.get_planner_call(), task_manager, plan_manager, time_limit)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
-        return self._get_default_reformulation_callstring(DiverseReformulationPlannerCall(), task_manager, plan_manager)
+        return self._get_default_reformulation_callstring(planner_call.DiverseReformulationPlannerCall(), task_manager, plan_manager)
         # pcargs = {}
         # num_existing_plans = plan_manager.get_plan_counter()
         # pcargs["curr_task_name"] = task_manager.get_original_task_path()
@@ -657,7 +658,7 @@ class DiversePlanner(Planner):
         # if self._args.symmetries:
         #     pcargs["use_symmetries"] = True
 
-        # pc = DiverseReformulationPlannerCall()
+        # pc = planner_call.DiverseReformulationPlannerCall()
         # command = pc.get_callstring(**pcargs)
         # logging.info("Reformulating the planning task, forbidding found solutions")
         # logging.debug("Running " + str(command))

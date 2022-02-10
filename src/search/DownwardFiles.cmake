@@ -871,6 +871,31 @@ fast_downward_plugin(
     DEPENDS BLISS
 )
 
+fast_downward_plugin(
+
+    NAME NOVELTY
+    HELP "Plugin containing the code for novelty heuristics"
+    SOURCES
+        heuristics/novelty_heuristic_simplified.cc
+        heuristics/novelty_heuristic.cc
+    DEPENDS TASK_PROPERTIES
+)
+
+fast_downward_plugin(
+    NAME RED_BLACK
+    HELP "Plugin containing the code for Red-Black Planning heuristics"
+    SOURCES
+        algorithms/topological_sort
+        algorithms/transitive_closure
+        red_black/red_black_operator
+        red_black/red_black_task_core
+        red_black/coloring_strategy
+        red_black/red_black_task
+        red_black/red_black_heuristic
+        red_black/dtg_operators
+    DEPENDS FF_HEURISTIC SCCS
+)
+
 fast_downward_add_plugin_sources(PLANNER_SOURCES)
 
 # The order in PLANNER_SOURCES influences the order in which object
