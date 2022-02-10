@@ -26,6 +26,7 @@ enum CutoffType {
 
 class NoveltyHeuristicTest : public Heuristic {
 	std::vector<std::shared_ptr<Heuristic>> novelty_heuristics;
+    int solution_found_by_heuristic;
 	int novelty_heuristics_largest_value;
 	NoveltyType type;
     CutoffType cutoff_type;
@@ -70,6 +71,9 @@ public:
     virtual void notify_state_transition(const State &parent_state,
                                          OperatorID op_id,
                                          const State &state) override;
+
+    virtual bool found_solution() const override; 
+    virtual const std::vector<OperatorID>& get_solution() const override;
 };
 }
 

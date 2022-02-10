@@ -5,12 +5,14 @@
 #include "../evaluation_context.h"
 #include "../utils/logging.h"
 #include "../utils/system.h"
+#include "../plan_manager.h"
 
 using namespace std;
  
 namespace novelty_heuristic {
 NoveltyHeuristicTest::NoveltyHeuristicTest(const Options &opts)
     : Heuristic(opts), 
+	  solution_found_by_heuristic(-1),
 	  novelty_heuristics_largest_value(DEAD_END),
 	  type(opts.get<NoveltyType>("type")),
 	  cutoff_type(opts.get<CutoffType>("cutoff_type")),
@@ -18,17 +20,12 @@ NoveltyHeuristicTest::NoveltyHeuristicTest(const Options &opts)
 	  num_ops_bound(opts.get<int>("num_ops_bound")),
 	  dump_value(opts.get<bool>("dump")),
 	  use_preferred_operators(opts.get<bool>("pref")),
-	  preferred_operators_from_evals(false),
+	  preferred_operators_from_evals(cutoff_type == NO_CUTOFF),  // In this case, we don't need to store novelty values per operator
 	  multiplier(opts.get<int>("multiplier")),
 	  reached_by_op_id(-1),
       log(utils::get_log_from_options(opts)),
       statistics(log)  {
     log  << "Initializing novelty heuristic..." << endl;
-
-    if (cutoff_type == NO_CUTOFF) {
-        // In this case, we don't need to store novelty values per operator
-        preferred_operators_from_evals = true;
-    }
  	for (auto h : opts.get_list<shared_ptr<Evaluator>>("evals")) {
 		novelty_heuristics.push_back(dynamic_pointer_cast<Heuristic>(h));
 	}
@@ -79,7 +76,8 @@ bool NoveltyHeuristicTest::store_values_for_operators() const {
 }
 
 int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
-
+	solution_found_by_heuristic = -1;
+	int best_plan_cost = numeric_limits<int>::max();
     vector<int> heuristic_values;
 	for (size_t heuristic_index = 0; heuristic_index < novelty_heuristics.size(); ++heuristic_index) {
 	    EvaluationContext eval_context(ancestor_state, 0, true, &statistics);
@@ -89,6 +87,14 @@ int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
 	    heuristic_values.push_back(value);
 	    update_maximal_value(value);
 
+		// Taking  cheapest plan found
+		if (novelty_heuristics[heuristic_index]->found_solution()) {
+			int current_plan_cost = calculate_plan_cost(novelty_heuristics[heuristic_index]->get_solution(), task_proxy);
+			if (current_plan_cost < best_plan_cost) {
+				solution_found_by_heuristic = (int) heuristic_index;
+				best_plan_cost = current_plan_cost;
+			}
+		}
 		if (use_preferred_operators) {
             // Updating for the operator that reaches the current state
 			if (reached_by_op_id.get_index() >= 0 && store_values_for_operators()) {
@@ -213,7 +219,6 @@ int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
 	return ret;
 }
 
-
 void NoveltyHeuristicTest::notify_state_transition(
     const State &, OperatorID op_id,
     const State &) {
@@ -222,6 +227,18 @@ void NoveltyHeuristicTest::notify_state_transition(
 		reached_by_op_id = op_id;
     }
 }
+
+const std::vector<OperatorID>& NoveltyHeuristicTest::get_solution() const {
+    if (solution_found_by_heuristic >= 0) {
+		return novelty_heuristics[solution_found_by_heuristic]->get_solution();
+	}
+    return Heuristic::get_solution();
+}
+
+bool NoveltyHeuristicTest::found_solution() const { 
+	return (solution_found_by_heuristic >= 0);
+}
+
 
 // bool NoveltyHeuristicTest::is_preferred(OperatorID op_id, int heuristic_index, int heuristic_value) const {
 	
