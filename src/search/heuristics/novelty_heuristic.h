@@ -1,5 +1,5 @@
-#ifndef HEURISTICS_NOVELTY_HEURISTIC_TEST_H
-#define HEURISTICS_NOVELTY_HEURISTIC_TEST_H
+#ifndef HEURISTICS_NOVELTY_HEURISTIC_H
+#define HEURISTICS_NOVELTY_HEURISTIC_H
 
 #include "../heuristic.h"
 #include "../search_statistics.h"

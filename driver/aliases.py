@@ -221,7 +221,7 @@ def _get_cerberus_novelty_ops_first(**kwargs):
         "--evaluator", 
         "hrb=RB(dag={dag}, extract_plan=true)".format(**kwargs),
         "--evaluator", 
-        "hn=novelty_test(evals=[hrb], type=separate_both, pref=true, %s)" % cutoff,
+        "hn=novelty(evals=[hrb], type=separate_both, pref=true, %s)" % cutoff,
         "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hn,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000),preferred=[hrb,hlm])""",
         "--if-non-unit-cost",
         "--evaluator",
@@ -229,7 +229,31 @@ def _get_cerberus_novelty_ops_first(**kwargs):
         "--evaluator", 
         "hrb=RB(dag={dag}, extract_plan=true, transform=adapt_costs(one))".format(**kwargs),
         "--evaluator", 
-        "hn=novelty_test(evals=[hrb], type=separate_both, pref=true, %s)" % cutoff,
+        "hn=novelty(evals=[hrb], type=separate_both, pref=true, %s)" % cutoff,
+        "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hn,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000), preferred=[hrb,hlm],
+                                     cost_type=one,reopen_closed=false)""",
+        "--always"]
+        # Append --always to be on the safe side if we want to append
+        # additional options later.
+
+
+def _get_new_cerberus_first(**kwargs):
+    return [
+        "--if-unit-cost",
+        "--evaluator",
+        "hlm=lmcount(lm_reasonable_orders_hps(lm_rhw()),pref={pref})".format(**kwargs),
+        "--evaluator", 
+        "hrb=RB(dag={dag}, extract_plan=true)".format(**kwargs),
+        "--evaluator", 
+        "hn=novelty(evals=[hrb], type=separate_both)",
+        "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hn,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000),preferred=[hrb,hlm])""",
+        "--if-non-unit-cost",
+        "--evaluator",
+        "hlm=lmcount(llm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(one),pref={pref})".format(**kwargs),
+        "--evaluator", 
+        "hrb=RB(dag={dag}, extract_plan=true, transform=adapt_costs(one))".format(**kwargs),
+        "--evaluator", 
+        "hn=novelty(evals=[hrb], type=separate_both)",
         "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hn,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000), preferred=[hrb,hlm],
                                      cost_type=one,reopen_closed=false)""",
         "--always"]
@@ -243,6 +267,8 @@ ALIASES["seq-sat-cerberus-gl-2018"] = _get_cerberus(pref="true", dag="greedy_lev
 
 ALIASES["seq-agl-cerberus-novelops-argmax"] = _get_cerberus_novelty_ops_first(pref="true", dag="from_coloring", cutoff_type="argmax")
 ALIASES["seq-agl-cerberus-novelops-co1"] = _get_cerberus_novelty_ops_first(pref="true", dag="from_coloring", cutoff_type="all_ordered", cutoff_bound="1")
+
+ALIASES["seq-agl-cerberus-new"] = _get_new_cerberus_first(pref="true", dag="from_coloring")
 
 PORTFOLIOS = {}
 for portfolio in os.listdir(PORTFOLIO_DIR):
