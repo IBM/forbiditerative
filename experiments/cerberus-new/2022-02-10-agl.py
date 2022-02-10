@@ -43,7 +43,9 @@ def main(revisions=None):
     exp.add_parser(exp.SINGLE_SEARCH_PARSER)
     exp.add_parser('red-black-parser.py')
 
-    attributes = exp.DEFAULT_TABLE_ATTRIBUTES + ["plan_length"]
+    REDBLACK_ATTRIBUTES = ["rb_invertible_variables", "rb_black_variables", "rb_black_root_variables", "rb_all_variables", "rb_variables_dtg_complete", "rb_variables_all_values_connected_to_goal", "rb_black_variables_only_strongly_connected_parents", "rb_max_side_effects_of_black_variables"]
+
+    attributes = exp.DEFAULT_TABLE_ATTRIBUTES + ["plan_length"] + REDBLACK_ATTRIBUTES
 
     exp.add_step('build', exp.build)
     exp.add_step('start', exp.start_runs)
