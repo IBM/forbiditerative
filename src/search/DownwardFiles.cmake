@@ -784,7 +784,7 @@ fast_downward_plugin(
     NAME NOVELTY
     HELP "Plugin containing the code for novelty heuristics"
     SOURCES
-        heuristics/novelty_heuristic.cc
+        heuristics/novelty_heuristic_simplified.cc
         heuristics/novelty_heuristic_test.cc
 )
 

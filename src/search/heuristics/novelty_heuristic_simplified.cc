@@ -1,4 +1,4 @@
-#include "novelty_heuristic.h"
+#include "novelty_heuristic_simplified.h"
 
 #include "../option_parser.h"
 #include "../plugin.h"
@@ -90,5 +90,5 @@ static shared_ptr<Heuristic> _parse(OptionParser &parser) {
 }
 
 
-static Plugin<Evaluator> _plugin("novelty", _parse);
+static Plugin<Evaluator> _plugin("novelty_simplified", _parse);
 }
