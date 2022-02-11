@@ -181,7 +181,7 @@ class CerberusPlannerCall(PlannerCall):
         "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hn,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000),preferred=[hrb,hlm])""",
         "--if-non-unit-cost",
         "--evaluator",
-        "hlm=lmcount(llm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(one),pref={pref})".format(**kwargs),
+        "hlm=lmcount(lm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(one),pref={pref})".format(**kwargs),
         "--evaluator", 
         "hrb=RB(dag={dag}, extract_plan=true, transform=adapt_costs(one))".format(**kwargs),
         "--evaluator", 
