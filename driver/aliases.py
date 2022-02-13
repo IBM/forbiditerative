@@ -246,7 +246,7 @@ def _get_new_cerberus_first(**kwargs):
         "hrb=RB(dag={dag}, extract_plan=true)".format(**kwargs),
         "--evaluator", 
         "hn=novelty(evals=[hrb], type=separate_both)",
-        "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hn,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000),preferred=[hrb,hlm])""",
+        "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hrb,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000),preferred=[hrb,hlm])""",
         "--if-non-unit-cost",
         "--evaluator",
         "hlm=lmcount(lm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(one),pref={pref})".format(**kwargs),

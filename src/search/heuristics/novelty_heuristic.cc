@@ -10,7 +10,7 @@
 using namespace std;
  
 namespace novelty_heuristic {
-NoveltyHeuristicTest::NoveltyHeuristicTest(const Options &opts)
+NoveltyHeuristic::NoveltyHeuristic(const Options &opts)
     : Heuristic(opts), 
 	  solution_found_by_heuristic(-1),
 	  novelty_heuristics_largest_value(DEAD_END),
@@ -46,36 +46,10 @@ NoveltyHeuristicTest::NoveltyHeuristicTest(const Options &opts)
 	log  << "Done initializing novelty heuristic" << endl;
 }
 
-NoveltyHeuristicTest::~NoveltyHeuristicTest() {
+NoveltyHeuristic::~NoveltyHeuristic() {
 }
 
-int NoveltyHeuristicTest::get_value_for_fact(const FactProxy& fact, int heuristic_index) const {
-	int var = fact.get_variable().get_id();
-	int val = fact.get_value();
-
-	return novelty_per_variable_value[var][val][heuristic_index];
-}
-
-void NoveltyHeuristicTest::update_value_for_fact(const FactProxy& fact, int heuristic_index, int value) {
-	int var = fact.get_variable().get_id();
-	int val = fact.get_value();
-
-	novelty_per_variable_value[var][val][heuristic_index] = value;
-}
-
-int NoveltyHeuristicTest::get_value_for_operator(OperatorID op_id, int heuristic_index) const {
-	return novelty_per_operator[op_id.get_index()][heuristic_index];
-}
-
-void NoveltyHeuristicTest::update_value_for_operator(OperatorID op_id, int heuristic_index, int value) {
-	novelty_per_operator[op_id.get_index()][heuristic_index] = value;
-}
-
-bool NoveltyHeuristicTest::store_values_for_operators() const {
-	return (use_preferred_operators && !preferred_operators_from_evals);
-}
-
-int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
+int NoveltyHeuristic::compute_heuristic(const State &ancestor_state) {
 	solution_found_by_heuristic = -1;
 	int best_plan_cost = numeric_limits<int>::max();
     vector<int> heuristic_values;
@@ -95,87 +69,7 @@ int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
 				best_plan_cost = current_plan_cost;
 			}
 		}
-		if (use_preferred_operators) {
-            // Updating for the operator that reaches the current state
-			if (reached_by_op_id.get_index() >= 0 && store_values_for_operators()) {
-				int curr_value = get_value_for_operator(reached_by_op_id, heuristic_index);
-				if (curr_value == DEAD_END || curr_value > value) {
-					if (log.is_at_least_debug()) {
-						log << "Updating value for operator " << reached_by_op_id << " from " << curr_value << " to " << value << endl;
-					}
-					update_value_for_operator(reached_by_op_id, heuristic_index, value);
-				}
-			}
-
-            // Selecting the set of preferred operators to choose from
-            const std::vector<OperatorID> &pref_ops_heuristic = eval_context.get_preferred_operators(novelty_heuristics[heuristic_index].get());
-            std::vector<OperatorID> candidates;
-			// for cutoff_bound-novelty pruning
-			if (cutoff_type == ARGMAX){
-				// max value
-				int max_value = std::numeric_limits<int>::min();
-
-				for (OperatorID op_id : pref_ops_heuristic) {
-					int curr_value = get_value_for_operator(op_id, heuristic_index);
-                    if (curr_value == DEAD_END) {
-						max_value = curr_value;
-                        break;
-					} else if (curr_value > max_value) {
-						max_value = curr_value;
-                    }
-				}
-				for (OperatorID op_id : pref_ops_heuristic) {
-					int curr_value = get_value_for_operator(op_id, heuristic_index);
-                    if (curr_value == max_value) {
-                        candidates.push_back(op_id);
-                    }
-				}
-                // rng->shuffle(candidates);
-			} else if (cutoff_type == ALL_RANDOM) {
-				//All operators novel above cutoff_bound, randmoly shuffle and take the first elements
-				for (OperatorID op_id : eval_context.get_preferred_operators(novelty_heuristics[heuristic_index].get())) {
-					int curr_value = get_value_for_operator(op_id, heuristic_index);
-					if (curr_value == DEAD_END || curr_value - value > cutoff_bound) {
-                        candidates.push_back(op_id);
-					}
-				}
-                // rng->shuffle(candidates);
-			} else if (cutoff_type == ALL_ORDERED) {
-				//All operators novel above cutoff_bound, sorting by value, descending
-                std::vector<pair<int,OperatorID>> candidates_values;
-				for (OperatorID op_id : eval_context.get_preferred_operators(novelty_heuristics[heuristic_index].get())) {
-					int curr_value = get_value_for_operator(op_id, heuristic_index);
-					if (curr_value == DEAD_END || curr_value - value > cutoff_bound) {
-                        candidates_values.push_back(make_pair(curr_value, op_id));
-					}
-				}
-                // Sorting, descending order
-                std::sort(candidates_values.begin(), candidates_values.end(), [](const pair<int,OperatorID> &l, const pair<int,OperatorID> &r) {return l.first > r.first;});
-                for (auto p : candidates_values) {
-                    candidates.push_back(p.second);
-                }
-			} else if (cutoff_type == NO_CUTOFF) {
-                // Adding all pref ops
-                candidates.insert(candidates.begin(), pref_ops_heuristic.begin(), pref_ops_heuristic.end());
-                // rng->shuffle(candidates);
-			} else {
-                ABORT("unknown cutoff type");
-			}
-
-            // Select a subset of selected pref ops, according to the bounds
-            // Get the absolute number of ops, choose the top/random elements
-            int num_ops_to_select = (int) candidates.size();
-            num_ops_to_select = min( num_ops_to_select, num_ops_bound);
-
-            // If the number of operators to select is smaller than the set size, choosing elements randomly
-            if (cutoff_type != ALL_ORDERED && num_ops_to_select < (int) candidates.size()) {
-                cerr <<  "This configuration is not supported " << endl;
-            } else {
-                for (int i = 0; i < num_ops_to_select; ++i) {
-                    set_preferred(task_proxy.get_operators()[candidates[i]]);
-                }
-            }
-		}
+		compute_preferred_operators(heuristic_index, value, eval_context);
 	}
     State state = convert_ancestor_state(ancestor_state);
 
@@ -219,7 +113,33 @@ int NoveltyHeuristicTest::compute_heuristic(const State &ancestor_state) {
 	return ret;
 }
 
-void NoveltyHeuristicTest::notify_state_transition(
+int NoveltyHeuristic::get_value_for_fact(const FactProxy& fact, int heuristic_index) const {
+	int var = fact.get_variable().get_id();
+	int val = fact.get_value();
+
+	return novelty_per_variable_value[var][val][heuristic_index];
+}
+
+void NoveltyHeuristic::update_value_for_fact(const FactProxy& fact, int heuristic_index, int value) {
+	int var = fact.get_variable().get_id();
+	int val = fact.get_value();
+
+	novelty_per_variable_value[var][val][heuristic_index] = value;
+}
+
+int NoveltyHeuristic::get_value_for_operator(OperatorID op_id, int heuristic_index) const {
+	return novelty_per_operator[op_id.get_index()][heuristic_index];
+}
+
+void NoveltyHeuristic::update_value_for_operator(OperatorID op_id, int heuristic_index, int value) {
+	novelty_per_operator[op_id.get_index()][heuristic_index] = value;
+}
+
+bool NoveltyHeuristic::store_values_for_operators() const {
+	return (use_preferred_operators && !preferred_operators_from_evals);
+}
+
+void NoveltyHeuristic::notify_state_transition(
     const State &, OperatorID op_id,
     const State &) {
 
@@ -228,19 +148,116 @@ void NoveltyHeuristicTest::notify_state_transition(
     }
 }
 
-const std::vector<OperatorID>& NoveltyHeuristicTest::get_solution() const {
+const std::vector<OperatorID>& NoveltyHeuristic::get_solution() const {
     if (solution_found_by_heuristic >= 0) {
 		return novelty_heuristics[solution_found_by_heuristic]->get_solution();
 	}
     return Heuristic::get_solution();
 }
 
-bool NoveltyHeuristicTest::found_solution() const { 
+bool NoveltyHeuristic::found_solution() const { 
 	return (solution_found_by_heuristic >= 0);
 }
 
 
-// bool NoveltyHeuristicTest::is_preferred(OperatorID op_id, int heuristic_index, int heuristic_value) const {
+void NoveltyHeuristic::compute_candidate_operators_argmax(size_t heuristic_index, std::vector<OperatorID>& candidates, const std::vector<OperatorID> &pref_ops) const {
+	// max value
+	int max_value = std::numeric_limits<int>::min();
+	for (OperatorID op_id : pref_ops) {
+		int curr_value = get_value_for_operator(op_id, heuristic_index);
+        if (curr_value == DEAD_END) {
+			max_value = curr_value;
+        	break;
+		} else if (curr_value > max_value) {
+			max_value = curr_value;
+        }
+	}
+	for (OperatorID op_id : pref_ops) {
+		int curr_value = get_value_for_operator(op_id, heuristic_index);
+        if (curr_value == max_value) {
+            candidates.push_back(op_id);
+        }
+	}
+    // rng->shuffle(candidates);
+}
+
+void NoveltyHeuristic::compute_candidate_operators_random(size_t heuristic_index, int heuristic_value, std::vector<OperatorID>& candidates, const std::vector<OperatorID> &pref_ops) const {
+	//All operators novel above cutoff_bound, randmoly shuffle and take the first elements
+	for (OperatorID op_id : pref_ops) {
+		int curr_value = get_value_for_operator(op_id, heuristic_index);
+		if (curr_value == DEAD_END || curr_value - heuristic_value > cutoff_bound) {
+            candidates.push_back(op_id);
+		}
+	}
+    // rng->shuffle(candidates);
+}
+
+void NoveltyHeuristic::compute_candidate_operators_ordered(size_t heuristic_index, int heuristic_value, std::vector<OperatorID>& candidates, const std::vector<OperatorID> &pref_ops) const {
+	//All operators novel above cutoff_bound, sorting by value, descending
+    std::vector<pair<int,OperatorID>> candidates_values;
+	for (OperatorID op_id : pref_ops) {
+		int curr_value = get_value_for_operator(op_id, heuristic_index);
+		if (curr_value == DEAD_END || curr_value - heuristic_value > cutoff_bound) {
+            candidates_values.push_back(make_pair(curr_value, op_id));
+		}
+	}
+    // Sorting, descending order
+    std::sort(candidates_values.begin(), candidates_values.end(), [](const pair<int,OperatorID> &l, const pair<int,OperatorID> &r) {return l.first > r.first;});
+    for (auto p : candidates_values) {
+        candidates.push_back(p.second);
+    }
+}
+
+void NoveltyHeuristic::compute_preferred_operators(size_t heuristic_index, int heuristic_value, EvaluationContext& eval_context) {
+	if (!use_preferred_operators) {
+		return;
+	}
+    // Updating for the operator that reaches the current state
+	if (reached_by_op_id.get_index() >= 0 && store_values_for_operators()) {
+		int curr_value = get_value_for_operator(reached_by_op_id, heuristic_index);
+		if (curr_value == DEAD_END || curr_value > heuristic_value) {
+			if (log.is_at_least_debug()) {
+				log << "Updating value for operator " << reached_by_op_id << " from " << curr_value << " to " << heuristic_value << endl;
+			}
+			update_value_for_operator(reached_by_op_id, heuristic_index, heuristic_value);
+		}
+	}
+
+    // Selecting the set of preferred operators to choose from
+    const std::vector<OperatorID> &pref_ops_heuristic = eval_context.get_preferred_operators(novelty_heuristics[heuristic_index].get());
+    std::vector<OperatorID> candidates;
+	// for cutoff_bound-novelty pruning
+	if (cutoff_type == ARGMAX) {
+		compute_candidate_operators_argmax(heuristic_index, candidates, pref_ops_heuristic);
+	} else if (cutoff_type == ALL_RANDOM) {
+		compute_candidate_operators_random(heuristic_index, heuristic_value, candidates, pref_ops_heuristic);
+	} else if (cutoff_type == ALL_ORDERED) {
+		compute_candidate_operators_ordered(heuristic_index, heuristic_value, candidates, pref_ops_heuristic);
+	} else if (cutoff_type == NO_CUTOFF) {
+        // Adding all pref ops
+        candidates.insert(candidates.begin(), pref_ops_heuristic.begin(), pref_ops_heuristic.end());
+        // rng->shuffle(candidates);
+	} else {
+        ABORT("unknown cutoff type");
+	}
+
+    // Select a subset of selected pref ops, according to the bounds
+    // Get the absolute number of ops, choose the top/random elements
+    int num_ops_to_select = (int) candidates.size();
+    num_ops_to_select = min( num_ops_to_select, num_ops_bound);
+
+    // If the number of operators to select is smaller than the set size, choosing elements randomly
+    if (cutoff_type != ALL_ORDERED && num_ops_to_select < (int) candidates.size()) {
+        cerr <<  "This configuration is not supported " << endl;
+    } else {
+        for (int i = 0; i < num_ops_to_select; ++i) {
+            set_preferred(task_proxy.get_operators()[candidates[i]]);
+        }
+    }
+}
+
+
+// bool NoveltyHeuristic::is_preferred(OperatorID op_id, int heuristic_index, int heuristic_value) const {
 	
 // 	// Check first if the heuristic thinks the op is preferred
 // 	log  << "Checking if the operator " << op_id << " is preferred by the heuristic " << heuristic_index << endl;
@@ -261,7 +278,7 @@ bool NoveltyHeuristicTest::found_solution() const {
 // }
 
 
-void NoveltyHeuristicTest::update_maximal_value(int value) {
+void NoveltyHeuristic::update_maximal_value(int value) {
 	if (novelty_heuristics_largest_value == DEAD_END) {
 		novelty_heuristics_largest_value = value;
 		return;
@@ -272,7 +289,7 @@ void NoveltyHeuristicTest::update_maximal_value(int value) {
 	}
 }
 
-int NoveltyHeuristicTest::compute_aggregated_score(std::vector<int>& values) const {
+int NoveltyHeuristic::compute_aggregated_score(std::vector<int>& values) const {
 	int max = 0;
 	for (int val : values) {
 		if (val > max)
@@ -281,7 +298,7 @@ int NoveltyHeuristicTest::compute_aggregated_score(std::vector<int>& values) con
 	return max;
 }
 
-int NoveltyHeuristicTest::get_estimate_novel(int curr_value, int heur_value, utils::LogProxy &clog) const {
+int NoveltyHeuristic::get_estimate_novel(int curr_value, int heur_value, utils::LogProxy &clog) const {
 	if (curr_value == DEAD_END) {
 		return multiplier;
 	}
@@ -301,7 +318,7 @@ int NoveltyHeuristicTest::get_estimate_novel(int curr_value, int heur_value, uti
 	utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
 }
 
-int NoveltyHeuristicTest::get_estimate_non_novel(int curr_value, int heur_value, utils::LogProxy &clog) const {
+int NoveltyHeuristic::get_estimate_non_novel(int curr_value, int heur_value, utils::LogProxy &clog) const {
 	if (type == BASIC ||
 		type == SEPARATE_NOVEL ||
 		curr_value == heur_value) {
@@ -327,13 +344,15 @@ int NoveltyHeuristicTest::get_estimate_non_novel(int curr_value, int heur_value,
 
 static shared_ptr<Heuristic> _parse(OptionParser &parser) {
     parser.document_synopsis("Novelty heuristic", "");
+	parser.document_language_support("action costs", "supported");
+    parser.document_language_support("conditional effects", "supported");
+    parser.document_language_support("axioms", "supported");
     parser.document_property("admissible", "no");
     parser.document_property("consistent", "no");
     parser.document_property("safe", "yes");
-    parser.document_property("preferred operators", "no");
+    parser.document_property("preferred operators", "yes");
 
     Heuristic::add_options_to_parser(parser);
-
     parser.add_list_option<shared_ptr<Evaluator>>("evals", "evaluators");
 
     vector<string> heur_opt;
@@ -348,7 +367,7 @@ static shared_ptr<Heuristic> _parse(OptionParser &parser) {
 
     parser.add_option<int>(
 		"multiplier", 
-		"Multiplier for the value of each fact", 
+		"Integer multiplier for the value of each fact", 
 		"1", 
 		Bounds("1", "infinity"));
 
@@ -397,17 +416,14 @@ static shared_ptr<Heuristic> _parse(OptionParser &parser) {
     utils::add_log_options_to_parser(parser);
 
     Options opts = parser.parse();
-
     if (parser.dry_run())
         return nullptr;
     else {
         opts.verify_list_non_empty<shared_ptr<Evaluator>>("evals");
-
-        return make_shared<NoveltyHeuristicTest>(opts);
+        return make_shared<NoveltyHeuristic>(opts);
 	}
 }
 
 
 static Plugin<Evaluator> _plugin("novelty", _parse);
-
 }

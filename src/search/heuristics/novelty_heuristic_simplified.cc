@@ -6,11 +6,12 @@
 #include "../utils/logging.h"
 
 using namespace std;
-namespace novelty_heuristic {
+namespace novelty_heuristic_simplified {
 
-NoveltyHeuristic::NoveltyHeuristic(const Options &opts)
+NoveltyHeuristicSimplified::NoveltyHeuristicSimplified(const Options &opts)
     : Heuristic(opts), novelty_heuristic(opts.get<shared_ptr<Evaluator>>("eval")),
         solution_found_by_heuristic(false),
+	    dump_value(opts.get<bool>("dump")),
         log(utils::get_log_from_options(opts)),
         statistics(log) {
     log  << "Initializing novelty heuristic..." << endl;
@@ -20,13 +21,14 @@ NoveltyHeuristic::NoveltyHeuristic(const Options &opts)
     for (VariableProxy var : variables) {
         novelty_per_variable_value[var.get_id()].assign(var.get_domain_size(), DEAD_END);
     }
+    log  << "Done initializing novelty heuristic" << endl;
 }
 
+NoveltyHeuristicSimplified::~NoveltyHeuristicSimplified() {
+}
 
-int NoveltyHeuristic::compute_heuristic(const State &ancestor_state) {
+int NoveltyHeuristicSimplified::compute_heuristic(const State &ancestor_state) {
     solution_found_by_heuristic = false;
-
-
     EvaluationContext eval_context(ancestor_state, 0, false, &statistics);
     int heuristic_value = eval_context.get_evaluator_value_or_infinity(novelty_heuristic.get());
     if (heuristic_value == EvaluationResult::INFTY)
@@ -58,10 +60,13 @@ int NoveltyHeuristic::compute_heuristic(const State &ancestor_state) {
     if (novelty_heuristic->found_solution()) {
         solution_found_by_heuristic = true;
     }
+    if (dump_value) {
+		log  << "NoveltyValue " << ret << endl;
+	}
     return ret;
 }
 
-const std::vector<OperatorID>& NoveltyHeuristic::get_solution() const {
+const std::vector<OperatorID>& NoveltyHeuristicSimplified::get_solution() const {
     if (solution_found_by_heuristic)
         return novelty_heuristic->get_solution();
     return Heuristic::get_solution();
@@ -79,13 +84,19 @@ static shared_ptr<Heuristic> _parse(OptionParser &parser) {
 
     Heuristic::add_options_to_parser(parser);
     parser.add_option<shared_ptr<Evaluator>>("eval", "Heuristic for novelty calculation");
+
+    parser.add_option<bool>(
+		"dump", 
+		"Dump the Novelty value for each state", 
+		"false");
+        
     utils::add_log_options_to_parser(parser);
 
     Options opts = parser.parse();
     if (parser.dry_run())
         return nullptr;
     else {
-        return make_shared<NoveltyHeuristic>(opts);
+        return make_shared<NoveltyHeuristicSimplified>(opts);
     }
 }
 

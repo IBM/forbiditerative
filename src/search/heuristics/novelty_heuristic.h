@@ -24,7 +24,7 @@ enum CutoffType {
     NO_CUTOFF
 };
 
-class NoveltyHeuristicTest : public Heuristic {
+class NoveltyHeuristic : public Heuristic {
 	std::vector<std::shared_ptr<Heuristic>> novelty_heuristics;
     int solution_found_by_heuristic;
 	int novelty_heuristics_largest_value;
@@ -57,11 +57,16 @@ class NoveltyHeuristicTest : public Heuristic {
     void update_value_for_operator(OperatorID op_id, int heuristic_index, int value);
     bool store_values_for_operators() const;
 
+    void compute_preferred_operators(size_t heuristic_index, int heuristic_value, EvaluationContext& eval_context);
+    void compute_candidate_operators_argmax(size_t heuristic_index, std::vector<OperatorID>& candidates, const std::vector<OperatorID> &pref_ops) const;
+    void compute_candidate_operators_random(size_t heuristic_index, int heuristic_value, std::vector<OperatorID>& candidates, const std::vector<OperatorID> &pref_ops) const;
+    void compute_candidate_operators_ordered(size_t heuristic_index, int heuristic_value, std::vector<OperatorID>& candidates, const std::vector<OperatorID> &pref_ops) const;
+
 protected:
     virtual int compute_heuristic(const State &ancestor_state) override;
 public:
-    NoveltyHeuristicTest(const options::Options &options);
-    ~NoveltyHeuristicTest();
+    NoveltyHeuristic(const options::Options &options);
+    virtual ~NoveltyHeuristic() override;
 
     virtual void get_path_dependent_evaluators(
         std::set<Evaluator *> &evals) override {

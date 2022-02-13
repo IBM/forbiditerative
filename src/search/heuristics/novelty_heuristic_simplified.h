@@ -5,10 +5,11 @@
 #include "../search_statistics.h"
 #include "../utils/logging.h"
 
-namespace novelty_heuristic {
-class NoveltyHeuristic : public Heuristic {
+namespace novelty_heuristic_simplified {
+class NoveltyHeuristicSimplified : public Heuristic {
 	std::shared_ptr<Evaluator> novelty_heuristic;
     bool solution_found_by_heuristic;
+ 	bool dump_value;
     std::vector<std::vector<int> > novelty_per_variable_value;
     utils::LogProxy log;
     SearchStatistics statistics;
@@ -16,7 +17,8 @@ class NoveltyHeuristic : public Heuristic {
 protected:
     virtual int compute_heuristic(const State &ancestor_state) override;
 public:
-    NoveltyHeuristic(const options::Options &options);
+    NoveltyHeuristicSimplified(const options::Options &options);
+    virtual ~NoveltyHeuristicSimplified() override;
 
     virtual bool found_solution() const override { return novelty_heuristic->found_solution(); } 
     virtual const std::vector<OperatorID>& get_solution() const override;
