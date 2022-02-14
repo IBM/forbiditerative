@@ -5,6 +5,7 @@
 #include "../search_statistics.h"
 #include "../utils/logging.h"
 
+#include <vector>
 namespace novelty_heuristic_simplified {
 class NoveltyHeuristicSimplified : public Heuristic {
 	std::shared_ptr<Evaluator> novelty_heuristic;
