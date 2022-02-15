@@ -177,7 +177,7 @@ class CerberusPlannerCall(PlannerCall):
         "--evaluator", 
         "hrb=RB(dag={dag}, extract_plan=true)".format(**kwargs),
         "--evaluator", 
-        "hn=novelty(evals=[hrb], type=separate_both)",
+        "hn=novelty(eval=hrb, type=separate_both)",
         "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hrb,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000),preferred=[hrb,hlm])""",
         "--if-non-unit-cost",
         "--evaluator",
@@ -185,7 +185,7 @@ class CerberusPlannerCall(PlannerCall):
         "--evaluator", 
         "hrb=RB(dag={dag}, extract_plan=true, transform=adapt_costs(one))".format(**kwargs),
         "--evaluator", 
-        "hn=novelty(evals=[hrb], type=separate_both)",
+        "hn=novelty(eval=hrb, type=separate_both)",
         "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hrb,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000), preferred=[hrb,hlm],
                                      cost_type=one,reopen_closed=false)""",
         "--always"]
