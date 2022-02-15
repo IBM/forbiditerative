@@ -254,7 +254,7 @@ def _get_new_cerberus_first(**kwargs):
         "hrb=RB(dag={dag}, extract_plan=true, transform=adapt_costs(one))".format(**kwargs),
         "--evaluator", 
         "hn=novelty(evals=[hrb], type=separate_both)",
-        "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hn,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000), preferred=[hrb,hlm],
+        "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hrb,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000), preferred=[hrb,hlm],
                                      cost_type=one,reopen_closed=false)""",
         "--always"]
         # Append --always to be on the safe side if we want to append
