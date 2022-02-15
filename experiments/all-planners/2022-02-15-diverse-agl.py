@@ -41,18 +41,18 @@ def get_planner_dir():
 ## Suite for optimal
 
 
-BENCHMARKS_DIR = '/data/software/ISR-benchmarks'
-
-SUITE = ['queen-split']
+BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
+SUITE = ["agricola-sat18-strips", "airport", "barman-sat11-strips", "barman-sat14-strips", "blocks", "childsnack-sat14-strips", "data-network-sat18-strips", "depot", "driverlog", "elevators-sat08-strips", "elevators-sat11-strips", "floortile-sat11-strips", "floortile-sat14-strips", "freecell", "ged-sat14-strips", "grid", "gripper", "hiking-sat14-strips", "logistics00", "logistics98", "miconic", "movie", "mprime", "mystery", "nomystery-sat11-strips", "openstacks-sat08-strips", "openstacks-sat11-strips", "openstacks-sat14-strips", "openstacks-strips", "organic-synthesis-sat18-strips", "organic-synthesis-split-sat18-strips", "parcprinter-08-strips", "parcprinter-sat11-strips", "parking-sat11-strips", "parking-sat14-strips", "pathways", "pegsol-08-strips", "pegsol-sat11-strips", "pipesworld-notankage", "pipesworld-tankage", "psr-small", "rovers", "satellite", "scanalyzer-08-strips", "scanalyzer-sat11-strips", "snake-sat18-strips", "sokoban-sat08-strips", "sokoban-sat11-strips", "spider-sat18-strips", "storage", "termes-sat18-strips", "tetris-sat14-strips", "thoughtful-sat14-strips", "tidybot-sat11-strips", "tpp", "transport-sat08-strips", "transport-sat11-strips", "transport-sat14-strips", "trucks-strips", "visitall-sat11-strips", "visitall-sat14-strips", "woodworking-sat08-strips", "woodworking-sat11-strips", "zenotravel"]
+        
 
 ATTRIBUTES = ['coverage', 'num_plans', 'total_time', 'found_worse_plan', 'proved_no_more_plans']
 
 config_name = 'diverse-agl' 
-config_date = '2022-01-23'
+config_date = '2022-02-15'
 report_name = '%s-%s' % (config_name,config_date)
 
    
-ENV = LocalEnvironment(processes=24)
+ENV = LocalEnvironment(processes=48)
 # Create a new experiment.
 exp = Experiment(environment=ENV)
 # Add built-in parsers.
@@ -71,8 +71,8 @@ def add_exp(planner_name, alg, exp_k):
         run.add_command(
             'run-planner',
             [planner_name, '{domain}', '{problem}',  exp_k],
-            time_limit=7200,
-            memory_limit=8192, soft_stdout_limit=None, hard_stdout_limit=None)
+            time_limit=1800,
+            memory_limit=4096, soft_stdout_limit=None, hard_stdout_limit=None)
         # AbsoluteReport needs the following properties:
         # 'domain', 'problem', 'algorithm', 'coverage'.
         run.set_property('domain', task.domain)
@@ -88,7 +88,7 @@ def add_exp(planner_name, alg, exp_k):
 
 planners = { "da": "plan_diverse_agl.sh"}
 
-for k in [10000]:
+for k in [1000]:
     for alg in planners:
         planner_name = os.path.join(get_planner_dir(), planners[alg])
         add_exp(planner_name, alg, k)
