@@ -120,18 +120,18 @@ class BaseSatisficingPlannerCall(BasePlannerCall):
     def planner_args(self, **kwargs):
         # LAMA first iteration
         return ["--evaluator",
-                "hlm=lmcount(lm_factory=lm_rhw(reasonable_orders=true),transform=adapt_costs(one),pref=false)",
+                "hlm=lmcount(lm_factory=lm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(one),pref=false)",
                 "--evaluator", "hff=ff(transform=adapt_costs(one))",
                 "--search", """lazy_greedy([hff,hlm],preferred=[hff,hlm],
                                cost_type=one,reopen_closed=false)"""]
         
 class ShortestOptimalPlannerCall(PlannerCall):
-    def get_path(self):
-        path = os.getenv('SHORTEST_OPTIMAL_FAST_DOWNWARD_PLANNER_PATH')
-        if not path:
-            print("Environment variable SHORTEST_OPTIMAL_FAST_DOWNWARD_PLANNER_PATH has to be specified.")
-            exit(1)
-        return path
+    # def get_path(self):
+    #     path = os.getenv('SHORTEST_OPTIMAL_FAST_DOWNWARD_PLANNER_PATH')
+    #     if not path:
+    #         print("Environment variable SHORTEST_OPTIMAL_FAST_DOWNWARD_PLANNER_PATH has to be specified.")
+    #         exit(1)
+    #     return path
 
     def get_callstring(self, **kwargs):
         return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + self.get_task_args(**kwargs) + \
@@ -154,12 +154,12 @@ class ShortestOptimalPlannerCall(PlannerCall):
 
 
 class CerberusPlannerCall(PlannerCall):
-    def get_path(self):
-        path = os.getenv('DIVERSE_FAST_DOWNWARD_PLANNER_PATH')
-        if not path:
-            print("Environment variable DIVERSE_FAST_DOWNWARD_PLANNER_PATH has to be specified.")
-            exit(1)
-        return path
+    # def get_path(self):
+    #     path = os.getenv('DIVERSE_FAST_DOWNWARD_PLANNER_PATH')
+    #     if not path:
+    #         print("Environment variable DIVERSE_FAST_DOWNWARD_PLANNER_PATH has to be specified.")
+    #         exit(1)
+    #     return path
 
     def get_callstring(self, **kwargs):
         return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + self.get_task_args(**kwargs) + \
@@ -171,26 +171,28 @@ class CerberusPlannerCall(PlannerCall):
 
     def _get_cerberus_first(self, **kwargs):
         return [
-            "--if-unit-cost",
-            "--evaluator",
-            "hlm=lmcount(lm_rhw(reasonable_orders=true),pref={pref})".format(**kwargs),
-            "--evaluator",
-            "hrb=RB(dag={dag}, extract_plan=true)".format(**kwargs),
-            "--evaluator",
-            "hn=novelty(eval=hrb)",
-            "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hrb,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000),preferred=[hrb,hlm])""",
-            "--if-non-unit-cost",
-            "--evaluator",
-            "hlm=lmcount(lm_rhw(reasonable_orders=true),transform=adapt_costs(one),pref={pref})".format(**kwargs),
-            "--evaluator",
-            "hrb=RB(dag={dag}, extract_plan=true, transform=adapt_costs(one))".format(**kwargs),
-            "--evaluator",
-            "hn=novelty(eval=hrb)",
-            "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hrb,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000), preferred=[hrb,hlm],
-                                        cost_type=one,reopen_closed=false)""",
-            "--always"]
-            # Append --always to be on the safe side if we want to append
-            # additional options later.
+        "--if-unit-cost",
+        "--evaluator",
+        "hlm=lmcount(lm_reasonable_orders_hps(lm_rhw()),pref={pref})".format(**kwargs),
+        "--evaluator", 
+        "hrb=RB(dag={dag}, extract_plan=true)".format(**kwargs),
+        "--evaluator", 
+        "hn=novelty(eval=hrb, type=separate_both)",
+        "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hrb,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000),preferred=[hrb,hlm])""",
+        "--if-non-unit-cost",
+        "--evaluator",
+        "hlm=lmcount(lm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(one),pref={pref})".format(**kwargs),
+        "--evaluator", 
+        "hrb=RB(dag={dag}, extract_plan=true, transform=adapt_costs(one))".format(**kwargs),
+        "--evaluator", 
+        "hn=novelty(eval=hrb, type=separate_both)",
+        "--search", """lazy(open=alt([tiebreaking([hn, hrb]), single(hrb,pref_only=true), single(hlm), single(hlm,pref_only=true)], boost=1000), preferred=[hrb,hlm],
+                                     cost_type=one,reopen_closed=false)""",
+        "--always"]
+        # Append --always to be on the safe side if we want to append
+        # additional options later.
+
+
 
 class AdditionalPlansPlannerCall(BasePlannerCall):
     def planner_args(self, **kwargs):

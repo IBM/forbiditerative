@@ -52,7 +52,7 @@ config_date = '2022-01-23'
 report_name = '%s-%s' % (config_name,config_date)
 
    
-ENV = LocalEnvironment(processes=48)
+ENV = LocalEnvironment(processes=24)
 # Create a new experiment.
 exp = Experiment(environment=ENV)
 # Add built-in parsers.
@@ -71,8 +71,8 @@ def add_exp(planner_name, alg, exp_k):
         run.add_command(
             'run-planner',
             [planner_name, '{domain}', '{problem}',  exp_k],
-            time_limit=1800,
-            memory_limit=4096, soft_stdout_limit=None, hard_stdout_limit=None)
+            time_limit=7200,
+            memory_limit=8192, soft_stdout_limit=None, hard_stdout_limit=None)
         # AbsoluteReport needs the following properties:
         # 'domain', 'problem', 'algorithm', 'coverage'.
         run.set_property('domain', task.domain)

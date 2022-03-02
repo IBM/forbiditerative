@@ -189,7 +189,8 @@ SearchStatus LazySearch::step() {
                 }
             }
             node.close();
-            if (check_goal_and_set_plan(current_state))
+            // if (check_goal_and_set_plan(current_state))
+            if (check_solution_via_state_and_set_plan(node.get_real_g(), current_state, reopen, current_eval_context))
                 return SOLVED;
             if (search_progress.check_progress(current_eval_context)) {
                 statistics.print_checkpoint_line(current_g);
@@ -206,6 +207,45 @@ SearchStatus LazySearch::step() {
         }
     }
     return fetch_next_state();
+}
+
+bool LazySearch::check_solution_via_state_and_set_plan(int g, const State &state, bool reopen, const EvaluationContext &eval_context) {
+    if (check_goal_and_set_plan(state)) {
+        return true;
+    }
+    // Not checking again in reopen
+    if (reopen) {
+        return false;
+    }
+    bool ret = false;
+    eval_context.get_cache().for_each_evaluator_result(
+        [this, &ret, &state, &g](const Evaluator *eval, const EvaluationResult &) {
+            if (eval->found_solution()) {
+                const vector<OperatorID>& plan_from = eval->get_solution();
+                // Getting the actual cost of the solution found
+                int h = 0;
+                for (OperatorID op_id : plan_from) {
+                    OperatorProxy op = task_proxy.get_operators()[op_id];
+                    h += op.get_cost();
+                }
+                // Checking whether the solution is under the bound. If not, skipping
+                if (g + h < this->bound) {
+                    if (log.is_at_least_normal()) {
+                        log << "Cost to: " << g << ", cost from: " << h << " the total is: " << g+ h << endl;
+                    }
+                    // Getting the solution
+                    log << "Solution found by the heuristic!" << endl;
+                    Plan total_plan;
+                    search_space.trace_path(state, total_plan, task);
+                    total_plan.insert(total_plan.end(), plan_from.begin(), plan_from.end());
+
+                    set_plan(total_plan);
+                    ret = true;
+                }
+            }
+        }
+        );
+    return ret;
 }
 
 void LazySearch::reward_progress() {
