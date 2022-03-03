@@ -628,6 +628,8 @@ fast_downward_plugin(
         tasks/graph_forbid_reformulated_task
         tasks/multiset_forbid_reformulated_task
         tasks/multisets_forbid_reformulated_task
+        tasks/supersets_forbid_reformulated_task
+        tasks/super_multisets_forbid_reformulated_task
     DEPENDS PLANS_GRAPH TASK_PROPERTIES
     DEPENDENCY_ONLY
 )

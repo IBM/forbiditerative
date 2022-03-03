@@ -10,6 +10,7 @@
 6. Bounded quality diverse planning
 7. Bounded quality and diversity diverse planning
 8. Bounded quality optimal diversity diverse planning
+9. Sub(multi)set top-quality planning
 
 ## The planners are based on the idea of obtaining multiple solutions by iteratively reformulating planning tasks to restrict the set of valid plans, forbidding previously found ones. Thus, the planners can be referred to as FI-top-k, FI-top-quality, FI-unordered-top-quality, FI-diverse-{agl,sat,bD,bQ,bQbD, bQoptD}.
 
@@ -22,6 +23,7 @@ The example invocation code can be found (for the corresponding computational pr
 6. plan_quality_bounded_diverse_sat.sh
 7. plan_quality_bounded_diversity_bounded_diverse.sh
 8. plan_quality_bounded_diversity_optimal_diverse.sh
+9. plan_{subset,submultiset}_topq.sh
 
 # Building
 For building the code please use

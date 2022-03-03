@@ -54,7 +54,7 @@ PlansGraph::PlansGraph(const TaskProxy &_task_proxy, size_t num_plans, bool _opt
         num_plans_to_dump(num_plans),
         optimal(_optimal),
         best_plan_cost(-1),
-        op_interaction(0),
+        op_interaction(nullptr),
         goal_distance(-1),
         init_distance(-1),
         num_edges_until_greedy_clean(-1) {
@@ -82,7 +82,9 @@ void PlansGraph::add_plan(PlanManager& plan_manager, const Plan& plan, PlanOrder
 		// Nothing else to do
 		return;
 	} else if (reduce_orders == PlanOrdersReduction::NEIGHBOURS_INTERFERE) {
-		op_interaction = new OperatorInteraction(task_proxy);
+		if (op_interaction == nullptr) {
+			op_interaction = make_shared<OperatorInteraction>(task_proxy);
+		}
 		add_plan_reduce_order_neighbors(plan);
 	} else if (reduce_orders == PlanOrdersReduction::NAIVE_ALL) {
 		add_plan_bfs_naive(plan);
@@ -106,7 +108,9 @@ void PlansGraph::dump_reordering_plans_neighbours_interfere(Plan& plan) {
     add_plan_no_reduce(plan);
     optimal_plans.insert(plan);
     
-    op_interaction = new OperatorInteraction(task_proxy);
+	if (op_interaction == nullptr) {
+		op_interaction = make_shared<OperatorInteraction>(task_proxy);
+	}
 	add_plan_reduce_order_neighbors(plan);
 }
 

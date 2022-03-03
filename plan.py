@@ -31,6 +31,10 @@ def get_planner(args):
         return planners.ExtendedUnorderedTopQualityPlanner(args)
     if args.planner == "topq_via_topk":
         return planners.TopQualityViaTopKPlanner(args)
+    if args.planner == "subsets_topq":
+        return planners.SubsetTopQualityPlanner(args)
+    if args.planner == "submultisets_topq":
+        return planners.SubMultisetTopQualityPlanner(args)                
     if args.planner == "topk_via_unordered_topq":
         return planners.TopKViaUnorderedTopQualityPlanner(args)
     if args.planner == "topq_via_unordered_topq":
@@ -262,7 +266,7 @@ def validate_input(args):
     if args.planner in ["topk", "topk_via_unordered_topq", "diverse", "extended_unordered_topq"] and not args.number_of_plans:
         logging.error("Required parameter --number-of-plans NUMBER_OF_PLANS")
         exit(1)
-    if args.planner in ["unordered_topq", "extended_unordered_topq", "topq_via_topk", "topq_via_unordered_topq"] and not args.quality_bound:
+    if args.planner in ["unordered_topq", "subsets_topq", "submultisets_topq",  "extended_unordered_topq", "topq_via_topk", "topq_via_unordered_topq"] and not args.quality_bound:
         logging.error("Required parameter --quality-bound QUALITY_BOUND")
         exit(1)
 
@@ -288,7 +292,7 @@ if __name__ == "__main__":
     lim.add_argument("--overall-time-limit")
     lim.add_argument("--overall-memory-limit")
  
-    parser.add_argument("--planner", help="The type of planner", choices=["topk", "topk_via_unordered_topq", "unordered_topq",  "extended_unordered_topq", "topq_via_topk", "topq_via_unordered_topq", "diverse"])
+    parser.add_argument("--planner", help="The type of planner", choices=["topk", "topk_via_unordered_topq", "unordered_topq",  "extended_unordered_topq", "topq_via_topk", "topq_via_unordered_topq", "subsets_topq", "submultisets_topq", "diverse"])
     parser.add_argument("--domain", help="PDDL domain file")
     parser.add_argument("--problem", help="PDDL problem file")
     parser.add_argument("--sas-file", help="SAS+ problem file")

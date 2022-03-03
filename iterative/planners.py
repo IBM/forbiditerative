@@ -627,6 +627,17 @@ class TopQualityViaUnorderedTopQualityPlanner(Planner):
             return True
         return self._enough_plans_found_quality(plan_manager)
 
+
+# Planner for forbidding supersets of previously found plans
+class SubsetTopQualityPlanner(UnorderedTopQualityPlanner):
+    def get_reformulation_callstring(self, task_manager, plan_manager):
+        return self._get_default_reformulation_callstring(planner_call.TopqSupersetReformulationPlannerCall(), task_manager, plan_manager)
+
+class SubMultisetTopQualityPlanner(UnorderedTopQualityPlanner):
+    def get_reformulation_callstring(self, task_manager, plan_manager):
+        return self._get_default_reformulation_callstring(planner_call.TopqSuperMultisetReformulationPlannerCall(), task_manager, plan_manager)
+
+
 ###################################################################################################
 #####  Diverse planners
 

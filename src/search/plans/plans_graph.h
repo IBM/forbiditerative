@@ -149,7 +149,7 @@ private:
     PlansSet optimal_plans;
     PlansSet non_optimal_plans;
     void dump_plan(std::vector<int>& ops_so_far);
-    OperatorInteraction* op_interaction;
+    std::shared_ptr<OperatorInteraction> op_interaction;
     void add_plan_bfs_naive(const Plan& plan);
     void add_plan_dfs_naive(const Plan& plan);
     void add_plan_dfs_naive_no_duplicate_detection(PlanManager& plan_manager, const Plan& plan);

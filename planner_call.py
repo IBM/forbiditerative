@@ -70,6 +70,47 @@ class TopqReformulationPlannerCall(ReformulationPlannerCall):
                number_of_plans_to_read={num_plans_to_read}, external_plans_path={external_plans_path})".format(**kwargs)]
 
 
+class TopqSupersetReformulationPlannerCall(ReformulationPlannerCall):
+    def planner_args(self, **kwargs):
+
+        numplans = ""
+        if "num_total_plans" in kwargs:
+            numplans = "number_of_plans={num_total_plans}, ".format(**kwargs)
+
+        if "use_symmetries" in kwargs:
+            return ["--symmetries",
+              "sym=structural_symmetries(time_bound=0,search_symmetries=dks, \
+               stabilize_initial_state=true, keep_operator_symmetries=true)",
+               "--search", "forbid_iterative(reformulate = FORBID_MULTIPLE_PLAN_SUPERSETS, \
+               extend_plans_with_symmetry=sym, dump=false, change_operator_names=true, %s\
+               number_of_plans_to_read={num_plans_to_read}, external_plans_path={external_plans_path})".format(**kwargs) % numplans]
+        else:
+            return ["--search", "forbid_iterative(reformulate = FORBID_MULTIPLE_PLAN_SUPERSETS, \
+               dump=false, change_operator_names=true, %s \
+               number_of_plans_to_read={num_plans_to_read}, external_plans_path={external_plans_path})".format(**kwargs) % numplans]
+
+
+
+class TopqSuperMultisetReformulationPlannerCall(ReformulationPlannerCall):
+    def planner_args(self, **kwargs):
+
+        numplans = ""
+        if "num_total_plans" in kwargs:
+            numplans = "number_of_plans={num_total_plans}, ".format(**kwargs)
+
+        if "use_symmetries" in kwargs:
+            return ["--symmetries",
+              "sym=structural_symmetries(time_bound=0,search_symmetries=dks, \
+               stabilize_initial_state=true, keep_operator_symmetries=true)",
+               "--search", "forbid_iterative(reformulate = FORBID_MULTIPLE_PLAN_SUPERMULTISETS, \
+               extend_plans_with_symmetry=sym, dump=false, change_operator_names=true,  %s\
+               number_of_plans_to_read={num_plans_to_read}, external_plans_path={external_plans_path})".format(**kwargs) % numplans]
+        else:
+            return ["--search", "forbid_iterative(reformulate = FORBID_MULTIPLE_PLAN_SUPERMULTISETS, \
+               dump=false, change_operator_names=true,  %s \
+               number_of_plans_to_read={num_plans_to_read}, external_plans_path={external_plans_path})".format(**kwargs) % numplans]
+
+
 class DiverseReformulationPlannerCall(ReformulationPlannerCall):
     def planner_args(self, **kwargs):
         if "use_symmetries" in kwargs:

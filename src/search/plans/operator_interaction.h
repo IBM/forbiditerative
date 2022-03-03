@@ -3,6 +3,7 @@
 
 #include "../abstract_task.h"
 #include "../pruning_method.h"
+#include "../task_proxy.h"
 
 namespace plans {
 class OperatorInteraction {
