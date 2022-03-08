@@ -54,37 +54,100 @@ For building the code please use
 ```
 ## FI-diverse-sat
 ```
-## See the dependencies below (1 and 2)
+## See the dependencies below (1)
 # ./plan_diverse_sat.sh <domain> <problem> <number-of-plans> <diversity-metric> <larger-number-of-plans>
 ./plan_diverse_sat.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 stability 20
 ```
 ## FI-diverse-bD
 ``` 
-## See the dependencies below (1, 2, and 3)
+## See the dependencies below (1 and 2)
 # ./plan_diverse_bounded.sh <domain> <problem> <number-of-plans> <diversity-metric> <bound> <larger-number-of-plans>
 ./plan_diverse_bounded.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 stability 0.25 20
 ```
 ## FI-diverse-bQ
 ``` 
-## See the dependencies below (2)
-# ./plan_quality_bounded_diverse_sat.sh <domain> <problem> <number-of-plans> <quality-bound>  <diversity-metric> <larger-number-of-plans>
-./plan_quality_bounded_diverse_sat.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 1.1 stability 20
+## See the dependencies below (1)
+# ./plan_quality_bounded_diverse_sat.sh <domain> <problem> <number-of-plans> <quality-bound>  <diversity-metric> 
+./plan_quality_bounded_diverse_sat.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 1.1 stability 
 ```
 ## FI-diverse-bQbD
 ``` 
-## See the dependencies below (2 and 3)
-# ./plan_quality_bounded_diversity_bounded_diverse.sh <domain> <problem> <number-of-plans> <quality-bound> <diversity-bound> <diversity-metric> <larger-number-of-plans>
-./plan_quality_bounded_diversity_bounded_diverse.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 1.1 0.1 stability 20
+## See the dependencies below (1 and 2)
+# ./plan_quality_bounded_diversity_bounded_diverse.sh <domain> <problem> <number-of-plans> <quality-bound> <diversity-bound> <diversity-metric> 
+./plan_quality_bounded_diversity_bounded_diverse.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 1.1 0.1 stability 
+```
+## FI-diverse-bQoptD
+``` 
+## See the dependencies below (1 and 2)
+# ./plan_quality_bounded_diversity_optimal_diverse.sh <domain> <problem> <number-of-plans> <quality-bound> <diversity-metric>  
+./plan_quality_bounded_diversity_optimal_diverse.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 1.1 stability 
 ```
 
 
 # Dependencies
 For some of the diverse planners, the dependencies are as follows:
-1. A Fast Downward (recent version) based planner for computing a single plan should be installed and a path to that planner should be specified in an environment variable **DIVERSE_FAST_DOWNWARD_PLANNER_PATH**. We suggest using the [*Cerberus* planner, post-IPC2018 version](https://github.com/ctpelok77/fd-red-black-postipc2018)
-2. Computation of a subset of plans is performed in a post-processing, path to the code should be specified in an environment variable **DIVERSE_SCORE_COMPUTATION_PATH**. The code can be found [here](https://github.com/IBM/diversescore).
-3. Note that for the diversity-bounded diverse planning the computation in a post-processing requires enabling CPLEX support in Fast Downward (see http://www.fast-downward.org/) and building the post-processing code with LP support.
+1. Computation of a subset of plans is performed in a post-processing, path to the code should be specified in an environment variable **DIVERSE_SCORE_COMPUTATION_PATH**. The code can be found [here](https://github.com/IBM/diversescore).
+2. Note that for the diversity-bounded diverse planning and for diversity-optimal one the computation in a post-processing requires enabling CPLEX support in Fast Downward (see https://www.fast-downward.org/) and building the post-processing code with LP support.
 
-For the unordered top-quality planner (and the planners that use it) that depend on finding a shortest cost-optimal plan, a Fast Downward (recent version) based shortest cost-optimal planner path should be specified in an environment variable **SHORTEST_OPTIMAL_FAST_DOWNWARD_PLANNER_PATH**. 
+
+## Citing
+
+### Top-k planning
+```
+@InProceedings{katz-et-al-icaps2018,
+  title =        "A Novel Iterative Approach to Top-k Planning",
+  author =       "Michael Katz and Shirin Sohrabi and Octavian Udrea and Dominik Winterer",
+  booktitle =    "Proceedings of the Twenty-Eighth International Conference on
+                  Automated Planning and Scheduling (ICAPS 2018)",
+  publisher =    "{AAAI} Press",
+  pages =        "132--140",
+  year =         "2018"
+}
+```
+
+### Top-quality planning
+```
+@InProceedings{katz-et-al-aaai2020,
+  author =       "Michael Katz and Shirin Sohrabi and Octavian Udrea",
+  title =        "Top-Quality Planning: Finding Practically Useful Sets of Best Plans",
+  booktitle =    "Proceedings of the Thirty-Fourth {AAAI} Conference on
+                  Artificial Intelligence ({AAAI} 2020)",
+  publisher =    "{AAAI} Press",
+  pages =        "9900--9907",
+  year =         "2020"
+}
+
+@InProceedings{katz-sohrabi-icaps2022,
+  author =       "Michael Katz and Shirin Sohrabi",
+  title =        "Who Needs These Operators Anyway: Top Quality Planning with Operator Subset Criteria",
+  booktitle =    "Proceedings of the Thirty-Second International Conference on
+                  Automated Planning and Scheduling (ICAPS 2022)",
+  publisher =    "{AAAI} Press",
+  year =         "2022"
+}
+```
+
+### Diverse planning
+```
+@InProceedings{katz-sohrabi-aaai2020,
+  title =        "Reshaping diverse planning",
+  author =       "Michael Katz and Shirin Sohrabi",
+  booktitle =    "Proceedings of the Thirty-Fourth {AAAI} Conference on
+                  Artificial Intelligence ({AAAI} 2020)",
+  publisher =    "{AAAI} Press",
+  pages =        "9892--9899",
+  year =         "2020"
+}
+
+@InProceedings{katz-et-al-aaai2022,
+  title =        "Bounding Quality in Diverse Planning",
+  author =       "Michael Katz and Shirin Sohrabi and Octavian Udrea",
+  booktitle =    "Proceedings of the Thirty-Sixth {AAAI} Conference on
+                  Artificial Intelligence ({AAAI} 2022)",
+  publisher =    "{AAAI} Press",
+  year =         "2022"
+}
+```
 
 ## Licensing
 
