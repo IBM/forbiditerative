@@ -8,29 +8,40 @@
 ###############################################################################
 FROM ubuntu:18.04 AS builder
 
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    cmake           \
-    ca-certificates \
-    curl            \
-    g++             \
-    make            \
-    python3
+RUN apt-get update && \
+    apt-get install -y locales jq vim wget curl gawk \
+    cmake g++ g++-multilib make python python-dev python-pip
+
+# Install basic dev tools
+RUN pip install --upgrade pip
+# RUN pip install h5py keras numpy pillow scipy tensorflow-cpu subprocess32
+
+# Set up environment variables
+RUN locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8 \ 
+	CXX=g++ \
+	HOME=/app \
+	BASE_DIR=/app/planners \
+    INT_BUILD_COMMIT_ID=eb7d44c \
+    DIV_SC_BUILD_COMMIT_ID=8615bf2 
     
 
-WORKDIR /workspace/cerberus/
-
-# Set up some environment variables.
-ENV CXX g++
-ENV BUILD_COMMIT_ID 821fad1
+WORKDIR $BASE_DIR/integrated/
 
 # Fetch the code at the right commit ID from the Github repo
-RUN curl -L https://github.com/ctpelok77/fd-red-black-postipc2018/archive/${BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1
-
+RUN curl -L https://github.ibm.com/research-planning/integrated-planner/archive/${INT_BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1 \
 # Invoke the build script with appropriate options
-RUN python3 ./build.py -j4 release
-
+    && python ./build.py -j4 \
 # Strip the main binary to reduce size
-RUN strip --strip-all builds/release/bin/downward
+    && strip --strip-all builds/release/bin/downward
+
+WORKDIR $BASE_DIR/diversescore/
+# Fetch the code at the right commit ID from the Github repo
+RUN curl -L https://github.com/IBM/diversescore/archive/${DIV_SC_BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1 \
+# Invoke the build script with appropriate options
+    && python ./build.py -j4 \
+# Strip the main binary to reduce size
+    && strip --strip-all builds/release/bin/downward
 
 ###############################################################################
 ## Second stage: the image to run the planner
@@ -41,19 +52,38 @@ RUN strip --strip-all builds/release/bin/downward
 ###############################################################################
 FROM ubuntu:18.04
 
-# Install any package needed to *run* the planner
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    python3  \
+RUN apt-get update && \
+    apt-get install -y locales curl gawk \
+    # cmake g++ g++-multilib make \
+    python python-dev python-pip \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /workspace/cerberus/
+# Set up environment variables
+RUN locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8 \ 
+	CXX=g++ \
+	HOME=/app \
+	BASE_DIR=/app/planners \
+    DIVERSE_SCORE_COMPUTATION_PATH=/app/planners/diversescore
 
-# Copy the relevant files from the previous docker build into this build.
-COPY --from=builder /workspace/cerberus/fast-downward.py .
-COPY --from=builder /workspace/cerberus/builds/release/bin/ ./builds/release/bin/
-COPY --from=builder /workspace/cerberus/driver ./driver
+# Create required directories
+RUN mkdir -p $HOME && mkdir -p $BASE_DIR
+WORKDIR $BASE_DIR
+
+## Copying integrated planner essential files
+WORKDIR ${BASE_DIR}/integrated/
+COPY --from=builder ${BASE_DIR}/integrated/fast-downward.py ${BASE_DIR}/integrated/plan-cerberus-sat.py ${BASE_DIR}/integrated/plan-cerberus-agl.py ./
+COPY --from=builder ${BASE_DIR}/integrated/builds/release/bin/ ./builds/release/bin/
+COPY --from=builder ${BASE_DIR}/integrated/driver ./driver
+COPY --from=develop ${BASE_DIR}/integrated/fast-downward.py ${BASE_DIR}/integrated/copy_plans.py ${BASE_DIR}/integrated/plan.py ${BASE_DIR}/integrated/planner_call.py ${BASE_DIR}/integrated/timers.py  ${BASE_DIR}/integrated/plan_*.sh  ./
+COPY --from=builder ${BASE_DIR}/integrated/iterative ./iterative
+
+## Copying diverse score computation essential files
+WORKDIR ${BASE_DIR}/diversescore/
+COPY --from=builder ${BASE_DIR}/diversescore/fast-downward.py .
+COPY --from=builder ${BASE_DIR}/diversescore/builds/release/bin/ ./builds/release/bin/
+COPY --from=builder ${BASE_DIR}/diversescore/driver ./driver
 
 WORKDIR /work
 
-# ENTRYPOINT ["/usr/bin/python3", "/workspace/cerberus/fast-downward.py"]
 CMD /bin/bash
