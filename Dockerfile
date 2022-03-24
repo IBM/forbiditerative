@@ -84,6 +84,8 @@ COPY --from=builder ${BASE_DIR}/diversescore/fast-downward.py .
 COPY --from=builder ${BASE_DIR}/diversescore/builds/release/bin/ ./builds/release/bin/
 COPY --from=builder ${BASE_DIR}/diversescore/driver ./driver
 
-WORKDIR /work
+WORKDIR $BASE_DIR
+
+COPY examples ./
 
 CMD /bin/bash
