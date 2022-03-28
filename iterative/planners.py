@@ -14,22 +14,28 @@ from . import plan_manager as pm
 class Planner(object): 
     def __init__(self, args):
         self._iterationStep = 1
-        self._timer = timers.Timer()
+        self._elapsed_time = timers.Timer()
         self._args = args
         dest = os.path.join(os.getcwd(), self._get_found_plans_dir())
         if os.path.exists(dest):
             shutil.rmtree(dest)
+
+    def get_remaining_time(self):
+        if self._args.overall_time_limit:
+            return int(self._args.overall_time_limit) - self._elapsed_time._elapsed_cpu_time()
+        else:
+            return None
 
     def _report_iteration_step(self, num_plans_found, success):
         report_msg = "done"
         if not success:
             report_msg = "terminated unexpectedly"
             
-        logging.info("Iteration step %s is %s, found %s plans, time %s" % (self._iterationStep, report_msg, num_plans_found, self._timer))
+        logging.info("Iteration step %s is %s, found %s plans, time %s" % (self._iterationStep, report_msg, num_plans_found, self._elapsed_time))
         self._iterationStep += 1
 
-    def _get_planner_callstring(self, pc, task_manager, plan_manager, time_limit, **kwargs):
-        logging.info("Iteration step %s, time limit %s" % (self._iterationStep , time_limit))
+    def _get_planner_callstring(self, pc, task_manager, plan_manager, **kwargs):
+        logging.info("Iteration step %s, time limit %s" % (self._iterationStep , self.get_remaining_time()))
         logging.info("Running external planner to get a plan")
 
         pcargs = kwargs
@@ -61,9 +67,9 @@ class Planner(object):
         return plan_manager.process_new_plans()
 
     def cleanup_plans(self, plan_manager):
-        logging.info("Cleaning up plans %s" % self._timer)
+        logging.info("Cleaning up plans %s" % self._elapsed_time)
         plan_manager.remove_aux_actions()
-        logging.info("DONE Cleaning up plans %s" % self._timer)
+        logging.info("DONE Cleaning up plans %s" % self._elapsed_time)
         
     def cleanup(self, plan_manager):
         if self._args.use_local_folder and self._args.clean_local_folder:
@@ -87,13 +93,13 @@ class Planner(object):
             """
 
     def report_done(self):
-        logging.info("All iterations are done %s" % self._timer)
+        logging.info("All iterations are done %s" % self._elapsed_time)
 
     def report_done_external_planner_run(self):
-        logging.info("DONE Running external planner %s" % self._timer)
+        logging.info("DONE Running external planner %s" % self._elapsed_time)
 
     def report_done_reformulation_run(self):
-        logging.info("DONE Reformulating %s" % self._timer)
+        logging.info("DONE Reformulating %s" % self._elapsed_time)
 
     def _get_found_plans_dir(self):
         FOUND_PLANS_DIR = "found_plans"
@@ -160,8 +166,8 @@ class TopKPlanner(Planner):
     def report_iteration_step(self, plan_manager, success):
         self._report_iteration_step(plan_manager.get_number_valid_plans(up_to_best_known_bound=True), success)
 
-    def get_planner_callstring(self, task_manager, plan_manager, time_limit):
-        return self._get_planner_callstring(planner_call.BaseCostOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=False, consistent=False)
+    def get_planner_callstring(self, task_manager, plan_manager):
+        return self._get_planner_callstring(planner_call.BaseCostOptimalPlannerCall(), task_manager, plan_manager, shortest=False, consistent=False)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
         plan_file = plan_manager.get_last_processed_plan()
@@ -192,7 +198,7 @@ class TopKPlanner(Planner):
         return command
 
     def cleanup_plans(self, plan_manager):
-        logging.info("Not cleaning up plans between iterations %s" % self._timer)
+        logging.info("Not cleaning up plans between iterations %s" % self._elapsed_time)
 
     def report_number_of_plans(self, plan_manager):
         plan_manager.report_number_of_plans(best_plans=False)
@@ -222,8 +228,8 @@ class TopKViaUnorderedTopQualityPlanner(Planner):
     def report_iteration_step(self, plan_manager, success):
         self._report_iteration_step(plan_manager.get_number_valid_plans(up_to_best_known_bound=True), success)
 
-    def get_planner_callstring(self, task_manager, plan_manager, time_limit):
-        return self._get_planner_callstring(planner_call.ShortestOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=True, consistent=False)
+    def get_planner_callstring(self, task_manager, plan_manager):
+        return self._get_planner_callstring(planner_call.ShortestOptimalPlannerCall(), task_manager, plan_manager, shortest=True, consistent=False)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
         pcargs = {}
@@ -291,7 +297,7 @@ class TopKViaUnorderedTopQualityPlanner(Planner):
         return command
 
     def report_done_plans_extension_run(self):
-        logging.info("DONE Extending the set of plans %s" % self._timer)
+        logging.info("DONE Extending the set of plans %s" % self._elapsed_time)
 
     def enough_plans_found(self, plan_manager):
         return self._enough_plans_found(plan_manager, up_to_best_known_bound=True)
@@ -308,8 +314,8 @@ class UnorderedTopQualityPlanner(Planner):
         assert(plan_manager.get_plan_counter() == plan_manager.get_number_valid_plans(up_to_best_known_bound=True))
         self._report_iteration_step(plan_manager.get_plan_counter(), success)
 
-    def get_planner_callstring(self, task_manager, plan_manager, time_limit):
-        return self._get_planner_callstring(planner_call.ShortestOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=True, consistent=False)
+    def get_planner_callstring(self, task_manager, plan_manager):
+        return self._get_planner_callstring(planner_call.ShortestOptimalPlannerCall(), task_manager, plan_manager, shortest=True, consistent=False)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
         pcargs = {}
@@ -413,7 +419,7 @@ class ExtendedUnorderedTopQualityPlanner(UnorderedTopQualityPlanner):
 
                     self.extend_plan(plan_manager, plan)
                     plan_manager.process_new_plans()
-                logging.info("DONE Extending the set of plans %s" % self._timer)
+                logging.info("DONE Extending the set of plans %s" % self._elapsed_time)
 
             self.report_number_of_plans(plan_manager)
             # Now we are copying the extended set of plans
@@ -446,12 +452,11 @@ class ExtendedUnorderedTopQualityPlanner(UnorderedTopQualityPlanner):
 
         logging.info("Extending the plan %s" % plan_file )
         logging.debug("Running " + str(command))
-        time_limit = limits.get_time_limit(None, self._args.overall_time_limit)
         enable_planners_output = True
         if self._args.suppress_planners_output:
             enable_planners_output = False
         try:
-            planner_call.make_call(command, time_limit, plan_manager.get_plans_folder(), enable_output=enable_planners_output)
+            planner_call.make_call(command, self.get_remaining_time(), plan_manager.get_plans_folder(), enable_output=enable_planners_output)
         except:
             raise
 
@@ -469,8 +474,8 @@ class TopQualityViaTopKPlanner(Planner):
     def report_iteration_step(self, plan_manager, success):
         self._report_iteration_step(plan_manager.get_number_valid_plans(up_to_best_known_bound=True), success)
 
-    def get_planner_callstring(self, task_manager, plan_manager, time_limit):
-        return self._get_planner_callstring(planner_call.BaseCostOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=False, consistent=False)
+    def get_planner_callstring(self, task_manager, plan_manager):
+        return self._get_planner_callstring(planner_call.BaseCostOptimalPlannerCall(), task_manager, plan_manager, shortest=False, consistent=False)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
         plan_file = plan_manager.get_last_processed_plan()
@@ -536,8 +541,8 @@ class TopQualityViaUnorderedTopQualityPlanner(Planner):
     def report_iteration_step(self, plan_manager, success):
         self._report_iteration_step(plan_manager.get_number_valid_plans(up_to_best_known_bound=True), success)
 
-    def get_planner_callstring(self, task_manager, plan_manager, time_limit):
-        return self._get_planner_callstring(planner_call.ShortestOptimalPlannerCall(), task_manager, plan_manager, time_limit, shortest=True, consistent=False)
+    def get_planner_callstring(self, task_manager, plan_manager):
+        return self._get_planner_callstring(planner_call.ShortestOptimalPlannerCall(), task_manager, plan_manager, shortest=True, consistent=False)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
         pcargs = {}
@@ -619,7 +624,7 @@ class TopQualityViaUnorderedTopQualityPlanner(Planner):
         return command
 
     def report_done_plans_extension_run(self):
-        logging.info("DONE Extending the set of plans %s" % self._timer)
+        logging.info("DONE Extending the set of plans %s" % self._elapsed_time)
 
     def enough_plans_found(self, plan_manager):
         # Allowing to specify the number of plans bound as an additional constraint
@@ -651,8 +656,8 @@ class DiversePlanner(Planner):
     def report_iteration_step(self, plan_manager, success):
         self._report_iteration_step(plan_manager.get_plan_counter(), success)
 
-    def get_planner_callstring(self, task_manager, plan_manager, time_limit):
-        return self._get_planner_callstring(self.get_planner_call(), task_manager, plan_manager, time_limit)
+    def get_planner_callstring(self, task_manager, plan_manager):
+        return self._get_planner_callstring(self.get_planner_call(), task_manager, plan_manager)
 
     def get_reformulation_callstring(self, task_manager, plan_manager):
         return self._get_default_reformulation_callstring(planner_call.DiverseReformulationPlannerCall(), task_manager, plan_manager)
