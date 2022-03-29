@@ -74,7 +74,7 @@ def add_exp(planner_name, args, alg, exp_q):
         run.add_command(
             'run-planner',
             [planner_name,
-            "--planner",  args["planner"], "--domain", '{domain}', "--problem", '{problem}', "--quality-bound", exp_q, "--number-of-plans", 10000, "--symmetries", "--use-local-folder", "--clean-local-folder", "--suppress-planners-output", "--overall-time-limit", 1800],
+            "--planner",  args["planner"], "--domain", '{domain}', "--problem", '{problem}', "--quality-bound", exp_q, "--upper-bound-on-number-of-plans", 10000, "--symmetries", "--use-local-folder", "--clean-local-folder", "--suppress-planners-output", "--overall-time-limit", 1800],
             time_limit=1800,
             memory_limit=4096, soft_stdout_limit=None, hard_stdout_limit=None)
         # AbsoluteReport needs the following properties:
