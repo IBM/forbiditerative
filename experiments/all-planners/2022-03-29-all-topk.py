@@ -48,11 +48,11 @@ SUITE = common_setup.DEFAULT_OPTIMAL_SUITE
 ATTRIBUTES = ['coverage', 'num_plans', 'total_time', 'found_worse_plan', 'proved_no_more_plans']
 
 config_name = 'all-topk' 
-config_date = '2022-02-29'
+config_date = '2022-03-29'
 
 report_name = '%s-%s' % (config_name,config_date)
 
-SUITE = ["blocks:probBLOCKS-4-0.pddl", "logistics00:probLOGISTICS-4-0.pddl", "gripper:prob01.pddl"]
+#SUITE = ["blocks:probBLOCKS-4-0.pddl", "logistics00:probLOGISTICS-4-0.pddl", "gripper:prob01.pddl"]
 
 ENV = LocalEnvironment(processes=48)
 # Create a new experiment.
