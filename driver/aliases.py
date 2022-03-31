@@ -270,6 +270,16 @@ ALIASES["seq-agl-cerberus-novelops-co1"] = _get_cerberus_novelty_ops_first(pref=
 
 ALIASES["seq-agl-cerberus-new"] = _get_new_cerberus_first(pref="true", dag="from_coloring")
 
+ALIASES["seq-opt-oss-por-lmcut"] = ["--if-conditional-effects", "--evaluator", "h=celmcut()",
+                "--if-no-conditional-effects", "--evaluator", "h=lmcut()",
+                "--always", "--symmetries", "sym=structural_symmetries(time_bound=0,search_symmetries=oss, \
+                    stabilize_initial_state=false, keep_operator_symmetries=false)",
+                "--search",
+                "astar(h, symmetries=sym,pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))"]
+
+
+
+
 PORTFOLIOS = {}
 for portfolio in os.listdir(PORTFOLIO_DIR):
     name, ext = os.path.splitext(portfolio)

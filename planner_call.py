@@ -148,13 +148,20 @@ class BasePlannerCall(PlannerCall):
 
 class BaseCostOptimalPlannerCall(BasePlannerCall):
     def planner_args(self, **kwargs):
-        search_heur = "blind()" if "consistent" in kwargs and kwargs["consistent"] else "celmcut()"
         bound_opt = "bound={cost_bound},".format(**kwargs) if "cost_bound" in kwargs else ""
-        return ["--symmetries",
-                "sym=structural_symmetries(time_bound=0,search_symmetries=oss, \
-                stabilize_initial_state=false, keep_operator_symmetries=false)",
+        if "consistent" in kwargs and kwargs["consistent"]:
+            return ["--symmetries",
+                    "sym=structural_symmetries(time_bound=0,search_symmetries=oss, \
+                    stabilize_initial_state=false, keep_operator_symmetries=false)",
+                    "--search",
+                    "astar(blind(),%s symmetries=sym,pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))" % bound_opt ]
+
+        return ["--if-conditional-effects", "--evaluator", "h=celmcut()",
+                "--if-no-conditional-effects", "--evaluator", "h=lmcut()",
+                "--always", "--symmetries", "sym=structural_symmetries(time_bound=0,search_symmetries=oss, \
+                    stabilize_initial_state=false, keep_operator_symmetries=false)",
                 "--search",
-                "astar(%s,%s symmetries=sym)" % (search_heur, bound_opt) ]
+                "astar(h,%s symmetries=sym,pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))" % bound_opt ]
 
 
 class BaseSatisficingPlannerCall(BasePlannerCall):
