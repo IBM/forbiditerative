@@ -22,14 +22,21 @@ ENV LANG=en_US.UTF-8 \
 	CXX=g++ \
 	HOME=/app \
 	BASE_DIR=/app/planners \
-    INT_BUILD_COMMIT_ID=eb7d44c \
-    DIV_SC_BUILD_COMMIT_ID=8615bf2 
+	# INT_BUILD_COMMIT_ID=eb7d44c \
+	INT_BUILD_COMMIT_ID=cb6d6d7 \
+	DIV_SC_BUILD_COMMIT_ID=8615bf2 
     
+
+# Artifactory credentials are used to set up access to internal packages
+ARG ARTIFACTORY_USERNAME
+ARG ARTIFACTORY_API_KEY
+ENV ARTIFACTORY_USERNAME=$ARTIFACTORY_USERNAME
+ENV ARTIFACTORY_API_KEY=$ARTIFACTORY_API_KEY
 
 WORKDIR $BASE_DIR/integrated/
 
 # Fetch the code at the right commit ID from the Github repo
-RUN curl -L https://github.ibm.com/research-planning/integrated-planner/archive/${INT_BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1 \
+RUN curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_API_KEY -L https://github.ibm.com/research-planning/integrated-planner/archive/${INT_BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1 \
 # Invoke the build script with appropriate options
     && python ./build.py -j4 \
 # Strip the main binary to reduce size
@@ -75,7 +82,7 @@ WORKDIR ${BASE_DIR}/integrated/
 COPY --from=builder ${BASE_DIR}/integrated/fast-downward.py ${BASE_DIR}/integrated/plan-cerberus-sat.py ${BASE_DIR}/integrated/plan-cerberus-agl.py ./
 COPY --from=builder ${BASE_DIR}/integrated/builds/release/bin/ ./builds/release/bin/
 COPY --from=builder ${BASE_DIR}/integrated/driver ./driver
-COPY --from=develop ${BASE_DIR}/integrated/fast-downward.py ${BASE_DIR}/integrated/copy_plans.py ${BASE_DIR}/integrated/plan.py ${BASE_DIR}/integrated/planner_call.py ${BASE_DIR}/integrated/timers.py  ${BASE_DIR}/integrated/plan_*.sh  ./
+COPY --from=builder ${BASE_DIR}/integrated/fast-downward.py ${BASE_DIR}/integrated/copy_plans.py ${BASE_DIR}/integrated/plan.py ${BASE_DIR}/integrated/planner_call.py ${BASE_DIR}/integrated/timers.py  ${BASE_DIR}/integrated/plan_*.sh  ./
 COPY --from=builder ${BASE_DIR}/integrated/iterative ./iterative
 
 ## Copying diverse score computation essential files
