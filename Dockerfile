@@ -22,8 +22,7 @@ ENV LANG=en_US.UTF-8 \
 	CXX=g++ \
 	HOME=/app \
 	BASE_DIR=/app/planners \
-	# INT_BUILD_COMMIT_ID=eb7d44c \
-	INT_BUILD_COMMIT_ID=cb6d6d7 \
+	INT_BUILD_COMMIT_ID=5b8a05e \
 	DIV_SC_BUILD_COMMIT_ID=8615bf2 
     
 
