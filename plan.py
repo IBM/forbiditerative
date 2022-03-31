@@ -18,9 +18,6 @@ from iterative import task_manager as tm
 from iterative import planners
 
 
-def get_time_limit(args):
-    return None
-
 def get_planner(args):
     ### TODO: Get the actual planner from args
     if args.planner == "topk":
@@ -61,11 +58,9 @@ def find_plans(args):
     plan_manager.delete_existing_plans()
     task_manager = tm.TaskManager("reformulated_output.sas", local_folder, keep_intermediate_tasks=args.keep_intermediate_tasks)
 
-    time_limit = get_time_limit(args)
-
-    command = planner.get_planner_callstring(task_manager, plan_manager, time_limit)
+    command = planner.get_planner_callstring(task_manager, plan_manager)
     try:
-        make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
+        make_call(command, planner.get_remaining_time(), local_folder, enable_output=enable_planners_output)
     except SubprocessError as err:
         logging.info("External planner did not produce a plan")
         if planner.check_unsolvable(err.output.decode()):
@@ -111,9 +106,8 @@ def find_plans(args):
 
     if command is not None:
         ## Adding plans from the just found plan
-        time_limit = get_time_limit(args)
         try:
-            make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
+            make_call(command, planner.get_remaining_time(), local_folder, enable_output=enable_planners_output)
         except:
             planner.report_iteration_step(plan_manager, success=False)
             planner.finalize(plan_manager)
@@ -131,9 +125,8 @@ def find_plans(args):
 
     # calling the reformulation
     command = planner.get_reformulation_callstring(task_manager, plan_manager)
-    time_limit = get_time_limit(args)
     try:
-        make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
+        make_call(command, planner.get_remaining_time(), local_folder, enable_output=enable_planners_output)
     except:
         planner.report_iteration_step(plan_manager, success=False)
         planner.finalize(plan_manager)
@@ -158,10 +151,9 @@ def find_plans(args):
     planner.report_iteration_step(plan_manager, success=True)
 
     while not planner.enough_plans_found(plan_manager):
-        time_limit = get_time_limit(args)
-        command = planner.get_planner_callstring(task_manager, plan_manager, time_limit)
+        command = planner.get_planner_callstring(task_manager, plan_manager)
         try:
-            make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
+            make_call(command, planner.get_remaining_time(), local_folder, enable_output=enable_planners_output)
         except SubprocessError as err:
             logging.info("External planner did not produce a plan")
             if planner.check_unsolvable(err.output.decode()):
@@ -198,9 +190,8 @@ def find_plans(args):
         command = planner.get_extend_plans_callstring(task_manager, plan_manager)
         if command is not None:
             ## Adding plans from the just found plan
-            time_limit = get_time_limit(args)
             try:
-                make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
+                make_call(command, planner.get_remaining_time(), local_folder, enable_output=enable_planners_output)
             except:
                 planner.report_iteration_step(plan_manager, success=False)
                 planner.finalize(plan_manager)
@@ -218,9 +209,8 @@ def find_plans(args):
 
         # calling the reformulation
         command = planner.get_reformulation_callstring(task_manager, plan_manager)
-        time_limit = get_time_limit(args)
         try:
-            make_call(command, time_limit, local_folder, enable_output=enable_planners_output)
+            make_call(command, planner.get_remaining_time(), local_folder, enable_output=enable_planners_output)
         except:
             planner.report_iteration_step(plan_manager, success=False)
             planner.finalize(plan_manager)

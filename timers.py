@@ -23,6 +23,8 @@ class Timer(object):
             self._clock() - self.start_clock,
             time.time() - self.start_time)
 
+    def _elapsed_cpu_time(self):
+        return  self._clock() - self.start_clock
 
 @contextlib.contextmanager
 def timing(text, block=False):
