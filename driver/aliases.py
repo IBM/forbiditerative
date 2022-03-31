@@ -278,6 +278,14 @@ ALIASES["seq-opt-oss-por-lmcut"] = ["--if-conditional-effects", "--evaluator", "
                 "astar(h, symmetries=sym,pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))"]
 
 
+ALIASES["seq-sopt-oss-por-lmcut"] = ["--if-conditional-effects", "--evaluator", "h=celmcut()",
+        "--if-no-conditional-effects", "--evaluator", "h=lmcut()",
+        "--always", "--symmetries", "sym=structural_symmetries(time_bound=0,search_symmetries=oss, stabilize_initial_state=false, keep_operator_symmetries=false)",
+        "--if-unit-cost",
+        "--search", "astar(h, symmetries=sym,pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))",
+        "--if-non-unit-cost",
+        "--search", "shortest_astar(h, symmetries=sym,pruning=stubborn_sets_simple(min_required_pruning_ratio=0.01,expansions_before_checking_pruning_ratio=1000))",
+        "--always"]
 
 
 PORTFOLIOS = {}
