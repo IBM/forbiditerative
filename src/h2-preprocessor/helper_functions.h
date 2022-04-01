@@ -38,8 +38,9 @@ void dump_preprocessed_problem_description(const vector<Variable *> &variables,
 
 void dump_DTGs(const vector<Variable *> &ordering,
                vector<DomainTransitionGraph> &transition_graphs);
-void generate_unsolvable_cpp_input();
-void generate_cpp_input(bool causal_graph_acyclic,
+void generate_unsolvable_cpp_input(string out_file_name);
+void generate_cpp_input(string out_file_name,
+                        bool causal_graph_acyclic,
                         const vector<Variable *> &ordered_var,
                         const bool &metric,
                         const vector<MutexGroup> &mutexes,

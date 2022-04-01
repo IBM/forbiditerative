@@ -35,6 +35,7 @@ int main(int argc, const char **argv) {
     vector<Axiom> axioms;
     vector<DomainTransitionGraph> transition_graphs;
 
+    string out_file_name = "output.sas";
     for (int i = 1; i < argc; ++i) {
         string arg = string(argv[i]);
         if (arg.compare("--no_rel") == 0) {
@@ -51,6 +52,14 @@ int main(int argc, const char **argv) {
                 }
             } else {
                 cerr << "please specify the number of seconds after --h2_time_limit" << endl;
+                exit(2);
+            }
+        } else if (arg.compare("--output-file") == 0) {
+            i++;
+            if (i < argc) {
+                out_file_name = argv[i];
+            } else {
+                cerr << "please specify the name of the output file after --output-file" << endl;
                 exit(2);
             }
         } else if (arg.compare("--no_h2") == 0) {
@@ -103,7 +112,7 @@ int main(int argc, const char **argv) {
 			       h2_mutex_time, disable_bw_h2)){
 	                // TODO: don't duplicate the code to return an unsolvable task, log and exit here
             cout << "Unsolvable task in preprocessor" << endl;
-            generate_unsolvable_cpp_input();
+            generate_unsolvable_cpp_input(out_file_name);
             cout << "done" << endl;
             return 0;
 	}
@@ -140,7 +149,7 @@ int main(int argc, const char **argv) {
         if (initial_state.remove_unreachable_facts()) {
             // TODO: don't duplicate the code to return an unsolvable task, log and exit here
             cout << "Unsolvable task in preprocessor" << endl;
-            generate_unsolvable_cpp_input();
+            generate_unsolvable_cpp_input(out_file_name);
             cout << "done" << endl;
             return 0;
         }
@@ -269,9 +278,9 @@ int main(int argc, const char **argv) {
     cout << "Writing output..." << endl;
     if (ordering.empty()) {
         cout << "Unsolvable task in preprocessor" << endl;
-        generate_unsolvable_cpp_input();
+        generate_unsolvable_cpp_input(out_file_name);
     } else {
-        generate_cpp_input(
+        generate_cpp_input(out_file_name,
             solveable_in_poly_time, ordering, metric,
             mutexes, initial_state, goals,
             operators, axioms, successor_generator,

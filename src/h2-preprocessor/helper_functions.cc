@@ -158,7 +158,7 @@ void dump_DTGs(const vector<Variable *> &ordering,
     }
 }
 
-void generate_cpp_input(bool /*solvable_in_poly_time*/,
+void generate_cpp_input(string out_file_name, bool /*solvable_in_poly_time*/,
                         const vector<Variable *> &ordered_vars,
                         const bool &metric,
                         const vector<MutexGroup> &mutexes,
@@ -173,7 +173,7 @@ void generate_cpp_input(bool /*solvable_in_poly_time*/,
        since the planner doesn't handle it specially any more anyway. */
 
     ofstream outfile;
-    outfile.open("output.sas", ios::out);
+    outfile.open(out_file_name, ios::out);
 
     outfile << "begin_version" << endl;
     outfile << PRE_FILE_VERSION << endl;
@@ -234,9 +234,9 @@ void generate_cpp_input(bool /*solvable_in_poly_time*/,
 
     outfile.close();
 }
-void generate_unsolvable_cpp_input() {
+void generate_unsolvable_cpp_input(string out_file_name) {
     ofstream outfile;
-    outfile.open("output.sas", ios::out);
+    outfile.open(out_file_name, ios::out);
     outfile << "begin_version" << endl;
     outfile << PRE_FILE_VERSION << endl;
     outfile << "end_version" << endl;
