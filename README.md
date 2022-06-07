@@ -1,29 +1,33 @@
 # Forbid-Iterative (FI) Planner is an Automated PDDL based planner that includes planners for top-k, top-quality, and diverse computational tasks.
 
-## The codebase consists of multiple planners, for multiple computational problems:
+## The codebase consists of multiple planners, for multiple computational problems, roughly divided into three categories:
 
 1. Top-k planning
-2. Top-quality planning
-3. Unordered top-quality planning
-4. Satisficing/Agile diverse planning
-5. Bounded diversity diverse planning
-6. Bounded quality diverse planning
-7. Bounded quality and diversity diverse planning
-8. Bounded quality optimal diversity diverse planning
-9. Sub(multi)set top-quality planning
+2. Top-quality planning  
+    2.1. Top-quality planning  
+    2.2. Unordered top-quality planning  
+    2.3. Sub(multi)set top-quality planning  
+3. Diverse planning  
+    3.1. Satisficing/Agile diverse planning  
+    3.2. Bounded diversity diverse planning  
+    3.3. Bounded quality diverse planning  
+    3.4. Bounded quality and diversity diverse planning  
+    3.5. Bounded quality optimal diversity diverse planning  
 
 ## The planners are based on the idea of obtaining multiple solutions by iteratively reformulating planning tasks to restrict the set of valid plans, forbidding previously found ones. Thus, the planners can be referred to as FI-top-k, FI-top-quality, FI-unordered-top-quality, FI-diverse-{agl,sat,bD,bQ,bQbD, bQoptD}.
 
-The example invocation code can be found (for the corresponding computational problem) in
-1. plan_topk.sh or plan_topk_via_unordered_topq.sh
-2. plan_topq_via_topk.sh or plan_topq_via_unordered_topq.sh
-3. plan_unordered_topq.sh
-4. plan_diverse_{agl,sat}.sh
-5. plan_diverse_bounded.sh
-6. plan_quality_bounded_diverse_sat.sh
-7. plan_quality_bounded_diversity_bounded_diverse.sh
-8. plan_quality_bounded_diversity_optimal_diverse.sh
-9. plan_{subset,submultiset}_topq.sh
+The example invocation code can be found (for the corresponding computational problem) in  
+1. plan_topk.sh or plan_topk_via_unordered_topq.sh  
+2.   
+    2.1. plan_topq_via_topk.sh or plan_topq_via_unordered_topq.sh  
+    2.2. plan_unordered_topq.sh  
+    2.3. plan_{subset,submultiset}_topq.sh  
+3.   
+    3.1. plan_diverse_{agl,sat}.sh  
+3.2. plan_diverse_bounded.sh  
+3.3. plan_quality_bounded_diverse_sat.sh  
+3.4. plan_quality_bounded_diversity_bounded_diverse.sh  
+3.5. plan_quality_bounded_diversity_optimal_diverse.sh  
 
 # Building
 For building the code please use
