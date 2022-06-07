@@ -22,8 +22,8 @@ ENV LANG=en_US.UTF-8 \
 	CXX=g++ \
 	HOME=/app \
 	BASE_DIR=/app/planners \
-	INT_BUILD_COMMIT_ID=5b8a05e \
-	DIV_SC_BUILD_COMMIT_ID=8615bf2 
+    INT_BUILD_COMMIT_ID=1a0e1a3 \
+    DIV_SC_BUILD_COMMIT_ID=bd98eae
     
 
 # Artifactory credentials are used to set up access to internal packages
