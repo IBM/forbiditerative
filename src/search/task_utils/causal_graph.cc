@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <fstream>
+
 #include <unordered_map>
 #include <unordered_set>
 
@@ -187,6 +189,7 @@ CausalGraph::CausalGraph(const TaskProxy &task_proxy) {
     cg_builder.succ_builder.compute_relation(successors);
 
     // dump(task_proxy);
+    // dump_dot_graph(task_proxy);
     utils::g_log << "done! [t=" << timer << "]" << endl;
 }
 
@@ -202,6 +205,27 @@ void CausalGraph::dump(const TaskProxy &task_proxy) const {
                      << "    predecessors: " << predecessors[var_id] << endl;
     }
 }
+
+
+void CausalGraph::dump_dot_graph(const TaskProxy &task_proxy) const {
+    std::ofstream os("causal_graph.dot", std::ofstream::out);
+
+    os << endl << "digraph causal_graph";
+
+    os << " {" << endl;
+    // for (VariableProxy var : task_proxy.get_variables()) {
+    //     os << "    node " << var.get_name() << ";" << endl;
+    // }
+    for (VariableProxy var : task_proxy.get_variables()) {
+        for (auto to : successors[var.get_id()]) {
+            VariableProxy to_var = task_proxy.get_variables()[to];
+            os << "    " << var.get_name() << " -> " << to_var.get_name() << ";" << endl;
+        }
+    }    
+    os << "}" << endl;
+    os.close();
+}
+
 
 const CausalGraph &get_causal_graph(const AbstractTask *task) {
     if (causal_graph_cache.count(task) == 0) {

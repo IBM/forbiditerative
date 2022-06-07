@@ -8,6 +8,7 @@
 #include <vector>
 
 class Evaluator;
+class Group;
 class PruningMethod;
 
 namespace options {
@@ -18,9 +19,16 @@ class Options;
 namespace eager_search {
 class EagerSearch : public SearchEngine {
     const bool reopen_closed_nodes;
+    std::shared_ptr<Group> group;
 
     std::unique_ptr<StateOpenList> open_list;
     std::shared_ptr<Evaluator> f_evaluator;
+    /*
+      Note: orbit space search and duplicate pruning with dks does not work
+      with preferred operators and multi path search.
+    */
+    bool use_oss() const;
+    bool use_dks() const;
 
     std::vector<Evaluator *> path_dependent_evaluators;
     std::vector<std::shared_ptr<Evaluator>> preferred_operator_evaluators;

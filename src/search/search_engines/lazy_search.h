@@ -50,6 +50,9 @@ protected:
     std::vector<OperatorID> get_successor_operators(
         const ordered_set::OrderedSet<OperatorID> &preferred_operators) const;
 
+    // Michael:
+    bool check_solution_via_state_and_set_plan(int g, const State &state, bool reopen, const EvaluationContext &eval_context);
+
 public:
     explicit LazySearch(const options::Options &opts);
     virtual ~LazySearch() = default;

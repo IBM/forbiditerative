@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 class OperatorID;
 class TaskProxy;
@@ -27,6 +28,19 @@ public:
     void save_plan(
         const Plan &plan, const TaskProxy &task_proxy,
         bool generates_multiple_plan_files = false);
+
+
+    void load_plan(std::string path_to_plan_file, Plan &plan, const TaskProxy &task_proxy) const;
+    void load_plans(std::string path_to_plan_folder, int num_plans, std::vector<Plan> &plans, const TaskProxy &task_proxy) const;
+
+    int get_num_previously_generated_plans() const { return num_previously_generated_plans; }
+    
+private:
+    void compute_ops_by_names(std::unordered_map<std::string, OperatorID>& ops_by_names, const TaskProxy &task_proxy) const;
+    void load_single_plan(std::string path_to_plan_file,
+        const std::unordered_map<std::string, OperatorID>& ops_by_names, Plan &plan) const;
+
+    
 };
 
 extern int calculate_plan_cost(const Plan &plan, const TaskProxy &task_proxy);

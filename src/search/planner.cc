@@ -23,12 +23,14 @@ int main(int argc, const char **argv) {
     }
 
     bool unit_cost = false;
+    bool conditional_effects = false;
     if (static_cast<string>(argv[1]) != "--help") {
         utils::g_log << "reading input..." << endl;
         tasks::read_root_task(cin);
         utils::g_log << "done reading input!" << endl;
         TaskProxy task_proxy(*tasks::g_root_task);
         unit_cost = task_properties::is_unit_cost(task_proxy);
+        conditional_effects = task_properties::has_conditional_effects(task_proxy);
     }
 
     shared_ptr<SearchEngine> engine;
@@ -37,8 +39,8 @@ int main(int argc, const char **argv) {
     // check for simple input errors, and then in normal mode.
     try {
         options::Registry registry(*options::RawRegistry::instance());
-        parse_cmd_line(argc, argv, registry, true, unit_cost);
-        engine = parse_cmd_line(argc, argv, registry, false, unit_cost);
+        parse_cmd_line(argc, argv, registry, true, unit_cost, conditional_effects);
+        engine = parse_cmd_line(argc, argv, registry, false, unit_cost, conditional_effects);
     } catch (const ArgError &error) {
         error.print();
         usage(argv[0]);

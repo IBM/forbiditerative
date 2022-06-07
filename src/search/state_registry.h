@@ -112,6 +112,9 @@ class IntPacker;
 using PackedStateBin = int_packer::IntPacker::Bin;
 
 
+class Group;
+class Permutation;
+
 class StateRegistry : public subscriber::SubscriberService<StateRegistry> {
     struct StateIDSemanticHash {
         const segmented_vector::SegmentedArrayVector<PackedStateBin> &state_data_pool;
@@ -163,14 +166,27 @@ class StateRegistry : public subscriber::SubscriberService<StateRegistry> {
     const int num_variables;
 
     segmented_vector::SegmentedArrayVector<PackedStateBin> state_data_pool;
+    // Used for DKS
+    segmented_vector::SegmentedArrayVector<PackedStateBin> canonical_state_data_pool;
     StateIDSet registered_states;
+    // Used for DKS
+    StateIDSet canonical_registered_states;
+    // Used for DKS
+    std::shared_ptr<Group> group;
+    // true iff group has been set; added here to avoid including group.h in this header
+    bool has_symmetries_and_uses_dks;
 
     std::unique_ptr<State> cached_initial_state;
 
     StateID insert_id_or_pop_state();
+    // Used for DKS
+    StateID insert_id_or_pop_state_dks();
     int get_bins_per_state() const;
 public:
     explicit StateRegistry(const TaskProxy &task_proxy);
+
+    // Used for DKS
+    void set_group(const std::shared_ptr<Group> &group);
 
     const TaskProxy &get_task_proxy() const {
         return task_proxy;
@@ -204,9 +220,28 @@ public:
     State get_successor_state(const State &predecessor, const OperatorProxy &op);
 
     /*
+      Registers and returns the state corresponding to the given state data.
+      This is an expensive operation as it includes duplicate checking.
+      Used for OSS.
+    */
+    State register_state_buffer(const std::vector<int> &state);
+
+    /*
+      Creates the permutation of the given state (which can be registered
+      somewhere else). Registers and returns the permuted state if this was not
+      done before. This is an expensive operation as it includes duplicate
+      checking.
+      Used for state tracing (OSS and DKS).
+    */
+    State permute_state(const State &state, const Permutation &permutation);
+
+    /*
       Returns the number of states registered so far.
     */
     size_t size() const {
+        if (has_symmetries_and_uses_dks) {
+            return canonical_registered_states.size();
+        }
         return registered_states.size();
     }
 

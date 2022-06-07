@@ -32,7 +32,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 # Select a default compiler because CMake does not respect the PATH environment variable for some generators,
 # e.g. used by existing compute servers in Basel.
-# See https://stackoverflow.com/a/45934279 and http://issues.fast-downward.org/issue1031 for details.
+# See https://stackoverflow.com/a/45934279 and https://issues.fast-downward.org/issue1031 for details.
 find_program(CMAKE_C_COMPILER NAMES $ENV{CC} cc gcc PATHS ENV PATH NO_DEFAULT_PATH)
 find_program(CMAKE_CXX_COMPILER NAMES $ENV{CXX} c++ g++ PATHS ENV PATH NO_DEFAULT_PATH)
 
@@ -69,3 +69,4 @@ add_custom_command(TARGET translate POST_BUILD
     COMMENT "Copying translator module into output directory")
 
 add_subdirectory(search)
+add_subdirectory(h2-preprocessor)

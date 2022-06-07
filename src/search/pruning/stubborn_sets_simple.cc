@@ -10,10 +10,6 @@
 using namespace std;
 
 namespace stubborn_sets_simple {
-StubbornSetsSimple::StubbornSetsSimple(const options::Options &opts)
-    : StubbornSets(opts) {
-}
-
 void StubbornSetsSimple::initialize(const shared_ptr<AbstractTask> &task) {
     StubbornSets::initialize(task);
     interference_relation.resize(num_operators);
@@ -69,6 +65,18 @@ void StubbornSetsSimple::handle_stubborn_operator(const State &state,
            => operator is applicable
            => add all interfering operators */
         add_interfering(op_no);
+
+        if (has_conditional_effects) {
+            /*
+              Similarly to the else case below, check for unsatisfied
+              effect conditions and add necessary enabling set for them.
+            */
+            for (const FactPair &condition : sorted_op_effect_conditions[op_no]) {
+                if (state[condition.var].get_value() != condition.value) {
+                    add_necessary_enabling_set(condition);
+                }
+            }
+        }
     } else {
         /* unsatisfied precondition found
            => add a necessary enabling set for it */
@@ -104,15 +112,11 @@ static shared_ptr<PruningMethod> _parse(OptionParser &parser) {
             "AAAI Press",
             "2014"));
 
-    stubborn_sets::add_pruning_options(parser);
-
-    Options opts = parser.parse();
-
     if (parser.dry_run()) {
         return nullptr;
     }
 
-    return make_shared<StubbornSetsSimple>(opts);
+    return make_shared<StubbornSetsSimple>();
 }
 
 static Plugin<PruningMethod> _plugin("stubborn_sets_simple", _parse);

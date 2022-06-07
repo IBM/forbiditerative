@@ -99,11 +99,12 @@ void SearchEngine::search() {
     log << "Actual search time: " << timer.get_elapsed_time() << endl;
 }
 
-bool SearchEngine::check_goal_and_set_plan(const State &state) {
+bool SearchEngine::check_goal_and_set_plan(
+    const State &state, const shared_ptr<Group> &group) {
     if (task_properties::is_goal_state(task_proxy, state)) {
         log << "Solution found!" << endl;
         Plan plan;
-        search_space.trace_path(state, plan);
+        search_space.trace_path(state, plan, task, group);
         set_plan(plan);
         return true;
     }

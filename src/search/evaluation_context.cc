@@ -11,10 +11,11 @@ using namespace std;
 EvaluationContext::EvaluationContext(
     const EvaluatorCache &cache, const State &state, int g_value,
     bool is_preferred, SearchStatistics *statistics,
-    bool calculate_preferred)
+    bool calculate_preferred, int d_value)
     : cache(cache),
       state(state),
       g_value(g_value),
+      d_value(d_value),
       preferred(is_preferred),
       statistics(statistics),
       calculate_preferred(calculate_preferred) {
@@ -23,23 +24,23 @@ EvaluationContext::EvaluationContext(
 
 EvaluationContext::EvaluationContext(
     const EvaluationContext &other, int g_value,
-    bool is_preferred, SearchStatistics *statistics, bool calculate_preferred)
+    bool is_preferred, SearchStatistics *statistics, bool calculate_preferred, int d_value)
     : EvaluationContext(other.cache, other.state, g_value, is_preferred,
-                        statistics, calculate_preferred) {
+                        statistics, calculate_preferred, d_value) {
 }
 
 EvaluationContext::EvaluationContext(
     const State &state, int g_value, bool is_preferred,
-    SearchStatistics *statistics, bool calculate_preferred)
+    SearchStatistics *statistics, bool calculate_preferred, int d_value)
     : EvaluationContext(EvaluatorCache(), state, g_value, is_preferred,
-                        statistics, calculate_preferred) {
+                        statistics, calculate_preferred, d_value) {
 }
 
 EvaluationContext::EvaluationContext(
     const State &state,
     SearchStatistics *statistics, bool calculate_preferred)
     : EvaluationContext(EvaluatorCache(), state, INVALID, false,
-                        statistics, calculate_preferred) {
+                        statistics, calculate_preferred, INVALID) {
 }
 
 const EvaluationResult &EvaluationContext::get_result(Evaluator *evaluator) {
@@ -66,6 +67,11 @@ const State &EvaluationContext::get_state() const {
 int EvaluationContext::get_g_value() const {
     assert(g_value != INVALID);
     return g_value;
+}
+
+int EvaluationContext::get_d_value() const {
+    assert(d_value != INVALID);
+    return d_value;
 }
 
 bool EvaluationContext::is_preferred() const {

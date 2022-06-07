@@ -4,6 +4,7 @@
 #include "../option_parser_util.h"
 
 #include "../evaluators/g_evaluator.h"
+#include "../evaluators/d_evaluator.h"
 #include "../evaluators/sum_evaluator.h"
 #include "../evaluators/weighted_evaluator.h"
 
@@ -19,6 +20,7 @@ namespace search_common {
 using GEval = g_evaluator::GEvaluator;
 using SumEval = sum_evaluator::SumEvaluator;
 using WeightedEval = weighted_evaluator::WeightedEvaluator;
+using DEval = d_evaluator::DEvaluator;
 
 shared_ptr<OpenListFactory> create_standard_scalar_open_list_factory(
     const shared_ptr<Evaluator> &eval, bool pref_only) {
@@ -116,6 +118,23 @@ create_astar_open_list_factory_and_f_eval(const Options &opts) {
     shared_ptr<Evaluator> h = opts.get<shared_ptr<Evaluator>>("eval");
     shared_ptr<Evaluator> f = make_shared<SumEval>(vector<shared_ptr<Evaluator>>({g, h}));
     vector<shared_ptr<Evaluator>> evals = {f, h};
+
+    Options options;
+    options.set("evals", evals);
+    options.set("pref_only", false);
+    options.set("unsafe_pruning", false);
+    shared_ptr<OpenListFactory> open =
+        make_shared<tiebreaking_open_list::TieBreakingOpenListFactory>(options);
+    return make_pair(open, f);
+}
+
+pair<shared_ptr<OpenListFactory>, const shared_ptr<Evaluator>>
+create_shortest_astar_open_list_factory_and_f_eval(const Options &opts) {
+    shared_ptr<GEval> g = make_shared<GEval>();
+    shared_ptr<Evaluator> h = opts.get<shared_ptr<Evaluator>>("eval");
+    shared_ptr<Evaluator> f = make_shared<SumEval>(vector<shared_ptr<Evaluator>>({g, h}));
+    shared_ptr<DEval> d = make_shared<DEval>();
+    vector<shared_ptr<Evaluator>> evals = {f, d, h};
 
     Options options;
     options.set("evals", evals);

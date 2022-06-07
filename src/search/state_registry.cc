@@ -3,6 +3,9 @@
 #include "per_state_information.h"
 #include "task_proxy.h"
 
+#include "structural_symmetries/group.h"
+#include "structural_symmetries/permutation.h"
+
 #include "task_utils/task_properties.h"
 #include "utils/logging.h"
 
@@ -14,12 +17,27 @@ StateRegistry::StateRegistry(const TaskProxy &task_proxy)
       axiom_evaluator(g_axiom_evaluators[task_proxy]),
       num_variables(task_proxy.get_variables().size()),
       state_data_pool(get_bins_per_state()),
+      canonical_state_data_pool(get_bins_per_state()),
       registered_states(
           StateIDSemanticHash(state_data_pool, get_bins_per_state()),
-          StateIDSemanticEqual(state_data_pool, get_bins_per_state())) {
+          StateIDSemanticEqual(state_data_pool, get_bins_per_state())),
+      canonical_registered_states(
+          StateIDSemanticHash(canonical_state_data_pool, get_bins_per_state()),
+          StateIDSemanticEqual(canonical_state_data_pool, get_bins_per_state())),
+      group(0),
+      has_symmetries_and_uses_dks(false) {
+}
+
+void StateRegistry::set_group(const shared_ptr<Group> &group_) {
+    // Group is only set from eager_search if it has symmetries and uses DKS.
+    group = group_;
+    has_symmetries_and_uses_dks = true;
 }
 
 StateID StateRegistry::insert_id_or_pop_state() {
+    if (has_symmetries_and_uses_dks) {
+        return insert_id_or_pop_state_dks();
+    }
     /*
       Attempt to insert a StateID for the last state of state_data_pool
       if none is present yet. If this fails (another entry for this state
@@ -33,6 +51,36 @@ StateID StateRegistry::insert_id_or_pop_state() {
         state_data_pool.pop_back();
     }
     assert(registered_states.size() == static_cast<int>(state_data_pool.size()));
+    return StateID(result.first);
+}
+
+StateID StateRegistry::insert_id_or_pop_state_dks() {
+    /*
+      Attempt to insert a StateID for the last state of state_data_pool
+      if none is present yet. If this fails (another entry for this state
+      is present), we have to remove the duplicate entry from the
+      state data pool.
+    */
+    StateID id(state_data_pool.size() - 1);
+    // Adding an entry for the canonical state to the canonical_state_data_pool
+    vector<int> canonical_state =
+        group->get_canonical_representative(
+            task_proxy.create_state(*this, id, state_data_pool[state_data_pool.size() - 1]));
+    PackedStateBin *canonical_buffer = new PackedStateBin[state_packer.get_num_bins()];
+    fill_n(canonical_buffer, state_packer.get_num_bins(), 0);
+    for (int i = 0; i < num_variables; ++i) {
+        state_packer.set(canonical_buffer, i, canonical_state[i]);
+    }
+    canonical_state_data_pool.push_back(canonical_buffer);
+    delete[] canonical_buffer;
+
+    pair<int, bool> result = canonical_registered_states.insert(id.value);
+    bool is_new_entry = result.second;
+    if (!is_new_entry) {
+        state_data_pool.pop_back();
+        canonical_state_data_pool.pop_back();
+    }
+    assert(canonical_registered_states.size() == static_cast<int>(state_data_pool.size()));
     return StateID(result.first);
 }
 
@@ -93,6 +141,33 @@ State StateRegistry::get_successor_state(const State &predecessor, const Operato
         StateID id = insert_id_or_pop_state();
         return task_proxy.create_state(*this, id, buffer);
     }
+}
+
+State StateRegistry::register_state_buffer(const vector<int> &state) {
+    PackedStateBin *buffer = new PackedStateBin[state_packer.get_num_bins()];
+    fill_n(buffer, state_packer.get_num_bins(), 0);
+    for (int i = 0; i < num_variables; ++i) {
+        state_packer.set(buffer, i, state[i]);
+    }
+    state_data_pool.push_back(buffer);
+    delete[] buffer;
+    StateID id = insert_id_or_pop_state();
+    return lookup_state(id);
+}
+
+State StateRegistry::permute_state(const State &state, const Permutation &permutation) {
+    PackedStateBin *buffer = new PackedStateBin[state_packer.get_num_bins()];
+    fill_n(buffer, state_packer.get_num_bins(), 0);
+    for (int i = 0; i < num_variables; ++i) {
+        pair<int, int> var_val = permutation.get_new_var_val_by_old_var_val(i, state[i].get_value());
+        assert(var_val.second < task_proxy.get_variables()[var_val.first].get_domain_size());
+        state_packer.set(buffer, var_val.first, var_val.second);
+    }
+    state_data_pool.push_back(buffer);
+    // buffer is copied by push_back
+    delete[] buffer;
+    StateID id = insert_id_or_pop_state();
+    return lookup_state(id);
 }
 
 int StateRegistry::get_bins_per_state() const {

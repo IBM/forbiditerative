@@ -1,4 +1,4 @@
-# See http://www.fast-downward.org/ForDevelopers/AddingSourceFiles
+# See https://www.fast-downward.org/ForDevelopers/AddingSourceFiles
 # for general information on adding source files and CMake plugins.
 #
 # All plugins are enabled by default and users can disable them by specifying
@@ -272,6 +272,14 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME D_EVALUATOR
+    HELP "The d-evaluator"
+    SOURCES
+        evaluators/d_evaluator
+    DEPENDS EVALUATORS_PLUGIN_GROUP
+)
+
+fast_downward_plugin(
     NAME COMBINING_EVALUATOR
     HELP "The combining evaluator"
     SOURCES
@@ -320,6 +328,13 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME LIMITED_PRUNING
+    HELP "Method for limiting another pruning method"
+    SOURCES
+        pruning/limited_pruning
+)
+
+fast_downward_plugin(
     NAME STUBBORN_SETS
     HELP "Base class for all stubborn set partial order reduction methods"
     SOURCES
@@ -357,7 +372,7 @@ fast_downward_plugin(
     HELP "Basic classes used for all search engines"
     SOURCES
         search_engines/search_common
-    DEPENDS ALTERNATION_OPEN_LIST G_EVALUATOR BEST_FIRST_OPEN_LIST SUM_EVALUATOR TIEBREAKING_OPEN_LIST WEIGHTED_EVALUATOR
+    DEPENDS ALTERNATION_OPEN_LIST G_EVALUATOR D_EVALUATOR BEST_FIRST_OPEN_LIST SUM_EVALUATOR TIEBREAKING_OPEN_LIST WEIGHTED_EVALUATOR
     DEPENDENCY_ONLY
 )
 
@@ -371,11 +386,28 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME SHORTEST_EAGER_SEARCH
+    HELP "Adapted eager search algorithm"
+    SOURCES
+        search_engines/shortest_eager_search
+    DEPENDS EAGER_SEARCH
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
     NAME PLUGIN_ASTAR
     HELP "A* search"
     SOURCES
         search_engines/plugin_astar
     DEPENDS EAGER_SEARCH SEARCH_COMMON
+)
+
+fast_downward_plugin(
+    NAME PLUGIN_SHORTEST_ASTAR
+    HELP "A* search"
+    SOURCES
+        search_engines/plugin_shortest_astar
+    DEPENDS SHORTEST_EAGER_SEARCH SEARCH_COMMON
 )
 
 fast_downward_plugin(
@@ -457,6 +489,7 @@ fast_downward_plugin(
         lp/lp_internals
         lp/lp_solver
     DEPENDS NAMED_VECTOR
+    DEPENDENCY_ONLY
 )
 
 fast_downward_plugin(
@@ -541,6 +574,15 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME CE_LANDMARK_CUT_HEURISTIC
+    HELP "The conditional effects LM-cut heuristic"
+    SOURCES
+        heuristics/ce_lm_cut_heuristic
+        heuristics/ce_lm_cut_landmarks
+    DEPENDS PRIORITY_QUEUES TASK_PROPERTIES
+)
+
+fast_downward_plugin(
     NAME MAX_HEURISTIC
     HELP "The Max heuristic"
     SOURCES
@@ -568,6 +610,36 @@ fast_downward_plugin(
         tasks/modified_operator_costs_task
     DEPENDS TASK_PROPERTIES
     DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME PLANS_GRAPH
+    HELP "Graph representation of multiple plans"
+    SOURCES
+        plans/plans_graph
+        plans/operator_interaction
+)
+
+fast_downward_plugin(
+    NAME EXTRA_TASKS_REFORMULATION
+    HELP "Non-core task transformations for reformulation"
+    SOURCES
+        tasks/plan_forbid_reformulated_task
+        tasks/graph_forbid_reformulated_task
+        tasks/multiset_forbid_reformulated_task
+        tasks/multisets_forbid_reformulated_task
+        tasks/supersets_forbid_reformulated_task
+        tasks/super_multisets_forbid_reformulated_task
+    DEPENDS PLANS_GRAPH TASK_PROPERTIES
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME FORBID_ITERATIVE
+    HELP "Forbid iterative search"
+    SOURCES
+        forbid_iterative_search
+    DEPENDS PLANS_GRAPH EXTRA_TASKS_REFORMULATION SEARCH_COMMON STRUCTURAL_SYMMETRIES
 )
 
 fast_downward_plugin(
@@ -705,9 +777,10 @@ fast_downward_plugin(
 
 fast_downward_plugin(
     NAME OPERATOR_COUNTING
-    HELP "Plugin containing the code for operator counting heuristics"
+    HELP "Plugin containing the code for operator-counting heuristics"
     SOURCES
         operator_counting/constraint_generator
+        operator_counting/delete_relaxation_constraints
         operator_counting/lm_cut_constraints
         operator_counting/operator_counting_heuristic
         operator_counting/pho_constraints
@@ -778,6 +851,60 @@ fast_downward_plugin(
     SOURCES
         algorithms/sccs
     DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME BLISS
+    HELP "Plugin containing a modified version of Bliss"
+    SOURCES
+        bliss/bignum.cc
+        bliss/defs.cc
+        bliss/graph.cc
+        bliss/heap.cc
+        bliss/kqueue.cc
+        bliss/kstack.cc
+        bliss/orbit.cc
+        bliss/partition.cc
+        bliss/timer.cc
+        bliss/uintseqhash.cc
+        bliss/utils.cc
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME STRUCTURAL_SYMMETRIES
+    HELP "Plugin containing the code for computing structural symmetries"
+    SOURCES
+        structural_symmetries/graph_creator.cc
+        structural_symmetries/group.cc
+        structural_symmetries/permutation.cc
+        structural_symmetries/operator_permutation.cc
+    DEPENDS BLISS
+)
+
+fast_downward_plugin(
+
+    NAME NOVELTY
+    HELP "Plugin containing the code for novelty heuristics"
+    SOURCES
+        heuristics/novelty_heuristic_simplified.cc
+        heuristics/novelty_heuristic.cc
+    DEPENDS TASK_PROPERTIES
+)
+
+fast_downward_plugin(
+    NAME RED_BLACK
+    HELP "Plugin containing the code for Red-Black Planning heuristics"
+    SOURCES
+        algorithms/topological_sort
+        algorithms/transitive_closure
+        red_black/red_black_operator
+        red_black/red_black_task_core
+        red_black/coloring_strategy
+        red_black/red_black_task
+        red_black/red_black_heuristic
+        red_black/dtg_operators
+    DEPENDS FF_HEURISTIC SCCS
 )
 
 fast_downward_add_plugin_sources(PLANNER_SOURCES)

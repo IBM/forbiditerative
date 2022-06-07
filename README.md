@@ -1,12 +1,172 @@
+# Forbid-Iterative (FI) Planner is an Automated PDDL based planner that includes planners for top-k, top-quality, and diverse computational tasks.
+
+## The codebase consists of multiple planners, for multiple computational problems:
+
+1. Top-k planning
+2. Top-quality planning
+3. Unordered top-quality planning
+4. Satisficing/Agile diverse planning
+5. Bounded diversity diverse planning
+6. Bounded quality diverse planning
+7. Bounded quality and diversity diverse planning
+8. Bounded quality optimal diversity diverse planning
+9. Sub(multi)set top-quality planning
+
+## The planners are based on the idea of obtaining multiple solutions by iteratively reformulating planning tasks to restrict the set of valid plans, forbidding previously found ones. Thus, the planners can be referred to as FI-top-k, FI-top-quality, FI-unordered-top-quality, FI-diverse-{agl,sat,bD,bQ,bQbD, bQoptD}.
+
+The example invocation code can be found (for the corresponding computational problem) in
+1. plan_topk.sh or plan_topk_via_unordered_topq.sh
+2. plan_topq_via_topk.sh or plan_topq_via_unordered_topq.sh
+3. plan_unordered_topq.sh
+4. plan_diverse_{agl,sat}.sh
+5. plan_diverse_bounded.sh
+6. plan_quality_bounded_diverse_sat.sh
+7. plan_quality_bounded_diversity_bounded_diverse.sh
+8. plan_quality_bounded_diversity_optimal_diverse.sh
+9. plan_{subset,submultiset}_topq.sh
+
+# Building
+For building the code please use
+```
+./build.py release64
+```
+
+# Running
+## FI-top-k
+```
+# ./plan_topk.sh <domain> <problem> <number-of-plans>
+./plan_topk.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 1000
+```
+## FI-top-quality
+```
+# ./plan_topq_via_topk.sh <domain> <problem> <quality-multiplier>
+./plan_topq_via_topk.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 1.1
+```
+## FI-unordered-top-quality
+```
+# ./plan_unordered_topq.sh <domain> <problem> <quality-multiplier>
+./plan_unordered_topq.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 1.1
+```
+## FI-diverse-agl
+```
+# ./plan_diverse_agl.sh <domain> <problem> <number-of-plans>
+./plan_diverse_agl.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10
+```
+## FI-diverse-sat
+```
+## See the dependencies below (1)
+# ./plan_diverse_sat.sh <domain> <problem> <number-of-plans> <diversity-metric> <larger-number-of-plans>
+./plan_diverse_sat.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 stability 20
+```
+## FI-diverse-bD
+``` 
+## See the dependencies below (1 and 2)
+# ./plan_diverse_bounded.sh <domain> <problem> <number-of-plans> <diversity-metric> <bound> <larger-number-of-plans>
+./plan_diverse_bounded.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 stability 0.25 20
+```
+## FI-diverse-bQ
+``` 
+## See the dependencies below (1)
+# ./plan_quality_bounded_diverse_sat.sh <domain> <problem> <number-of-plans> <quality-bound>  <diversity-metric> 
+./plan_quality_bounded_diverse_sat.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 1.1 stability 
+```
+## FI-diverse-bQbD
+``` 
+## See the dependencies below (1 and 2)
+# ./plan_quality_bounded_diversity_bounded_diverse.sh <domain> <problem> <number-of-plans> <quality-bound> <diversity-bound> <diversity-metric> 
+./plan_quality_bounded_diversity_bounded_diverse.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 1.1 0.1 stability 
+```
+## FI-diverse-bQoptD
+``` 
+## See the dependencies below (1 and 2)
+# ./plan_quality_bounded_diversity_optimal_diverse.sh <domain> <problem> <number-of-plans> <quality-bound> <diversity-metric>  
+./plan_quality_bounded_diversity_optimal_diverse.sh examples/logistics00/domain.pddl examples/logistics00/probLOGISTICS-4-0.pddl 10 1.1 stability 
+```
+
+
+# Dependencies
+For some of the diverse planners, the dependencies are as follows:
+1. Computation of a subset of plans is performed in a post-processing, path to the code should be specified in an environment variable **DIVERSE_SCORE_COMPUTATION_PATH**. The code can be found [here](https://github.com/IBM/diversescore).
+2. Note that for the diversity-bounded diverse planning and for diversity-optimal one the computation in a post-processing requires enabling CPLEX support in Fast Downward (see https://www.fast-downward.org/) and building the post-processing code with LP support.
+
+
+## Citing
+
+### Top-k planning
+```
+@InProceedings{katz-et-al-icaps2018,
+  title =        "A Novel Iterative Approach to Top-k Planning",
+  author =       "Michael Katz and Shirin Sohrabi and Octavian Udrea and Dominik Winterer",
+  booktitle =    "Proceedings of the Twenty-Eighth International Conference on
+                  Automated Planning and Scheduling (ICAPS 2018)",
+  publisher =    "{AAAI} Press",
+  pages =        "132--140",
+  year =         "2018"
+}
+```
+
+### Top-quality planning
+```
+@InProceedings{katz-et-al-aaai2020,
+  author =       "Michael Katz and Shirin Sohrabi and Octavian Udrea",
+  title =        "Top-Quality Planning: Finding Practically Useful Sets of Best Plans",
+  booktitle =    "Proceedings of the Thirty-Fourth {AAAI} Conference on
+                  Artificial Intelligence ({AAAI} 2020)",
+  publisher =    "{AAAI} Press",
+  pages =        "9900--9907",
+  year =         "2020"
+}
+
+@InProceedings{katz-sohrabi-icaps2022,
+  author =       "Michael Katz and Shirin Sohrabi",
+  title =        "Who Needs These Operators Anyway: Top Quality Planning with Operator Subset Criteria",
+  booktitle =    "Proceedings of the Thirty-Second International Conference on
+                  Automated Planning and Scheduling (ICAPS 2022)",
+  publisher =    "{AAAI} Press",
+  year =         "2022"
+}
+```
+
+### Diverse planning
+```
+@InProceedings{katz-sohrabi-aaai2020,
+  title =        "Reshaping diverse planning",
+  author =       "Michael Katz and Shirin Sohrabi",
+  booktitle =    "Proceedings of the Thirty-Fourth {AAAI} Conference on
+                  Artificial Intelligence ({AAAI} 2020)",
+  publisher =    "{AAAI} Press",
+  pages =        "9892--9899",
+  year =         "2020"
+}
+
+@InProceedings{katz-et-al-aaai2022,
+  title =        "Bounding Quality in Diverse Planning",
+  author =       "Michael Katz and Shirin Sohrabi and Octavian Udrea",
+  booktitle =    "Proceedings of the Thirty-Sixth {AAAI} Conference on
+                  Artificial Intelligence ({AAAI} 2022)",
+  publisher =    "{AAAI} Press",
+  year =         "2022"
+}
+```
+
+## Licensing
+
+Forbid-Iterative (FI) Planner is an Automated PDDL based planner that
+includes planners for top-k, top-quality, and diverse computational
+tasks. Copyright (C) 2019  Michael Katz, IBM Research, USA.
+The code extends the Fast Downward planning system. The license for the
+extension is specified in the LICENSE file.
+
+## Fast Downward
 <img src="misc/images/fast-downward.svg" width="800" alt="Fast Downward">
 
 Fast Downward is a domain-independent classical planning system.
 
-Copyright 2003-2020 Fast Downward contributors (see below).
+Copyright 2003-2022 Fast Downward contributors (see below).
 
 For further information:
-- Fast Downward website: <http://www.fast-downward.org>
-- Report a bug or file an issue: <http://issues.fast-downward.org>
+- Fast Downward website: <https://www.fast-downward.org>
+- Report a bug or file an issue: <https://issues.fast-downward.org>
 - Fast Downward mailing list: <https://groups.google.com/forum/#!forum/fast-downward>
 - Fast Downward main repository: <https://github.com/aibasel/downward>
 
@@ -23,7 +183,7 @@ This version of Fast Downward has been tested with the following software versio
 | Windows 10   | 3.6    | Visual Studio Enterprise 2017 (MSVC 19.16) and 2019 (MSVC 19.28) | 3.19  |
 
 We test LP support with CPLEX 12.9, SoPlex 3.1.1 and Osi 0.107.9.
-On Ubuntu, we test both CPLEX and SoPlex. On Windows, we currently 
+On Ubuntu, we test both CPLEX and SoPlex. On Windows, we currently
 only test CPLEX, and on macOS, we do not test LP solvers (yet).
 
 
@@ -37,22 +197,26 @@ Currently, this list is sorted by the last year the person has been
 active, and in case of ties, by the earliest year the person started
 contributing, and finally by last name.
 
-- 2003-2020 Malte Helmert
-- 2008-2016, 2018-2020 Gabriele Roeger
-- 2010-2020 Jendrik Seipp
-- 2010-2011, 2013-2020 Silvan Sievers
-- 2012-2020 Florian Pommerening
-- 2013, 2015-2020 Salome Eriksson
+- 2003-2022 Malte Helmert
+- 2008-2016, 2018-2022 Gabriele Roeger
+- 2010-2022 Jendrik Seipp
+- 2010-2011, 2013-2022 Silvan Sievers
+- 2012-2022 Florian Pommerening
+- 2013, 2015-2022 Salomé Eriksson
+- 2018-2022 Patrick Ferber
+- 2021-2022 Clemens Büchner
+- 2021-2022 Dominik Drexler
+- 2022 Remo Christen
+- 2015, 2021 Thomas Keller
 - 2016-2020 Cedric Geissmann
 - 2017-2020 Guillem Francès
 - 2018-2020 Augusto B. Corrêa
-- 2018-2020 Patrick Ferber
+- 2020 Rik de Graaff
 - 2015-2019 Manuel Heusner
 - 2017 Daniel Killenberger
 - 2016 Yusra Alkhazraji
 - 2016 Martin Wehrle
 - 2014-2015 Patrick von Reth
-- 2015 Thomas Keller
 - 2009-2014 Erez Karpas
 - 2014 Robert P. Goldman
 - 2010-2012 Andrew Coles
