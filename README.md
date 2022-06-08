@@ -32,7 +32,7 @@ The example invocation code can be found (for the corresponding computational pr
 # Building
 For building the code please use
 ```
-./build.py release64
+./build.py 
 ```
 
 # Running
