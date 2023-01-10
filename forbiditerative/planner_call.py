@@ -50,7 +50,9 @@ class PlannerCall(object):
 
 class ReformulationPlannerCall(PlannerCall):
     def get_callstring(self, **kwargs):
-        return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + self.build_args() + \
+        return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + \
+               (["--build", kwargs['build']] if 'build' in kwargs else []) + \
+               self.build_args() + \
                ["{curr_task_name}".format(**kwargs), "--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
                self.planner_args(**kwargs)
 
@@ -183,7 +185,9 @@ class ShortestOptimalPlannerCall(PlannerCall):
     #     return path
 
     def get_callstring(self, **kwargs):
-        return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + self.get_task_args(**kwargs) + \
+        return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + \
+               (["--build", kwargs['build']] if 'build' in kwargs else []) + \
+               self.get_task_args(**kwargs) + \
                ["--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
                self.planner_args(**kwargs)
 
@@ -211,7 +215,9 @@ class CerberusPlannerCall(PlannerCall):
     #     return path
 
     def get_callstring(self, **kwargs):
-        return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + self.get_task_args(**kwargs) + \
+        return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + \
+               (["--build", kwargs['build']] if 'build' in kwargs else []) + \
+               self.get_task_args(**kwargs) + \
                ["--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
                self.planner_args(**kwargs)
 
@@ -261,7 +267,9 @@ class AdditionalPlansPlannerCall(BasePlannerCall):
 
 class PlansToJsonPlannerCall(PlannerCall):
     def get_callstring(self, **kwargs):
-        return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + self.build_args() + \
+        return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + \
+               (["--build", kwargs['build']] if 'build' in kwargs else []) + \
+               self.build_args() + \
                [os.path.abspath("{domain_file}".format(**kwargs)), os.path.abspath("{problem_file}".format(**kwargs))] + \
                self.planner_args(**kwargs)
 
