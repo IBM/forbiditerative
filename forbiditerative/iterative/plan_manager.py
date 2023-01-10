@@ -6,7 +6,7 @@ import itertools
 import os
 import re
 import logging
-import copy_plans
+from forbiditerative import copy_plans
 import json
 
 _PLAN_INFO_REGEX = re.compile(r"; cost = (\d+) \((unit cost|general cost)\)\n")

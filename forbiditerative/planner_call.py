@@ -51,8 +51,8 @@ class PlannerCall(object):
 class ReformulationPlannerCall(PlannerCall):
     def get_callstring(self, **kwargs):
         return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + self.build_args() + \
-            ["{curr_task_name}".format(**kwargs), "--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
-            self.planner_args(**kwargs)
+               ["{curr_task_name}".format(**kwargs), "--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
+               self.planner_args(**kwargs)
 
 
 class TopqReformulationPlannerCall(ReformulationPlannerCall):
@@ -137,12 +137,13 @@ class TopkReformulationPlannerCall(ReformulationPlannerCall):
                external_plan_file={external_plan_file})".format(**kwargs)]
 
 
-
 class BasePlannerCall(PlannerCall):
     def get_callstring(self, **kwargs):
-        return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + self.build_args() + self.get_task_args(**kwargs) + \
-            ["--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
-            self.planner_args(**kwargs)
+        return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + \
+               (["--build", kwargs['build']] if 'build' in kwargs else []) + \
+               self.build_args() + self.get_task_args(**kwargs) + \
+               ["--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
+               self.planner_args(**kwargs)
 
 
 
@@ -183,8 +184,8 @@ class ShortestOptimalPlannerCall(PlannerCall):
 
     def get_callstring(self, **kwargs):
         return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + self.get_task_args(**kwargs) + \
-            ["--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
-            self.planner_args(**kwargs)
+               ["--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
+               self.planner_args(**kwargs)
 
     def planner_args(self, **kwargs):
         shortest = "shortest" in kwargs and kwargs["shortest"]
@@ -211,8 +212,8 @@ class CerberusPlannerCall(PlannerCall):
 
     def get_callstring(self, **kwargs):
         return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + self.get_task_args(**kwargs) + \
-            ["--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
-            self.planner_args(**kwargs)
+               ["--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
+               self.planner_args(**kwargs)
 
     def planner_args(self, **kwargs):
         return self._get_cerberus_first(pref="true", dag="from_coloring")
@@ -261,8 +262,8 @@ class AdditionalPlansPlannerCall(BasePlannerCall):
 class PlansToJsonPlannerCall(PlannerCall):
     def get_callstring(self, **kwargs):
         return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + self.build_args() + \
-                [os.path.abspath("{domain_file}".format(**kwargs)), os.path.abspath("{problem_file}".format(**kwargs))] + \
-            self.planner_args(**kwargs)
+               [os.path.abspath("{domain_file}".format(**kwargs)), os.path.abspath("{problem_file}".format(**kwargs))] + \
+               self.planner_args(**kwargs)
 
     def planner_args(self, **kwargs):
         return ["--search", \

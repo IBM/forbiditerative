@@ -3,12 +3,10 @@
 import os, shutil
 # import glob
 import logging
-import timers
-from driver import limits
 import math
 
 # from planner_call import BaseCostOptimalPlannerCall, ShortestOptimalPlannerCall, CerberusPlannerCall, TopqReformulationPlannerCall, TopkReformulationPlannerCall, DiverseReformulationPlannerCall, AdditionalPlansPlannerCall, make_call
-import planner_call 
+from forbiditerative import planner_call, timers
 from . import plan_manager as pm 
 
 class Planner(object): 
@@ -39,6 +37,8 @@ class Planner(object):
         logging.info("Running external planner to get a plan")
 
         pcargs = kwargs
+        if self._args.build:
+            pcargs["build"] = self._args.build
         pcargs["domain_file"] = self._args.domain
         pcargs["problem_file"] = self._args.problem
         pcargs["sas_file"] = self._args.sas_file
