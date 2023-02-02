@@ -205,7 +205,7 @@ public:
     void dump_plans(PlanManager& plan_manager, size_t number_of_plans);
 
     void dump_graph();
-    void dump_graph_dot(int num_plan, bool verbose);
+    void dump_dot_graph(int num_plan, bool verbose);
     void dump_graph_file(int num_plan);
     void add_non_deterministic_plan(std::vector<std::string> plan);
     int get_number_of_plans_dumped() const { return optimal_plans.size(); }

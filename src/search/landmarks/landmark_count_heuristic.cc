@@ -4,6 +4,7 @@
 #include "landmark_cost_assignment.h"
 #include "landmark_factory.h"
 #include "landmark_status_manager.h"
+#include "util.h"
 
 #include "../option_parser.h"
 #include "../per_state_bitset.h"
@@ -94,6 +95,8 @@ LandmarkCountHeuristic::LandmarkCountHeuristic(const options::Options &opts)
     } else {
         lm_cost_assignment = nullptr;
     }
+    if (opts.get<bool>("dump_action_landmarks"))
+        dump_landmarks_json(task_proxy, *lgraph);
 
     if (use_preferred_operators) {
         /* Ideally, we should reuse the successor generator of the main task in cases
@@ -368,6 +371,8 @@ static shared_ptr<Heuristic> _parse(OptionParser &parser) {
                             "(see OptionCaveats#Using_preferred_operators_"
                             "with_the_lmcount_heuristic)", "false");
     parser.add_option<bool>("alm", "use action landmarks", "true");
+    parser.add_option<bool>("dump_action_landmarks", "dump action landmarks", "false");
+
     lp::add_lp_solver_option_to_parser(parser);
     Heuristic::add_options_to_parser(parser);
     Options opts = parser.parse();

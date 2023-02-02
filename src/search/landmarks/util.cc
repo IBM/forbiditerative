@@ -5,8 +5,12 @@
 
 #include "../task_proxy.h"
 #include "../utils/logging.h"
+#include "../utils/strings.h"
 
+#include <string>
 #include <limits>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -141,5 +145,40 @@ void dump_landmark_graph(const TaskProxy &task_proxy, const LandmarkGraph &graph
     }
     cout << "}" << endl;
     utils::g_log << "Landmark graph end." << endl;
+}
+
+static string dump_facts_json(const TaskProxy &task_proxy, const LandmarkNode &node) {
+    vector<string> facts;
+    for (FactPair fact : node.get_landmark().facts) {
+        facts.push_back("\"" + task_proxy.get_variables()[fact.var].get_fact(fact.value).get_name() + "\"");
+    }
+    return utils::join(facts, ", ");
+}
+
+static string dump_achievers_json(const TaskProxy &task_proxy, const LandmarkNode &node) {
+    vector<string> action_names;
+    for (int op_id : node.get_landmark().first_achievers) {
+        action_names.push_back("\"" + task_proxy.get_operators()[op_id].get_name() + "\"");
+    }
+    return utils::join(action_names, ", ");
+}
+
+static string dump_node_json(const TaskProxy &task_proxy, const LandmarkNode &node) {
+    return "{ \"facts\" : [" + dump_facts_json(task_proxy, node) + "], \"disjunctive\" : " + 
+        ((node.get_landmark().disjunctive) ? "\"True\"" : "\"False\"") + ", \"first_achievers\" : [" + 
+        dump_achievers_json(task_proxy, node) + "]}";
+}
+
+void dump_landmarks_json(const TaskProxy &task_proxy, const LandmarkGraph &graph) {
+    utils::g_log << "Dumping landmarks from landmark graph: " << endl;
+    ofstream os("landmarks.json");
+    os << "{ \"landmarks\" : [" << endl;
+    vector<string> nodes_json;
+    for (const unique_ptr<LandmarkNode> &node : graph.get_nodes()) {
+        nodes_json.push_back(dump_node_json(task_proxy, *node));
+    }
+    os << utils::join(nodes_json, ", \n");
+    os << "]}" << endl;
+    utils::g_log << "Action landmarks end." << endl;
 }
 }

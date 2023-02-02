@@ -167,9 +167,9 @@ SearchStatus ForbidIterativeSearch::step() {
             }
             os << "]}" << endl;
         }
-        if (reformulate == TaskReformulationType::NONE) {
-            utils::exit_with(utils::ExitCode::SUCCESS);
-        }
+        // if (reformulate == TaskReformulationType::NONE) {
+        //     utils::exit_with(utils::ExitCode::SUCCESS);
+        // }
         
         utils::HashSet<Plan> unique_plans;
         vector<Plan> ordered_unique_plans;
@@ -299,7 +299,7 @@ plans::PlansGraph* ForbidIterativeSearch::create_forbid_graph_and_dump_multiple_
 
     //utils::g_log << "=========================================================================" << endl;
     if (dump_debug_info)
-        forbid_graph->dump_graph_dot(plan_manager.get_num_previously_generated_plans(), false);
+        forbid_graph->dump_dot_graph(plan_manager.get_num_previously_generated_plans(), false);
 
     utils::g_log << "Dumping plans before reformulation " << endl;
     forbid_graph->dump_plans(plan_manager, number_of_plans);
@@ -700,7 +700,7 @@ void ForbidIterativeSearch::reformulate_and_dump_read_plans_and_dump_graph(const
         }
         forbid_graph->add_non_deterministic_plan(plan);
     }
-    forbid_graph->dump_graph_file(plan_manager.get_num_previously_generated_plans());
+    forbid_graph->dump_dot_graph(plan_manager.get_num_previously_generated_plans(), true);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

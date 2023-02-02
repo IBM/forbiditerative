@@ -764,23 +764,23 @@ void PlansGraph::dump_graph() {
 }
 
 
-void PlansGraph::dump_graph_dot(int num_plan, bool verbose) {
+void PlansGraph::dump_dot_graph(int num_plan, bool verbose) {
 	ofstream os("graph" + std::to_string(num_plan) + ".dot");
 	os << "digraph {\n";
 	OperatorsProxy operators = task_proxy.get_operators();
 
 	for (const StateID& from : get_nodes()) {
 		State from_state = registry->lookup_state(from);
-		os << from << " [ peripheries=\"1\", shape=\"rectangle\", ";
+		os << "node"<<from.hash() << " [ peripheries=\"1\", shape=\"rectangle\", ";
 
 		if (task_properties::is_goal_state(task_proxy, from_state)) {
 			os << "style=\"rounded, filled\", fillcolor=\"red\", ";
 		} else {
 			os << "style=\"rounded, filled\", fillcolor=\"yellow\", ";
 		}
-		os << "label=\""<< from << "\\n";
-		os << " init dist: " << get_init_distance(from_state) << "\\n";
-		os << " dist: " << get_goal_distance(from_state) << "\\n";
+		os << "label=\""<< "node"<<from.hash() << "\\n";
+		// os << " init dist: " << get_init_distance(from_state) << "\\n";
+		// os << " dist: " << get_goal_distance(from_state) << "\\n";
 		if (verbose)
 			os << state_label(from_state) << "\\n";
 		os << "\" ]\n";
@@ -791,9 +791,10 @@ void PlansGraph::dump_graph_dot(int num_plan, bool verbose) {
 			int op_no = edge.first;
 			const StateID& to = edge.second;
 
-			os << from << "  ->  " << to;
-			os <<" [ label=\"#" << operators[op_no].get_name();
-			os << "/"<< operators[op_no].get_cost();
+			os << "node"<<from.hash() << "  ->  " << "node"<<to.hash();
+			os <<" [ label=\"" << operators[op_no].get_name();
+			if (!task_properties::is_unit_cost(task_proxy))
+				os << " (cost "<< operators[op_no].get_cost() << ")";
 			os << "\" ]\n";
 
 		}

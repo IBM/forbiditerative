@@ -24,6 +24,7 @@ extern OperatorProxy get_operator_or_axiom(const TaskProxy &task_proxy, int op_o
 extern int get_operator_or_axiom_id(const OperatorProxy &op);
 
 extern void dump_landmark_graph(const TaskProxy &task_proxy, const LandmarkGraph &graph);
+extern void dump_landmarks_json(const TaskProxy &task_proxy, const LandmarkGraph &graph);
 }
 
 #endif

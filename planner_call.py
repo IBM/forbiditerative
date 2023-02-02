@@ -45,7 +45,7 @@ class PlannerCall(object):
         elif "sas_file" in kwargs and kwargs["sas_file"] is not None:
             return [ os.path.abspath("{sas_file}".format(**kwargs)) ]
         else:
-            return [os.path.abspath("{domain_file}".format(**kwargs)), os.path.abspath("{problem_file}".format(**kwargs))]
+            return ["--transform-task", "preprocess", os.path.abspath("{domain_file}".format(**kwargs)), os.path.abspath("{problem_file}".format(**kwargs))]
 
 
 class ReformulationPlannerCall(PlannerCall):
