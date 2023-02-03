@@ -155,7 +155,6 @@ private:
     void add_plan_dfs_naive_no_duplicate_detection(PlanManager& plan_manager, const Plan& plan);
 
     void add_plan_reduce_order_neighbors(const Plan& plan);
-    void add_plan_no_reduce(const Plan& plan);
     void dump_plans_bfs(int number_of_plans);
     // For DFS dump procedure we need a bound on plan cost
     void find_plans_dfs(PlanManager& plan_manager, size_t number_of_plans);
@@ -207,7 +206,7 @@ public:
     void dump_graph();
     void dump_dot_graph(int num_plan, bool verbose);
     void dump_graph_file(int num_plan);
-    void add_non_deterministic_plan(std::vector<std::string> plan);
+    // void add_non_deterministic_plan(std::vector<std::string> plan);
     int get_number_of_plans_dumped() const { return optimal_plans.size(); }
     void set_num_edges_until_greedy_clean(int num) { num_edges_until_greedy_clean = num; }
 
@@ -215,6 +214,9 @@ public:
     void dump_reordering_plans_neighbours_interfere(Plan& plan);
 	void plan_to_multiset(const Plan &plan, MultisetPlan& plan_multiset) const;
 	void plan_to_multiset(const std::vector<int> &plan, MultisetPlan& plan_multiset) const;
+
+	// Made public to support manual creation of plans graph for dumping to dot
+    void add_plan_no_reduce(const Plan& plan);
 
 };
 }

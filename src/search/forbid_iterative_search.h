@@ -67,7 +67,7 @@ private:
     void reformulate_and_dump_multiple_plans_graph(const char* filename, bool optimal, const Plan &current_plan);
     void reformulate_and_dump_multiset(const char* filename, std::vector<Plan> &current_plans);
     void reformulate_and_dump_superset(const char* filename, std::vector<Plan> &current_plans);
-    void reformulate_and_dump_read_plans_and_dump_graph(const char* filename, bool optimal) const;
+    void reformulate_and_dump_read_plans_and_dump_graph(const char* filename, std::vector<Plan> &current_plans) const;
     // void compute_metrics(const options::Options &opts, const std::vector<std::vector<const GlobalOperator *>>& plans);
 
     std::shared_ptr<AbstractTask> create_reformulated_task(std::vector<std::vector<int>>& plans) const;

@@ -241,7 +241,7 @@ void ForbidIterativeSearch::reformulate_and_dump(bool optimal, std::vector<Plan>
     } else if (reformulate == TaskReformulationType::FORBID_MULTIPLE_PLAN_SUPERSETS) {
         reformulate_and_dump_superset(filename, plans);
     } else if (read_plans_and_dump_graph > 0) {
-        reformulate_and_dump_read_plans_and_dump_graph(filename, optimal);
+        reformulate_and_dump_read_plans_and_dump_graph(filename, plans);
     }
 }
 
@@ -674,31 +674,20 @@ bool ForbidIterativeSearch::multiset_union(std::unordered_map<int, int>& multise
     return !is_proper_subset;
 }
 
-///TODO: Check if we need this method
-void ForbidIterativeSearch::reformulate_and_dump_read_plans_and_dump_graph(const char* filename, bool optimal) const {
+void ForbidIterativeSearch::reformulate_and_dump_read_plans_and_dump_graph(const char* filename, std::vector<Plan> &current_plans) const {
     ofstream os(filename);
     assert(number_of_plans >= 0);
-    shared_ptr<plans::PlansGraph> forbid_graph = make_shared<plans::PlansGraph>(task_proxy, number_of_plans, optimal);
-    for (int plan_no=1; plan_no <= read_plans_and_dump_graph; ++plan_no) {
-        ifstream planfile;
-        string fname = "found_plans/done/sas_plan." + std::to_string(plan_no);
-        planfile.open(fname);
 
-        if (!planfile.is_open()) {
-            cerr << "File is not open!" << endl;
-        }
-        string line;
-        //utils::g_log << "-----------------------------------------------------------------------" << endl;
-        //utils::g_log << "Plan " << plan_no << endl;
-        vector<string> plan;
-        while(std::getline(planfile, line)) {
-            if (line.size() == 0 || line[0] == ';')
-                continue;
-            string op_name = line.substr(1, line.size()-2);
-            //  utils::g_log << op_name << endl;
-            plan.push_back(op_name);
-        }
-        forbid_graph->add_non_deterministic_plan(plan);
+    shared_ptr<plans::PlansGraph> forbid_graph = make_shared<plans::PlansGraph>(task_proxy, number_of_plans, true);
+    // OperatorsProxy operators = task_proxy.get_operators();
+
+    for (auto p : current_plans) {
+        // vector<string> plan;
+        // for (auto a : p) {
+        //     plan.push_back(operators[a].get_name());
+        // }
+        forbid_graph->add_plan_no_reduce(p);
+        // forbid_graph->add_non_deterministic_plan(plan);
     }
     forbid_graph->dump_dot_graph(plan_manager.get_num_previously_generated_plans(), true);
 }

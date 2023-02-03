@@ -949,23 +949,23 @@ inline vector<int> get_ops_no_from_name(const TaskProxy& task_proxy, string op_n
 }
 
 
-void PlansGraph::add_non_deterministic_plan(vector<string> plan) {
+// void PlansGraph::add_non_deterministic_plan(vector<string> plan) {
 	
-	OperatorsProxy operators = task_proxy.get_operators();
-	State current = registry->get_initial_state();
-	for (size_t i=0; i < plan.size(); ++i) {
-		string op_name = plan[i];
-		for (int op_no : get_ops_no_from_name(task_proxy, op_name)) {
-			const OperatorProxy& op = operators[op_no];
-			if (!task_properties::is_applicable(op, current)) {
-	            utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
-			}
-			const State& next = registry->get_successor_state(current, op);
-			add_edge(current, op_no, next);
-			current = next;
-		}
-	}
-}
+// 	OperatorsProxy operators = task_proxy.get_operators();
+// 	State current = registry->get_initial_state();
+// 	for (size_t i=0; i < plan.size(); ++i) {
+// 		string op_name = plan[i];
+// 		for (int op_no : get_ops_no_from_name(task_proxy, op_name)) {
+// 			const OperatorProxy& op = operators[op_no];
+// 			if (!task_properties::is_applicable(op, current)) {
+// 	            utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
+// 			}
+// 			const State& next = registry->get_successor_state(current, op);
+// 			add_edge(current, op_no, next);
+// 			current = next;
+// 		}
+// 	}
+// }
 
 
 
