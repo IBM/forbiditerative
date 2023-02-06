@@ -22,30 +22,26 @@ ENV LANG=en_US.UTF-8 \
 	CXX=g++ \
 	HOME=/app \
 	BASE_DIR=/app/planners \
-    INT_BUILD_COMMIT_ID=1a0e1a3 \
-    DIV_SC_BUILD_COMMIT_ID=bd98eae
-    
-
-# Artifactory credentials are used to set up access to internal packages
-ARG ARTIFACTORY_USERNAME
-ARG ARTIFACTORY_API_KEY
-ENV ARTIFACTORY_USERNAME=$ARTIFACTORY_USERNAME
-ENV ARTIFACTORY_API_KEY=$ARTIFACTORY_API_KEY
+    INT_BUILD_COMMIT_ID=1e53834 \
+    DIV_SC_BUILD_COMMIT_ID=af16888
 
 WORKDIR $BASE_DIR/integrated/
 
 # Fetch the code at the right commit ID from the Github repo
-RUN curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_API_KEY -L https://github.ibm.com/research-planning/integrated-planner/archive/${INT_BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1 \
+RUN curl -L https://github.com/IBM/forbiditerative/archive/${INT_BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1 \
 # Invoke the build script with appropriate options
-    && python ./build.py -j4 \
+    && python ./build.py \
 # Strip the main binary to reduce size
     && strip --strip-all builds/release/bin/downward
 
+#################################
+# Download and Install diverse score computation
+#################################
 WORKDIR $BASE_DIR/diversescore/
 # Fetch the code at the right commit ID from the Github repo
 RUN curl -L https://github.com/IBM/diversescore/archive/${DIV_SC_BUILD_COMMIT_ID}.tar.gz | tar xz --strip=1 \
 # Invoke the build script with appropriate options
-    && python ./build.py -j4 \
+    && python ./build.py \
 # Strip the main binary to reduce size
     && strip --strip-all builds/release/bin/downward
 
