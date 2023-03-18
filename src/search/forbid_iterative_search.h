@@ -59,6 +59,17 @@ private:
     bool is_external_plans_path;
     bool is_json_file_to_dump;
 
+    // Components associated with deduplication
+    // 1. A flag to indicate whether deduplication is enabled
+    // 2. A predefined string of action name prefix (pr)
+    //    such that duplicate will be name original_action_name + pr + #no
+    bool is_deduplicating;
+    std::string duplicate_prefix;
+    // 2. A function to extend multisets to consider potential duplicates
+    void extend_for_duplicates(std::unordered_map<int, int>& multiset) const;
+    // 3. A function to identify the original action name
+    std::string get_original_name(std::string act_name) const;
+
     void get_plan_for_op_ids(const std::vector<int>& plan_ids, Plan& plan) const;
 
     plans::PlansGraph* create_forbid_graph_and_dump_multiple_plans(bool optimal, const Plan &current_plan);
