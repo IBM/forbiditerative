@@ -2,12 +2,14 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from setuptools import setup, find_packages, Extension
+from setuptools import Extension
 from setuptools.command.build_ext import build_ext
+from setuptools.command.build_py import build_py as build_py
 import multiprocessing
 
 try:
     from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+
 
     class bdist_wheel(_bdist_wheel):
         def finalize_options(self):
@@ -28,6 +30,17 @@ class CMakeExtension(Extension):
     def __init__(self, name):
         # don't invoke the original build_ext for this special extension
         super().__init__(name, sources=[])
+
+
+class BuildPy(build_py):
+    def run(self):
+        self.run_command("build_ext")
+        return super().run()
+
+    def initialize_options(self):
+        super().initialize_options()
+        if self.distribution.ext_modules is None:
+            self.distribution.ext_modules = [CMakeExtension('src')]
 
 
 class BuildCMakeExt(build_ext):
@@ -76,25 +89,3 @@ class BuildCMakeExt(build_ext):
         # temporary CMake files including "CMakeCache.txt" in top level dir.
         os.chdir(str(cwd))
         shutil.copytree(build_temp / 'bin', Path(self.build_lib) / 'forbiditerative' / 'builds' / 'release' / 'bin', dirs_exist_ok=True)
-
-
-setup(
-    name="forbiditerative",
-    version="0.0.1",
-    description="forbiditerative",
-    long_description=Path("README.md").read_text(),
-    url="https://github.com/IBM/forbiditerative",
-    license=Path("LICENSE").read_text(),
-    packages=find_packages(),
-    package_data={
-        'forbiditerative': ['builds/release/bin/**/*', 'builds/release/bin/*'],
-        'driver': ['portfolios/*']
-    },
-    install_requires=[],
-    classifiers=["Programming Language :: Python :: 3.8"],
-    ext_modules=[CMakeExtension('src')],
-    cmdclass={
-        'build_ext': BuildCMakeExt,
-        'bdist_wheel': bdist_wheel
-    }
-)

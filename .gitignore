@@ -1,10 +1,12 @@
 .DS_Store
 .idea/
+.tox/
 build/
 builds/
 dist/
 *.egg-info/
 __pycache__/
+found_plans/
 /output.sas
 /sas_plan
 /sas_plan.*
