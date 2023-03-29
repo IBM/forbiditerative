@@ -14,7 +14,7 @@ domain="$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
 problem="$(cd "$(dirname "$2")"; pwd)/$(basename "$2")"
 
 SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd)"
-$SOURCE/plan.py --planner extended_unordered_topq --domain $domain --problem $problem --number-of-plans $3 --quality-bound $4 --symmetries --use-local-folder --clean-local-folder #--suppress-planners-output #--keep-intermediate-tasks 
+export PYTHONPATH=$PWD && $SOURCE/forbiditerative/plan.py --planner extended_unordered_topq --domain $domain --problem $problem --number-of-plans $3 --quality-bound $4 --symmetries --use-local-folder --clean-local-folder #--suppress-planners-output #--keep-intermediate-tasks
 
 FINALPLANSDIR=$PWD/found_plans/done
 PLANSDIR=$PWD/found_plans/almost_done
@@ -22,7 +22,7 @@ PLANSDIR=$PWD/found_plans/almost_done
 ## Renaming the folder
 mv $FINALPLANSDIR $PLANSDIR
 
-source $SOURCE/helper_functions.sh
+source $SOURCE/forbiditerative/helper_functions.sh
 
 num_found_plans=`ls -1q $PLANSDIR/sas_plan.* | wc -l | tr -d '[:space:]'`
 echo "The number of plans found after extending is "$num_found_plans

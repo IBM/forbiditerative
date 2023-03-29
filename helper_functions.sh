@@ -33,7 +33,7 @@ function extend_plans_complete {
 
             SEARCH_PARAMS="forbid_iterative(reformulate=NONE_FIND_ADDITIONAL_PLANS,dump=false,number_of_plans=$remaining,external_plan_file=$plan_file)"
             (cd $PLANSDIR && 
-                $SOURCE/fast-downward.py $domain $problem --internal-previous-portfolio-plans $found_so_far --search $SEARCH_PARAMS)
+                export PYTHONPATH=$PWD && python ./forbiditerative/fast-downward.py $domain $problem --internal-previous-portfolio-plans $found_so_far --search $SEARCH_PARAMS)
             # Check how many plans we now have
             found_so_far=`ls -1q $PLANSDIR/sas_plan.* | wc -l`
             if [ "$found_so_far" -ge $NUM_PLANS ]; then
@@ -66,7 +66,7 @@ function extend_plans_uniformly {
             echo "Generating additional $n plans for each found plan"
             SEARCH_PARAMS="forbid_iterative(reformulate=NONE_FIND_ADDITIONAL_PLANS,dump=false,number_of_plans=$n,external_plan_file=$plan_file)"
             (cd $PLANSDIR && 
-                $SOURCE/fast-downward.py $domain $problem --internal-previous-portfolio-plans $found_so_far --search $SEARCH_PARAMS)
+                export PYTHONPATH=$PWD && python ./fast-downward.py $domain $problem --internal-previous-portfolio-plans $found_so_far --search $SEARCH_PARAMS)
             # Check how many plans we now have
             found_so_far=`ls -1q $PLANSDIR/sas_plan.* | wc -l`
         done

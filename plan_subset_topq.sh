@@ -16,6 +16,6 @@ if [ "$#" -eq 4 ]; then
 fi
 
 SOURCE="$( dirname "${BASH_SOURCE[0]}" )"
-$SOURCE/plan.py --planner subsets_topq --domain $1 --problem $2 --quality-bound $3 $KBOUND --symmetries --use-local-folder --clean-local-folder --suppress-planners-output  #--keep-intermediate-tasks  #
-# $SOURCE/plan.py --planner subsets_topq --domain $1 --problem $2 --quality-bound $3 $KBOUND --symmetries --use-local-folder --keep-intermediate-tasks  #--clean-local-folder
+export PYTHONPATH=$PWD && $SOURCE/forbiditerative/plan.py --planner subsets_topq --domain $1 --problem $2 --quality-bound $3 $KBOUND --symmetries --use-local-folder --clean-local-folder --suppress-planners-output  #--keep-intermediate-tasks  #
+# export PYTHONPATH=$PWD && $SOURCE/forbiditerative/plan.py --planner subsets_topq --domain $1 --problem $2 --quality-bound $3 $KBOUND --symmetries --use-local-folder --keep-intermediate-tasks  #--clean-local-folder
 
