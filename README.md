@@ -111,15 +111,12 @@ Due to the CLI-oriented design, the code must be run using subprocess.
 import sys
 import subprocess
 import logging
-from pathlib import Path
 from subprocess import SubprocessError
-from forbiditerative import plan
 
-planner_bin = Path(plan.__file__).parent / 'builds' / 'bin'
 sys.dont_write_bytecode = True  # abseil's driver attempts to dynamically load .py files and fails if __pycache__ is generated
     
 try:
-    output = subprocess.check_output([sys.executable, plan.__file__, "..your args"])
+    output = subprocess.check_output([sys.executable, "-m" "forbiditerative.plan", "..your args"])
 except SubprocessError as err:
     logging.error(err.output.decode())
 ```
