@@ -8,14 +8,10 @@ import sys
 from subprocess import SubprocessError
 import logging
 
-# import timers
-
-import copy_plans
-from planner_call import make_call, get_base_dir
-
-from iterative import plan_manager as pm 
-from iterative import task_manager as tm
-from iterative import planners
+# from forbiditerative import timers
+from forbiditerative import copy_plans
+from forbiditerative.planner_call import make_call, get_base_dir
+from forbiditerative.iterative import planners, task_manager as tm
 
 
 def get_planner(args):
@@ -281,7 +277,14 @@ if __name__ == "__main__":
         title="time and memory limits")
     lim.add_argument("--overall-time-limit")
     lim.add_argument("--overall-memory-limit")
- 
+
+    parser.add_argument("--build", help="BUILD can be a predefined build name like release "
+                                        "(default) and debug, a custom build name, or the path to "
+                                        "a directory holding the planner binaries. The driver "
+                                        "first looks for the planner binaries under 'BUILD'. If "
+                                        "this path does not exist, it tries the directory "
+                                        "'<repo>/builds/BUILD/bin', where the build script creates "
+                                        "them by default.")
     parser.add_argument("--planner", help="The type of planner", choices=["topk", "topk_via_unordered_topq", "unordered_topq",  "extended_unordered_topq", "topq_via_topk", "topq_via_unordered_topq", "subsets_topq", "submultisets_topq", "diverse"])
     parser.add_argument("--domain", help="PDDL domain file")
     parser.add_argument("--problem", help="PDDL problem file")

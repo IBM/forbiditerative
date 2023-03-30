@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools", "wheel", "setuptools_scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "forbiditerative"
+version = "0.0.1"
+description = "Forbid-Iterative (FI) Planner is an Automated PDDL based planner that includes planners for top-k, top-quality, and diverse computational tasks."
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+keywords = ["planning"]
+authors = [
+    {name = "IBM"}
+]
+dependencies = []
+
+[tool.setuptools]
+py-modules = ["_custom_build"]
+
+[tool.setuptools.cmdclass]
+build_py = "_custom_build.BuildPy"
+build_ext = "_custom_build.BuildCMakeExt"
+bdist_wheel = "_custom_build.bdist_wheel"
+
+[tool.setuptools.package-data]
+forbiditerative = ["builds/release/bin/**/*", "builds/release/bin/*"]
+driver = ["portfolios/*"]
+
+[tool.setuptools.packages.find]
+include = ["forbiditerative*", "driver*"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = ["tests"]

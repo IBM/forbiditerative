@@ -3,12 +3,10 @@
 import os, shutil
 # import glob
 import logging
-import timers
-from driver import limits
 import math
 
 # from planner_call import BaseCostOptimalPlannerCall, ShortestOptimalPlannerCall, CerberusPlannerCall, TopqReformulationPlannerCall, TopkReformulationPlannerCall, DiverseReformulationPlannerCall, AdditionalPlansPlannerCall, make_call
-import planner_call 
+from forbiditerative import planner_call, timers
 from . import plan_manager as pm 
 
 class Planner(object): 
@@ -39,6 +37,8 @@ class Planner(object):
         logging.info("Running external planner to get a plan")
 
         pcargs = kwargs
+        if self._args.build:
+            pcargs["build"] = self._args.build
         pcargs["domain_file"] = self._args.domain
         pcargs["problem_file"] = self._args.problem
         pcargs["sas_file"] = self._args.sas_file
@@ -145,6 +145,10 @@ class Planner(object):
         pcargs["num_plans_to_read"] = num_existing_plans
         pcargs["num_previous_plans"] = 0
 
+
+        if self._args.build:
+            pcargs["build"] = self._args.build
+
         if self._args.number_of_plans:
             pcargs["num_total_plans"] = self._args.number_of_plans
 
@@ -188,6 +192,9 @@ class TopKPlanner(Planner):
         pcargs["external_plan_file"] = plan_file
         pcargs["num_previous_plans"] = num_previous_plans
         pcargs["num_total_plans"] = num_remaining_plans
+
+        if self._args.build:
+            pcargs["build"] = self._args.build
 
         pcargs["reordering"] = self._args.reordering
         pc = planner_call.TopkReformulationPlannerCall()
@@ -238,6 +245,9 @@ class TopKViaUnorderedTopQualityPlanner(Planner):
         pcargs["num_plans_to_read"] = plan_manager.get_plan_counter() 
         pcargs["num_previous_plans"] = 0
 
+        if self._args.build:
+            pcargs["build"] = self._args.build
+
         pc = planner_call.TopqReformulationPlannerCall()
         command = pc.get_callstring(**pcargs)
 
@@ -286,6 +296,10 @@ class TopKViaUnorderedTopQualityPlanner(Planner):
         pcargs["external_plan_file"] = plan_file
         pcargs["num_previous_plans"] = num_previous_plans
         pcargs["num_total_plans"] = num_remaining_plans
+
+        if self._args.build:
+            pcargs["build"] = self._args.build
+
         if self._args.symmetries:
             pcargs["use_symmetries"] = True
 
@@ -323,6 +337,10 @@ class UnorderedTopQualityPlanner(Planner):
         pcargs["external_plans_path"] = plan_manager.get_plans_folder()
         pcargs["num_plans_to_read"] = plan_manager.get_plan_counter()
         pcargs["num_previous_plans"] = 0
+
+        if self._args.build:
+            pcargs["build"] = self._args.build
+
         if self._args.symmetries:
             pcargs["use_symmetries"] = True
 
@@ -444,6 +462,10 @@ class ExtendedUnorderedTopQualityPlanner(UnorderedTopQualityPlanner):
         pcargs["domain_file"] = self._args.domain
         pcargs["problem_file"] = self._args.problem
         pcargs["sas_file"] = self._args.sas_file
+
+        if self._args.build:
+            pcargs["build"] = self._args.build
+
         if self._args.symmetries:
             pcargs["use_symmetries"] = True
 
@@ -498,6 +520,9 @@ class TopQualityViaTopKPlanner(Planner):
         # TODO: Check this one!
         pcargs["num_total_plans"] = num_remaining_plans
 
+        if self._args.build:
+            pcargs["build"] = self._args.build
+
         pcargs["reordering"] = self._args.reordering
         pc = planner_call.TopkReformulationPlannerCall()
         command = pc.get_callstring(**pcargs)
@@ -550,6 +575,9 @@ class TopQualityViaUnorderedTopQualityPlanner(Planner):
         pcargs["external_plans_path"] = plan_manager.get_plans_folder()
         pcargs["num_plans_to_read"] = plan_manager.get_plan_counter()
         pcargs["num_previous_plans"] = 0
+
+        if self._args.build:
+            pcargs["build"] = self._args.build
 
         pc = planner_call.TopqReformulationPlannerCall()
         command = pc.get_callstring(**pcargs)
@@ -613,6 +641,10 @@ class TopQualityViaUnorderedTopQualityPlanner(Planner):
         pcargs["external_plan_file"] = plan_file
         pcargs["num_previous_plans"] = num_previous_plans
         pcargs["num_total_plans"] = self._args.upper_bound_on_number_of_plans
+
+        if self._args.build:
+            pcargs["build"] = self._args.build
+
         if self._args.symmetries:
             pcargs["use_symmetries"] = True
 
@@ -667,6 +699,9 @@ class DiversePlanner(Planner):
         # pcargs["external_plans_path"] = plan_manager.get_plans_folder()
         # pcargs["num_plans_to_read"] = num_existing_plans
         # pcargs["num_previous_plans"] = 0
+
+        # if self._args.build:
+        #     pcargs["build"] = self._args.build
 
         # if self._args.number_of_plans:
         #     pcargs["num_total_plans"] = self._args.number_of_plans - num_existing_plans

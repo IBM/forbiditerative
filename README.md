@@ -93,6 +93,33 @@ For some of the diverse planners, the dependencies are as follows:
 1. Computation of a subset of plans is performed in a post-processing, path to the code should be specified in an environment variable **DIVERSE_SCORE_COMPUTATION_PATH**. The code can be found [here](https://github.com/IBM/diversescore).
 2. Note that for the diversity-bounded diverse planning and for diversity-optimal one the computation in a post-processing requires enabling CPLEX support in Fast Downward (see https://www.fast-downward.org/) and building the post-processing code with LP support.
 
+# Building the package:
+```bash
+# Testing locally
+pip install tox pytest -e .
+tox
+# Output a wheel
+python -c "import setuptools; setuptools.setup()" bdist_wheel
+```
+
+# Using as a package:
+```bash
+pip install git+https://github.com/IBM/forbiditerative.git
+```
+Due to the CLI-oriented design, the code must be run using subprocess.
+```python
+import sys
+import subprocess
+import logging
+from subprocess import SubprocessError
+
+sys.dont_write_bytecode = True  # abseil's driver attempts to dynamically load .py files and fails if __pycache__ is generated
+    
+try:
+    output = subprocess.check_output([sys.executable, "-m" "forbiditerative.plan", "..your args"])
+except SubprocessError as err:
+    logging.error(err.output.decode())
+```
 
 ## Citing
 

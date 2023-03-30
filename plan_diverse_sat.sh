@@ -23,9 +23,9 @@ fi
 
 
 SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd)"
-$SOURCE/plan.py --planner diverse --domain $1 --problem $2 --number-of-plans $num_plans --use-local-folder --clean-local-folder  --suppress-planners-output
+export PYTHONPATH=$PWD && $SOURCE/forbiditerative/plan.py --planner diverse --domain $1 --problem $2 --number-of-plans $num_plans --use-local-folder --clean-local-folder  --suppress-planners-output
 
-PLANSDIR=$SOURCE/found_plans
+PLANSDIR=$SOURCE/forbiditerative/found_plans
 
 ## replace the value in num_found_plans with the actual number of plans in PLANSDIR
 num_plans=`ls -1q $PLANSDIR/sas_plan.* | wc -l`
