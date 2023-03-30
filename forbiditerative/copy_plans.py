@@ -20,7 +20,7 @@ def get_path_to_file_folder(dir, local_folder=None):
     return os.path.join(local_folder, dir)
 
 def get_found_plans_dir(local_folder=None):
-    FOUND_PLANS_DIR = "../found_plans"
+    FOUND_PLANS_DIR = "found_plans"
     return get_path_to_file_folder(FOUND_PLANS_DIR, local_folder)
 
 def get_found_optimal_plans_dir(local_folder=None):

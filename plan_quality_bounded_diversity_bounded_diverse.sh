@@ -24,7 +24,7 @@ PLANSDIR=$PWD/found_plans/almost_done
 ## Renaming the folder
 mv $FINALPLANSDIR $PLANSDIR
 
-source $SOURCE/forbiditerative/helper_functions.sh
+source $SOURCE/helper_functions.sh
 
 num_found_plans=`ls -1q $PLANSDIR/sas_plan.* | wc -l | tr -d '[:space:]'`
 echo "The number of plans found after extending is "$num_found_plans

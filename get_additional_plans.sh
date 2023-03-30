@@ -17,6 +17,6 @@ SEARCH_PARAM="forbid_iterative(reformulate=NONE_FIND_ADDITIONAL_PLANS,extend_pla
 
 SOURCE="$( dirname "${BASH_SOURCE[0]}" )"
 
-export PYTHONPATH=$PWD && python ./fast-downward.py $1 $2 --symmetries $SYM_PARAM --search $SEARCH_PARAM
+export PYTHONPATH=$PWD && python $SOURCE/forbiditerative/fast-downward.py $1 $2 --symmetries $SYM_PARAM --search $SEARCH_PARAM
 
-#echo export PYTHONPATH=$PWD && python ./fast-downward.py $1 $2 --symmetries \"$SYM_PARAM\" --search \"$SEARCH_PARAM\"
+#echo export PYTHONPATH=$PWD && python $SOURCE/forbiditerative/fast-downward.py $1 $2 --symmetries \"$SYM_PARAM\" --search \"$SEARCH_PARAM\"
