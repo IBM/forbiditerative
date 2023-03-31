@@ -113,8 +113,6 @@ import subprocess
 import logging
 from subprocess import SubprocessError
 
-sys.dont_write_bytecode = True  # abseil's driver attempts to dynamically load .py files and fails if __pycache__ is generated
-    
 try:
     output = subprocess.check_output([sys.executable, "-m" "forbiditerative.plan", "..your args"])
 except SubprocessError as err:

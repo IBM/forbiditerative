@@ -5,8 +5,6 @@ import subprocess
 import logging
 from subprocess import SubprocessError
 
-sys.dont_write_bytecode = True  # driver attempts to dynamically load .py files and fails if __pycache__ is generated
-
 if __name__ == "__main__":
     domain = sys.argv[1]
     problem = sys.argv[2]
