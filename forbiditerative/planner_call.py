@@ -29,9 +29,6 @@ def make_call(command, time_limit, local_folder, enable_output=False):
 
 
 class PlannerCall(object):
-    def build_args(self):
-        return []
-
     def get_path(self):
         """Assume that this script always lives in the base dir of the infrastructure."""
         return os.path.abspath(get_script_dir())
@@ -52,7 +49,6 @@ class ReformulationPlannerCall(PlannerCall):
     def get_callstring(self, **kwargs):
         return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + \
                (["--build", kwargs['build']] if 'build' in kwargs else []) + \
-               self.build_args() + \
                ["{curr_task_name}".format(**kwargs), "--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
                self.planner_args(**kwargs)
 
@@ -143,7 +139,7 @@ class BasePlannerCall(PlannerCall):
     def get_callstring(self, **kwargs):
         return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + \
                (["--build", kwargs['build']] if 'build' in kwargs else []) + \
-               self.build_args() + self.get_task_args(**kwargs) + \
+               self.get_task_args(**kwargs) + \
                ["--internal-previous-portfolio-plans", str("{num_previous_plans}".format(**kwargs))] + \
                self.planner_args(**kwargs)
 
@@ -269,7 +265,6 @@ class PlansToJsonPlannerCall(PlannerCall):
     def get_callstring(self, **kwargs):
         return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + \
                (["--build", kwargs['build']] if 'build' in kwargs else []) + \
-               self.build_args() + \
                [os.path.abspath("{domain_file}".format(**kwargs)), os.path.abspath("{problem_file}".format(**kwargs))] + \
                self.planner_args(**kwargs)
 

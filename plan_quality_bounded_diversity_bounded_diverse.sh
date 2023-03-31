@@ -24,7 +24,19 @@ PLANSDIR=$PWD/found_plans/almost_done
 ## Renaming the folder
 mv $FINALPLANSDIR $PLANSDIR
 
-source $SOURCE/helper_functions.sh
+function get_metric_param() {
+    ret=""
+    if [[ $1 == *"stability"* ]]; then
+        ret=$ret"compute_stability_metric=true,"
+    fi    
+    if [[ $1 == *"state"* ]]; then
+        ret=$ret"compute_states_metric=true,"
+    fi    
+    if [[ $1 == *"uniqueness"* ]]; then
+        ret=$ret"compute_uniqueness_metric=true,"
+    fi    
+    echo $ret 
+}
 
 num_found_plans=`ls -1q $PLANSDIR/sas_plan.* | wc -l | tr -d '[:space:]'`
 echo "The number of plans found after extending is "$num_found_plans
