@@ -1,19 +1,15 @@
 #! /usr/bin/env python
 
-import sys,os
+import sys
 import subprocess
 import logging
 from subprocess import SubprocessError
 
-sys.dont_write_bytecode = True  # abseil's driver attempts to dynamically load .py files and fails if __pycache__ is generated
+sys.dont_write_bytecode = True  # driver attempts to dynamically load .py files and fails if __pycache__ is generated
 
 from driver.plan_manager import PlanManager
 
 if __name__ == "__main__":
-    # pathname = os.path.abspath(sys.argv[0])
-    # dirname = os.path.dirname(pathname)
-    # planner = os.path.join(dirname, "fast-downward.py")
-
     domain = sys.argv[1]
     problem = sys.argv[2]
     plan_file = sys.argv[3]
