@@ -11,7 +11,6 @@ class TestCerberus(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.logistics_planning_tasks = get_planning_tasks(logistics)
-        sys.dont_write_bytecode = True  # abseil's driver attempts to dynamically load .py files and fails if __pycache__ is generated
 
     @unittest.skip("Skipped because it takes an extremely long time.")
     def test_logistics_satisficing_cerberus(self):

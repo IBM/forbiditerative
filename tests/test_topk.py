@@ -13,7 +13,6 @@ class TestTopK(unittest.TestCase):
         super().setUp()
         self.miconic_planning_tasks = get_planning_tasks(miconic)
         self.logistics_planning_tasks = get_planning_tasks(logistics)
-        sys.dont_write_bytecode = True  # abseil's driver attempts to dynamically load .py files and fails if __pycache__ is generated
 
     def test_miconic_iterative_topk(self):
         domain, problem = self.miconic_planning_tasks[0]

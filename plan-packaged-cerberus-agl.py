@@ -4,9 +4,6 @@ import sys
 import subprocess
 import logging
 from subprocess import SubprocessError
-
-sys.dont_write_bytecode = True  # driver attempts to dynamically load .py files and fails if __pycache__ is generated
-
 from driver.plan_manager import PlanManager
 
 if __name__ == "__main__":
