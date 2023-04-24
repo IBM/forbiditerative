@@ -288,6 +288,21 @@ ALIASES["seq-sopt-oss-por-lmcut"] = ["--if-conditional-effects", "--evaluator", 
         "--always"]
 
 
+ALIASES["get_landmarks_exhaust"] = ["--evaluator", "h=lmcount(lm_factory=lm_exhaust(),dump_action_landmarks=true)",
+                "--always", "--search", "lazy_greedy([h,const(infinity())])"]
+
+ALIASES["get_landmarks_h1"] = ["--evaluator", "h=lmcount(lm_factory=lm_hm(m=1),dump_action_landmarks=true)",
+                "--always", "--search", "lazy_greedy([h,const(infinity())])"]
+
+ALIASES["get_landmarks_h2"] = ["--evaluator", "h=lmcount(lm_factory=lm_hm(m=2),dump_action_landmarks=true)",
+                "--always", "--search", "lazy_greedy([h,const(infinity())])"]
+
+ALIASES["get_landmarks_rhw"] = ["--evaluator", "h=lmcount(lm_factory=lm_rhw(),dump_action_landmarks=true)",
+                "--always", "--search", "lazy_greedy([h,const(infinity())])"]
+
+ALIASES["get_landmarks_zg"] = ["--evaluator", "h=lmcount(lm_factory=lm_zg(),dump_action_landmarks=true)",
+                "--always", "--search", "lazy_greedy([h,const(infinity())])"]
+
 PORTFOLIOS = {}
 for portfolio in os.listdir(PORTFOLIO_DIR):
     if portfolio == "__pycache__":

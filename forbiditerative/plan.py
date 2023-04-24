@@ -108,7 +108,7 @@ def find_plans(args):
             planner.report_iteration_step(plan_manager, success=False)
             planner.finalize(plan_manager)
             planner.cleanup(plan_manager)
-            raise
+            return
         planner.process_new_plans(plan_manager)
         planner.report_done_plans_extension_run()
         planner.report_number_of_plans(plan_manager)
@@ -127,7 +127,7 @@ def find_plans(args):
         planner.report_iteration_step(plan_manager, success=False)
         planner.finalize(plan_manager)
         planner.cleanup(plan_manager)
-        raise
+        return
 
     planner.process_new_plans(plan_manager)
     planner.report_done_reformulation_run()
@@ -192,7 +192,7 @@ def find_plans(args):
                 planner.report_iteration_step(plan_manager, success=False)
                 planner.finalize(plan_manager)
                 planner.cleanup(plan_manager)
-                raise
+                return
             planner.process_new_plans(plan_manager)
             planner.report_done_plans_extension_run()
             planner.report_number_of_plans(plan_manager)
@@ -211,7 +211,7 @@ def find_plans(args):
             planner.report_iteration_step(plan_manager, success=False)
             planner.finalize(plan_manager)
             planner.cleanup(plan_manager)
-            raise
+            return
 
         planner.process_new_plans(plan_manager)
         planner.report_number_of_plans(plan_manager)

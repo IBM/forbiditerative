@@ -42,7 +42,7 @@ ForbidIterativeSearch::ForbidIterativeSearch(const Options &opts)
       number_of_plans(opts.get<int>("number_of_plans")),
       dump_debug_info(opts.get<bool>("dump")),
       dumping_plans_files(opts.get<bool>("dumping_plans_files")),
-      read_plans_and_dump_graph(opts.get<int>("read_plans_and_dump_graph")),
+      read_plans_and_dump_graph(opts.get<bool>("read_plans_and_dump_graph")),
       number_of_edges_until_greedy_clean(opts.get<int>("number_of_edges_until_greedy_clean")),
       external_plan_file(""),
       external_plans_path(""),
@@ -240,7 +240,7 @@ void ForbidIterativeSearch::reformulate_and_dump(bool optimal, std::vector<Plan>
         reformulate_and_dump_multiset(filename, plans);
     } else if (reformulate == TaskReformulationType::FORBID_MULTIPLE_PLAN_SUPERSETS) {
         reformulate_and_dump_superset(filename, plans);
-    } else if (read_plans_and_dump_graph > 0) {
+    } else if (read_plans_and_dump_graph) {
         reformulate_and_dump_read_plans_and_dump_graph(filename, plans);
     }
 }
@@ -759,7 +759,7 @@ void ForbidIterativeSearch::add_forbid_plan_reformulation_option(OptionParser &p
     parser.add_option<int>("number_of_plans", "Number of plans", "-1");
     parser.add_option<int>("number_of_edges_until_greedy_clean", "Number of edges added by the naive DFS algorithm until a greedy cleaning is performed", "-1");
     parser.add_option<bool>("dump", "Dumping debug info", "false");
-    parser.add_option<int>("read_plans_and_dump_graph", "reading the plans and creating a graph, and then dumping it", "0");
+    parser.add_option<bool>("read_plans_and_dump_graph", "reading the plans and creating a graph, and then dumping it", "false");
     parser.add_option<bool>("dumping_plans_files", "Dumping the plans to files", "true");
 
 }

@@ -50,7 +50,7 @@ private:
     int number_of_plans;
     bool dump_debug_info;
     bool dumping_plans_files;
-    int read_plans_and_dump_graph;
+    bool read_plans_and_dump_graph;
     int number_of_edges_until_greedy_clean;
     std::string external_plan_file;
     std::string external_plans_path;
