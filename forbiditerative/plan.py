@@ -274,28 +274,30 @@ def validate_input(args):
 def set_default_build_path():
     """ 
     Operates directly on sys.argv and sets the default value of --build. Prioritizes builds in this order:
-    1) Any provided --build path, does not modify sys.argv
-    2) If <repo>/builds/BUILD/bin exists, no changes are made to argv and --build will be set to this in the driver.
-    3) If <site-packages>/forbiditeritive/builds/BUILD/bin exists due to the package having been installed as a library,
-       build will be set to this
-    
+    1) Any provided --build path
+    2) <repo>/builds/BUILD/bin if it exists
+    3) <site-packages>/forbiditeritive/builds/BUILD/bin if it exists (the package has been installed as a library)
+
     NOTE: Operating directly on sys.argv is generally considered bad practice but we need to modify the build arg
     before it reaches the upstream driver code, and are unable to pass in a copy to driver. 
     """
     if "--build" in sys.argv:
-        return
+        #A build path has been explicitly provided by the end user, don't modify anything
+        return 
     
     forbiditerative_path = Path(__file__).parent 
     regular_build_path = forbiditerative_path.parent / 'builds' / 'release' / 'bin'    
     if os.path.exists(regular_build_path):
-        return
+        #The driver will look here by default, don't modify argv 
+        return  
     
     package_build_path = forbiditerative_path / 'builds' / 'release' / 'bin'    
     if os.path.exists(package_build_path):
         sys.argv.append("--build")
-        sys.argv.append(package_build_path)
+        sys.argv.append(str(package_build_path))
 
 if __name__ == "__main__":
+    set_default_build_path()
     parser = argparse.ArgumentParser(
         add_help=False)
     lim = parser.add_argument_group(
@@ -331,8 +333,6 @@ if __name__ == "__main__":
     parser.add_argument("--upper-bound-on-number-of-plans", help="The overall bound on the number of plans", type=int, default=1000000)
 
     parser.add_argument("--suppress-planners-output", help="Suppress the output of the individual planners", action="store_true")
-
-    set_default_build_path()
 
     args = parser.parse_args()
 
