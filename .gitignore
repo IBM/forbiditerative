@@ -1,5 +1,6 @@
 .DS_Store
 .idea/
+.vscode/
 .tox/
 build/
 builds/
@@ -16,3 +17,5 @@ found_plans/
 /experiments/structural-symmetries-pruning/data/
 /misc/.tox/
 /misc/autodoc/downward-xmlrpc.secret
+Pipfile
+Pipfile.lock

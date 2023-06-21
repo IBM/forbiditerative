@@ -2,7 +2,9 @@
 
 import argparse
 
+import os
 import sys
+from pathlib import Path
 # from driver import limits, arguments
 
 from subprocess import SubprocessError
@@ -269,8 +271,45 @@ def validate_input(args):
         logging.error("Cannot use --clean-local-folder with --keep-intermediate-tasks")
         exit(1)
 
+def set_default_build_path():
+    """ 
+    Operates directly on sys.argv and sets the default value of --build. Prioritizes builds in this order:
+    1) Any provided --build path
+    2) <repo>/builds/BUILD/bin if it exists
+    3) <site-packages>/forbiditeritive/builds/BUILD/bin if it exists (the package has been installed as a library)
+
+    NOTE: Operating directly on sys.argv is generally considered bad practice but we need to modify the build arg
+    before it reaches the upstream driver code, and are unable to pass in a copy to driver. 
+    """
+    if "--build" in sys.argv:
+        #A build path has been explicitly provided by the end user, don't modify anything
+        return 
+    
+    forbiditerative_path = Path(__file__).parent 
+    regular_build_path = forbiditerative_path.parent / 'builds' / 'release' / 'bin'    
+    if os.path.exists(regular_build_path):
+        #The driver will look here by default, don't modify argv 
+        return  
+    
+    package_build_path = forbiditerative_path / 'builds' / 'release' / 'bin'    
+    if os.path.exists(package_build_path):
+        sys.argv.append("--build")
+        sys.argv.append(str(package_build_path))
+        return
+    
+    logging.error(f"""
+    No binary directory was found at the default search locations: {str(package_build_path)},
+    {str(regular_build_path)}, or provided via the --build flag.
+    If you are building locally from source, run build.py in the main folder.
+    If you are installing as a python package from local source, run "pip install ." in the main folder
+    or if installing from the remote source "pip install git+https://github.com/IBM/forbiditerative.git" 
+    If you have manually installed the binaries in a separate location please specify a path to them with the --build argument.
+    Note: when installing locally with "pip install -e .", a --build flag must be provided to the binaries.  
+    """)
+    exit(1)
 
 if __name__ == "__main__":
+    set_default_build_path()
     parser = argparse.ArgumentParser(
         add_help=False)
     lim = parser.add_argument_group(
