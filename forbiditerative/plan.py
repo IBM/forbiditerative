@@ -293,8 +293,9 @@ def set_default_build_path():
     regular_build_path = forbiditerative_path.parent / 'builds' / 'release' / 'bin'    
     if os.path.exists(regular_build_path):
         logging.info(f"Local build found under {str(regular_build_path)}")
-        #The driver will look here by default, don't modify argv 
-        return  
+        sys.argv.append("--build")
+        sys.argv.append(str(regular_build_path))
+        return
     
     package_build_path = forbiditerative_path / 'builds' / 'release' / 'bin'    
     if os.path.exists(package_build_path):
