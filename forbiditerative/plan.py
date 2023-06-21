@@ -281,18 +281,24 @@ def set_default_build_path():
     NOTE: Operating directly on sys.argv is generally considered bad practice but we need to modify the build arg
     before it reaches the upstream driver code, and are unable to pass in a copy to driver. 
     """
+
+    logging.info("Setting default build path if one does not exist")
+
     if "--build" in sys.argv:
         #A build path has been explicitly provided by the end user, don't modify anything
+        logging.info("A build path has been explicitly provided")
         return 
     
     forbiditerative_path = Path(__file__).parent 
     regular_build_path = forbiditerative_path.parent / 'builds' / 'release' / 'bin'    
     if os.path.exists(regular_build_path):
+        logging.info(f"Local build found under {str(regular_build_path)}")
         #The driver will look here by default, don't modify argv 
         return  
     
     package_build_path = forbiditerative_path / 'builds' / 'release' / 'bin'    
     if os.path.exists(package_build_path):
+        logging.info(f"Package build found under {str(package_build_path)}")
         sys.argv.append("--build")
         sys.argv.append(str(package_build_path))
         return
