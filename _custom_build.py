@@ -20,7 +20,6 @@ try:
         def get_tag(self):
             """build for specific ABI and platform"""
             python, abi, plat = _bdist_wheel.get_tag(self)
-            python = 'py3'
             return python, abi, plat
 except ImportError:
     bdist_wheel = None
@@ -65,7 +64,7 @@ class BuildCMakeExt(build_ext):
                 pass
             CMAKE_GENERATOR = "Unix Makefiles"
         elif os.name == "nt":
-            CMAKE_GENERATOR = "NMake Makefiles"
+            CMAKE_GENERATOR = "MinGW Makefiles"
         else:
             print("Unsupported OS: " + os.name)
             sys.exit(1)

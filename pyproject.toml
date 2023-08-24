@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "forbiditerative"
-version = "0.0.1"
 description = "Forbid-Iterative (FI) Planner is an Automated PDDL based planner that includes planners for top-k, top-quality, and diverse computational tasks."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -14,6 +13,7 @@ authors = [
     {name = "IBM"}
 ]
 dependencies = []
+dynamic = ["version"]
 
 [tool.setuptools]
 py-modules = ["_custom_build"]
@@ -29,6 +29,9 @@ driver = ["portfolios/*"]
 
 [tool.setuptools.packages.find]
 include = ["forbiditerative*", "driver*"]
+
+[tool.setuptools_scm]
+write_to = "forbiditerative/__version__.py"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
