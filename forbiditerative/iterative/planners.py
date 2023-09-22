@@ -37,6 +37,9 @@ class Planner(object):
         logging.info("Running external planner to get a plan")
 
         pcargs = kwargs
+        
+        if self._args.case_sensitive:
+            pcargs["case_sensitive"] = True
         if self._args.build:
             pcargs["build"] = self._args.build
         pcargs["domain_file"] = self._args.domain
@@ -463,6 +466,8 @@ class ExtendedUnorderedTopQualityPlanner(UnorderedTopQualityPlanner):
         pcargs["problem_file"] = self._args.problem
         pcargs["sas_file"] = self._args.sas_file
 
+        if self._args.case_sensitive:
+            pcargs["case_sensitive"] = True
         if self._args.build:
             pcargs["build"] = self._args.build
 

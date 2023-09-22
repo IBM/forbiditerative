@@ -352,7 +352,8 @@ if __name__ == "__main__":
     parser.add_argument("--upper-bound-on-number-of-plans", help="The overall bound on the number of plans", type=int, default=1000000)
 
     parser.add_argument("--suppress-planners-output", help="Suppress the output of the individual planners", action="store_true")
-
+    parser.add_argument("--case-sensitive", action="store_true", help="treat the input PDDL as case sensitive")
+     
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, #level=logging.DEBUG,

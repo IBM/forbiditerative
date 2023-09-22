@@ -1,3 +1,5 @@
+import options
+
 __all__ = ["ParseError", "parse_nested_list"]
 
 class ParseError(Exception):
@@ -27,7 +29,10 @@ def tokenize(input):
                              line[0:-1])
         line = line.replace("(", " ( ").replace(")", " ) ").replace("?", " ?")
         for token in line.split():
-            yield token.lower()
+            if options.case_sensitive:
+                yield token
+            else:
+                yield token.lower()
 
 def parse_list_aux(tokenstream):
     # Leading "(" has already been swallowed.

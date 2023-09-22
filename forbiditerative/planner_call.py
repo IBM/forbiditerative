@@ -42,7 +42,8 @@ class PlannerCall(object):
         elif "sas_file" in kwargs and kwargs["sas_file"] is not None:
             return [ os.path.abspath("{sas_file}".format(**kwargs)) ]
         else:
-            return ["--transform-task", "preprocess", os.path.abspath("{domain_file}".format(**kwargs)), os.path.abspath("{problem_file}".format(**kwargs))]
+            translator_options = ["--translate-options", "--case-sensitive", "--search-options"] if 'case_sensitive' in kwargs else []
+            return ["--transform-task", "preprocess", os.path.abspath("{domain_file}".format(**kwargs)), os.path.abspath("{problem_file}".format(**kwargs))] + translator_options
 
 
 class ReformulationPlannerCall(PlannerCall):
@@ -263,10 +264,11 @@ class AdditionalPlansPlannerCall(BasePlannerCall):
 
 class PlansToJsonPlannerCall(PlannerCall):
     def get_callstring(self, **kwargs):
+        translator_options = ["--translate-options", "--case-sensitive", "--search-options"] if 'case_sensitive' in kwargs else []
         return [sys.executable, os.path.join(self.get_path(), 'fast-downward.py'), "--keep-sas-file"] + \
                (["--build", kwargs['build']] if 'build' in kwargs else []) + \
                [os.path.abspath("{domain_file}".format(**kwargs)), os.path.abspath("{problem_file}".format(**kwargs))] + \
-               self.planner_args(**kwargs)
+               translator_options + self.planner_args(**kwargs)
 
     def planner_args(self, **kwargs):
         return ["--search", \
