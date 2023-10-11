@@ -10,10 +10,18 @@ requires-python = ">=3.8"
 license = {file = "LICENSE"}
 keywords = ["planning"]
 authors = [
-    {name = "IBM"}
+    {name = "Michael Katz", email="michael.katz1@ibm.com"}
 ]
 dependencies = []
 dynamic = ["version"]
+
+classifiers = [
+"License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/IBM/forbiditerative"
+
 
 [tool.setuptools]
 py-modules = ["_custom_build"]
@@ -37,3 +45,4 @@ write_to = "forbiditerative/__version__.py"
 minversion = "6.0"
 addopts = "-ra -q"
 testpaths = ["tests"]
+
