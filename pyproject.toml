@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "forbiditerative"
 description = "Forbid-Iterative (FI) Planner is an Automated PDDL based planner that includes planners for top-k, top-quality, and diverse computational tasks."
-readme = "README.md"
+readme = "README-pypi.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
 keywords = ["planning"]
