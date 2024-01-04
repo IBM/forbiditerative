@@ -20,43 +20,35 @@ pip install forbiditerative
 
 # Running
 ```python
-import sys
-import subprocess
-import logging
-from subprocess import SubprocessError
 
-try:
-    output = subprocess.check_output([sys.executable, "-m", "forbiditerative.plan", "..your args"])
-except SubprocessError as err:
-    logging.error(err.output.decode())
-```
-
-
-## Example: FI-unordered-top-quality
-```python
-import sys
-import subprocess
-import logging
-from subprocess import SubprocessError
+from forbiditerative import planners
 from pathlib import Path
-
-build_dir = Path(forbiditerative.__file__).parent / 'builds' / 'release' / 'bin'
 
 domain_file = Path("your/path/domain.pddl")
 problem_file = Path("your/path/problem.pddl")
-result_file = Path("your/path/result.json")
 
-build_args = ["--build", str(build_dir.absolute())]
-planner_args = ["--planner", "unordered_topq", "--domain", str(domain_file.absolute()), "--problem", str(problem_file.absolute()), "--quality-bound", "1.0", "--number-of-plans", "100", "--symmetries", "--use-local-folder", "--clean-local-folder", "--suppress-planners-output", "--plans-as-json", "--results-file", str(result_file.absolute())]
+# Example: FI-unordered-top-quality
+plans = planners.plan_unordered_topq(domain_file=domain_file, problem_file=problem_file, quality_bound=1.0, number_of_plans_bound=100)
+print(plans)
 
-try:
-    subprocess.check_output([sys.executable, "-B", "-m", "forbiditerative.plan"] + build_args + planner_args)
+# Example: FI-submultisets-top-quality
+plans = planners.plan_submultisets_topq(domain_file=domain_file, problem_file=problem_file, quality_bound=1.0, number_of_plans_bound=None)
+print(plans)
 
-except SubprocessError as err:
-    logging.error(err.output.decode())
+# Example: FI-subsets-top-quality
+plans = planners.plan_subsets_topq(domain_file=domain_file, problem_file=problem_file, quality_bound=1.0, number_of_plans_bound=None)
+print(plans)
 
-print(result_file.read_text())
+# Example: FI-topk
+plans = planners.plan_topk(domain_file=domain_file, problem_file=problem_file, number_of_plans_bound=100)
+print(plans)
+
+# Example: FI-diverse-agl
+plans = planners.plan_diverse_agl(domain_file=domain_file, problem_file=problem_file, number_of_plans_bound=100)
+print(plans)
+
 ```
+
 
 
 ## Citing
