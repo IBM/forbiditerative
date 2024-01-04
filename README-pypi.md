@@ -26,7 +26,7 @@ import logging
 from subprocess import SubprocessError
 
 try:
-    output = subprocess.check_output([sys.executable, "-m" "forbiditerative.plan", "..your args"])
+    output = subprocess.check_output([sys.executable, "-m", "forbiditerative.plan", "..your args"])
 except SubprocessError as err:
     logging.error(err.output.decode())
 ```
