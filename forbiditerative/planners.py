@@ -5,13 +5,18 @@ import subprocess
 import logging
 from subprocess import SubprocessError
 from pathlib import Path
+from typing import List, Literal
 
 import forbiditerative
 build_dir = Path(forbiditerative.__file__).parent / 'builds' / 'release' / 'bin'
 default_build_args = ["--build", str(build_dir.absolute())]
 
-def run_planner(planner_args) -> dict:
 
+# From here https://www.fast-downward.org/Doc/LandmarkFactory
+LandmarkMethods = Literal['exhaust', 'h1', 'h2', 'rhw', 'zg']
+
+
+def run_planner(planner_args) -> dict:
     try:
         import tempfile
         with tempfile.NamedTemporaryFile() as result_file:
@@ -93,3 +98,18 @@ def plan_diverse_agl(domain_file : Path, problem_file : Path, number_of_plans_bo
                 "--symmetries", "--use-local-folder", "--clean-local-folder", "--suppress-planners-output", "--plans-as-json"]
     return run_planner(planner_args)
 
+
+def get_landmarks(method: LandmarkMethods, domain_file : Path, problem_file : Path) -> dict:
+    """Execute the planner on the task, no search."""
+    try:
+        import tempfile
+
+        run_dir = Path(tempfile.gettempdir())
+        landmarks_file = run_dir / "landmarks.json"
+        command =  ["--alias", f'get_landmarks_{method}', str(domain_file.absolute()), str(problem_file.absolute())]
+        subprocess.run([sys.executable, "-B", "-m", "driver.main"] + default_build_args + command, cwd=run_dir)
+        return json.loads(landmarks_file.read_text())
+    
+    except SubprocessError as err:
+        logging.error(err.output.decode())
+        return None
