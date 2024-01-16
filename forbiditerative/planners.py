@@ -14,6 +14,7 @@ default_build_args = ["--build", str(build_dir.absolute())]
 
 # From here https://www.fast-downward.org/Doc/LandmarkFactory
 LandmarkMethods = Literal['exhaust', 'h1', 'h2', 'rhw', 'zg']
+default_landmark_method = 'rhw'
 
 def run_planner(planner_args) -> dict:
     try:
@@ -98,7 +99,7 @@ def plan_diverse_agl(domain_file : Path, problem_file : Path, number_of_plans_bo
     return run_planner(planner_args)
 
 
-def get_landmarks(method: LandmarkMethods, domain_file : Path, problem_file : Path) -> dict:
+def get_landmarks(domain_file : Path, problem_file : Path, method: LandmarkMethods = default_landmark_method) -> dict:
     """Execute the planner on the task, no search."""
     try:
         import tempfile

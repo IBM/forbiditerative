@@ -47,6 +47,20 @@ print(plans)
 plans = planners.plan_diverse_agl(domain_file=domain_file, problem_file=problem_file, number_of_plans_bound=100)
 print(plans)
 
+# Example: getting landmarks (default method 'rhw')
+landmarks = planners.get_landmarks(domain_file=domain_file, problem_file=problem_file)
+print(landmarks)
+
+# Example: getting exhaustive landmarks (https://www.fast-downward.org/Doc/LandmarkFactory) 
+landmarks = planners.get_landmarks(domain_file=domain_file, problem_file=problem_file, method = 'exhaust')
+print(landmarks)
+
+# Example: create a dot graph 
+import graphviz
+dot_txt = planners.get_dot(domain_file=domain_file, problem_file=problem_file, plans = plans)
+src = graphviz.Source(dot_txt)
+src.render('plans.gv', view=True)
+
 ```
 
 
