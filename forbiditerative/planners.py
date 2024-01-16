@@ -15,7 +15,6 @@ default_build_args = ["--build", str(build_dir.absolute())]
 # From here https://www.fast-downward.org/Doc/LandmarkFactory
 LandmarkMethods = Literal['exhaust', 'h1', 'h2', 'rhw', 'zg']
 
-
 def run_planner(planner_args) -> dict:
     try:
         import tempfile
@@ -113,3 +112,32 @@ def get_landmarks(method: LandmarkMethods, domain_file : Path, problem_file : Pa
     except SubprocessError as err:
         logging.error(err.output.decode())
         return None
+    
+
+def get_dot(domain_file : Path, problem_file : Path, plans: List[List[str]]) -> str:
+    """Execute the planner on the task, no search."""
+    try:
+        import tempfile
+
+        run_dir = Path(tempfile.gettempdir())
+        graph_file = run_dir / "graph0.dot"
+        plans_path = run_dir / "plans"
+        if not (plans_path.is_dir()):
+            plans_path.mkdir()
+        counter = 1
+        for plan in plans:
+            plan_file = Path(plans_path / f"sas_plan.{counter}")
+            actions = ["(" + a + ")" for a in plan]
+            plan_file.write_text("\n".join(actions) + "\n")
+            counter += 1
+
+        counter -= 1
+        command = [str(domain_file.absolute()), str(problem_file.absolute())] + ["--search",
+                f"forbid_iterative(reformulate=NONE,read_plans_and_dump_graph=true,external_plans_path={plans_path},number_of_plans_to_read={counter})"]
+        subprocess.run([sys.executable, "-B", "-m", "driver.main"] + default_build_args + command, cwd=run_dir)
+        return graph_file.read_text()
+    
+    except SubprocessError as err:
+        logging.error(err.output.decode())
+        return None
+    
