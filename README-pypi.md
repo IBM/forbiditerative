@@ -28,7 +28,7 @@ domain_file = Path("your/path/domain.pddl")
 problem_file = Path("your/path/problem.pddl")
 
 # Example: FI-unordered-top-quality
-plans = planners.plan_unordered_topq(domain_file=domain_file, problem_file=problem_file, quality_bound=1.0, number_of_plans_bound=100)
+plans = planners.plan_unordered_topq(domain_file=domain_file, problem_file=problem_file, quality_bound=1.0, number_of_plans_bound=100, timeout=20)
 print(plans)
 
 # Example: FI-submultisets-top-quality
