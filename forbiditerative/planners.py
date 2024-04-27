@@ -133,9 +133,8 @@ def get_landmarks(domain_file : Path, problem_file : Path, method: LandmarkMetho
             
         data["landmarks"] = []
 
-        lfile = Path(str(landmarks_file.name))
-        if lfile.is_file() and lfile.stat().st_size > 0:
-            lms = json.loads(lfile.read_text(encoding="UTF-8"))
+        if landmarks_file.is_file() and landmarks_file.stat().st_size > 0:
+            lms = json.loads(landmarks_file.read_text(encoding="UTF-8"))
             data["landmarks"] = lms["landmarks"]
 
         return data
