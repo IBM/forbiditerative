@@ -121,23 +121,23 @@ def get_landmarks(domain_file : Path, problem_file : Path, method: LandmarkMetho
     """Execute the planner on the task, no search."""
     try:
         import tempfile
+        with tempfile.TemporaryDirectory() as run_dir:
 
-        run_dir = Path(tempfile.gettempdir())
-        landmarks_file = run_dir / "landmarks.json"
-        command =  ["--alias", f'get_landmarks_{method}', str(domain_file.absolute()), str(problem_file.absolute())]
-        out = subprocess.run([sys.executable, "-B", "-m", "driver.main"] + default_build_args + command, cwd=run_dir, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+            landmarks_file = Path(str(run_dir)) / "landmarks.json"
+            command =  ["--alias", f'get_landmarks_{method}', str(domain_file.absolute()), str(problem_file.absolute())]
+            out = subprocess.run([sys.executable, "-B", "-m", "driver.main"] + default_build_args + command, cwd=run_dir, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
 
-        data = {}
-        data["planner_output"] = out.stdout.decode()
-        data["planner_error"] = out.stderr.decode()
-            
-        data["landmarks"] = []
+            data = {}
+            data["planner_output"] = out.stdout.decode()
+            data["planner_error"] = out.stderr.decode()
+                
+            data["landmarks"] = []
 
-        if landmarks_file.is_file() and landmarks_file.stat().st_size > 0:
-            lms = json.loads(landmarks_file.read_text(encoding="UTF-8"))
-            data["landmarks"] = lms["landmarks"]
+            if landmarks_file.is_file() and landmarks_file.stat().st_size > 0:
+                lms = json.loads(landmarks_file.read_text(encoding="UTF-8"))
+                data["landmarks"] = lms["landmarks"]
 
-        return data
+            return data
     
     except SubprocessError as err:
         logging.error(err.output.decode())
@@ -148,30 +148,30 @@ def get_dot(domain_file : Path, problem_file : Path, plans: List[List[str]]) -> 
     """Execute the planner on the task, no search."""
     try:
         import tempfile
+        with tempfile.TemporaryDirectory() as run_dir:
 
-        run_dir = Path(tempfile.gettempdir())
-        graph_file = run_dir / "graph0.dot"
-        plans_path = run_dir / "plans"
-        if not (plans_path.is_dir()):
-            plans_path.mkdir()
-        counter = 1
-        for plan in plans:
-            plan_file = Path(plans_path / f"sas_plan.{counter}")
-            actions = ["(" + a + ")" for a in plan]
-            plan_file.write_text("\n".join(actions) + "\n")
-            counter += 1
+            # run_dir = Path(tempfile.gettempdir())
+            graph_file = Path(str(run_dir)) / "graph0.dot"
+            plans_path = Path(str(run_dir)) / "plans"
+            if not (plans_path.is_dir()):
+                plans_path.mkdir()
+            counter = 1
+            for plan in plans:
+                plan_file = Path(plans_path / f"sas_plan.{counter}")
+                actions = ["(" + a + ")" for a in plan]
+                plan_file.write_text("\n".join(actions) + "\n")
+                counter += 1
 
-        counter -= 1
-        command = [str(domain_file.absolute()), str(problem_file.absolute())] + ["--search",
-                f"forbid_iterative(reformulate=NONE,read_plans_and_dump_graph=true,external_plans_path={plans_path},number_of_plans_to_read={counter})"]
-        subprocess.run([sys.executable, "-B", "-m", "driver.main"] + default_build_args + command, cwd=run_dir, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+            counter -= 1
+            command = [str(domain_file.absolute()), str(problem_file.absolute())] + ["--search",
+                    f"forbid_iterative(reformulate=NONE,read_plans_and_dump_graph=true,external_plans_path={plans_path},number_of_plans_to_read={counter})"]
+            subprocess.run([sys.executable, "-B", "-m", "driver.main"] + default_build_args + command, cwd=run_dir, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
 
-        res = ""
-        gfile = Path(str(graph_file.name))
-        if gfile.is_file() and gfile.stat().st_size > 0:
-            res = gfile.read_text(encoding="UTF-8")
+            res = ""
+            if graph_file.is_file() and graph_file.stat().st_size > 0:
+                res = graph_file.read_text(encoding="UTF-8")
 
-        return res
+            return res
     
     except SubprocessError as err:
         logging.error(err.output.decode())
