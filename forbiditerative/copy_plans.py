@@ -6,6 +6,7 @@ import logging
 
 # import planner_call
 from forbiditerative.planner_call import PlansToJsonPlannerCall, make_call
+from forbiditerative.utility.file_utility import open_atomic
 
 def get_plan_files(folder=None):
     plans = "sas_plan*"
@@ -218,7 +219,7 @@ def copy_plans_to_folder_lpg(plans, input_plans_folder_name):
             #logging.info(valid_actions_raw2)
             actions = [extract_action_name_and_cost(action) for action in valid_actions_raw2]
             
-            with open(new_plan_file_name, "w") as wpf:                        
+            with open_atomic(new_plan_file_name, "w") as wpf:                        
                 total_cost = 0
                 unit_cost = True
                 for action, cost in actions:
