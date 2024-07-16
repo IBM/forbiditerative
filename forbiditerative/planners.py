@@ -177,3 +177,49 @@ def get_dot(domain_file : Path, problem_file : Path, plans: List[List[str]]) -> 
         logging.error(err.output.decode())
         return None
     
+def get_PDG(domain_file : Path, problem_file : Path) -> str:
+    """Execute the planner on the task, no search."""
+    try:
+        import tempfile
+        with tempfile.TemporaryDirectory() as run_dir:
+
+            # run_dir = Path(tempfile.gettempdir())
+            graph_file = Path(str(run_dir)) / "symmetry-graph.dot"
+
+            command = [str(domain_file.absolute()), str(problem_file.absolute())] + ["--symmetries", 
+                    'sym=structural_symmetries(time_bound=0,search_symmetries=oss,dump_symmetry_graph=true)', 
+                    "--search", 'astar(const(infinity()),symmetries=sym)']
+            subprocess.run([sys.executable, "-B", "-m", "driver.main"] + default_build_args + command, cwd=run_dir, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+
+            res = ""
+            if graph_file.is_file() and graph_file.stat().st_size > 0:
+                res = graph_file.read_text(encoding="UTF-8")
+
+            return res
+    
+    except SubprocessError as err:
+        logging.error(err.output.decode())
+        return None
+    
+
+def get_ASG(domain_file : Path, problem_file : Path) -> str:
+    """Execute the planner on the task, no search."""
+    try:
+        import tempfile
+        with tempfile.TemporaryDirectory() as run_dir:
+
+            # run_dir = Path(tempfile.gettempdir())
+            graph_file = Path(str(run_dir)) / "abstract-structure-graph.dot"
+
+            command = [str(domain_file.absolute()), str(problem_file.absolute())] + ["--translate-options", "--compute-abstract-structure-graph", "--only-functions-from-initial-state", "--dump-dot-graph"]
+            subprocess.run([sys.executable, "-B", "-m", "driver.main"] + default_build_args + command, cwd=run_dir, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+
+            res = ""
+            if graph_file.is_file() and graph_file.stat().st_size > 0:
+                res = graph_file.read_text(encoding="UTF-8")
+
+            return res
+    
+    except SubprocessError as err:
+        logging.error(err.output.decode())
+        return None

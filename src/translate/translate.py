@@ -16,6 +16,7 @@ from collections import defaultdict
 from copy import deepcopy
 from itertools import product
 
+from abstract_structure_module import AbstractStructureGraph, NB_NODE_TYPES
 import axiom_rules
 import fact_groups
 import instantiate
@@ -521,6 +522,57 @@ def unsolvable_sas_task(msg):
     return trivial_task(solvable=False)
 
 def pddl_to_sas(task):
+    compute_abstract_structure_graph = options.compute_abstract_structure_graph
+    if compute_abstract_structure_graph:
+        only_object_symmetries = options.only_object_symmetries
+        stabilize_initial_state = not options.do_not_stabilize_initial_state
+        stabilize_goal = not options.do_not_stabilize_goal
+
+        hide_equal_predicates = True
+
+        with timers.timing("Creating abstract structure graph..", True):
+            graph = AbstractStructureGraph(task, only_object_symmetries, stabilize_initial_state, stabilize_goal)
+            if options.dump_dot_graph:
+                f = open('abstract-structure-graph.dot', 'w')
+                graph.write_dot_graph(f, hide_equal_predicates=False)
+                f.close()
+
+            # print("Turning graph into adjacency list representation")
+            node_types = []
+            adjacency_graph = []
+            node_counter = 0
+            vertex_indices = {}
+            for vertex in graph.graph.get_vertices():
+                if hide_equal_predicates and vertex in graph.graph.excluded_vertices:
+                    continue
+                vertex_indices[vertex] = node_counter
+                node_types.append(vertex[0])
+                adjacency_graph.append([])
+                node_counter += 1
+            for edge in graph.graph.edges:
+                assert type(edge) is tuple
+                assert len(edge) == 2
+                if edge[0] in vertex_indices and edge[1] in vertex_indices:
+                    i = vertex_indices[edge[0]]
+                    j = vertex_indices[edge[1]]
+                    adjacency_graph[i].append(j)
+
+
+            with open('abstract-structure-graph.txt', 'w') as f:
+                for successors in adjacency_graph:
+                    f.write(",".join(str(elem) for elem in successors))
+                    f.write("\n")
+
+            with open('annotated-abstract-structure-graph.txt', 'w') as f:
+                f.write("# Nb node types\n")
+                f.write(str(NB_NODE_TYPES))
+                f.write("\n")
+                f.write("# format: For each node i (starting at 0), the i-th line contains: NODE_TYPE_OF_i(,IDS_OF_SUCCESSORS_OF_i)*\n")
+
+                for node_type, successors in zip(node_types, adjacency_graph):
+                    f.write(",".join(str(elem) for elem in ([node_type] + successors)))
+                    f.write("\n")
+
     with timers.timing("Instantiating", block=True):
         (relaxed_reachable, atoms, actions, axioms,
          reachable_action_params) = instantiate.explore(task)

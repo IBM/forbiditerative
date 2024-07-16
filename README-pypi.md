@@ -12,6 +12,12 @@
 
 ## The planners are based on the idea of obtaining multiple solutions by iteratively reformulating planning tasks to restrict the set of valid plans, forbidding previously found ones. Thus, the planners can be referred to as FI-top-k, FI-top-quality, FI-unordered-top-quality, FI-diverse-agl.
 
+## The codebase also includes multiple useful utilities:
+1. Getting the landmarks of a planning problem
+2. Constructing a graph from plans
+3. Constructing graph representations of a planning task
+  3.1 Problem Description Graph (PDG)
+  3.2 Abstract Structure Graph (ASG)
 
 # Installation
 ```
@@ -55,11 +61,23 @@ print(landmarks)
 landmarks = planners.get_landmarks(domain_file=domain_file, problem_file=problem_file, method = 'exhaust')
 print(landmarks)
 
-# Example: create a dot graph 
+# Example: create a dot graph out of plans
 import graphviz
 dot_txt = planners.get_dot(domain_file=domain_file, problem_file=problem_file, plans = plans)
 src = graphviz.Source(dot_txt)
 src.render('plans.gv', view=True)
+
+# Example: get a problem description graph (PDG) in dot format
+import graphviz
+dot_txt = planners.get_PDG(domain_file=domain_file, problem_file=problem_file)
+src = graphviz.Source(dot_txt)
+src.render('PDG.gv', view=True)
+
+# Example: get an abstract structure graph (ASG) in dot format
+import graphviz
+dot_txt = planners.get_ASG(domain_file=domain_file, problem_file=problem_file)
+src = graphviz.Source(dot_txt)
+src.render('ASG.gv', view=True)
 
 ```
 

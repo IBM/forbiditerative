@@ -57,6 +57,32 @@ def parse_args():
         help="How to assign layers to derived variables. 'min' attempts to put as "
         "many variables into the same layer as possible, while 'max' puts each variable "
         "into its own layer unless it is part of a cycle.")
+
+    # Options related to symmetries/computation of abstract structure graphs.
+    argparser.add_argument(
+        "--compute-abstract-structure-graph", action="store_true",
+        help="Compute the abstract structure graph from the PDDL description.")
+    argparser.add_argument(
+        "--only-object-symmetries", action="store_true",
+        help="HACK! Only allow objects to be permuted, but not "
+        "predicates, operators, axioms or functions. (Set option "
+        "--compute-symmetries)")
+    argparser.add_argument(
+        "--do-not-stabilize-initial-state", action="store_true",
+        help="If true, only those atoms in the initial state mentioning "
+        "static predicates are added. (Set option --compute-symmetries)")
+    argparser.add_argument(
+        "--only-functions-from-initial-state", action="store_true",
+        help="If true, include only the functions mentioned in the initial "
+        "states, but not the fluents or types. (Set option --compute-symmetries)")
+    argparser.add_argument(
+        "--do-not-stabilize-goal", action="store_true",
+        help="If true, literals in the goal are not colored with a special "
+        "color. (Set option --compute-symmetries)")
+    argparser.add_argument(
+        "--dump-dot-graph", action="store_true",
+        help="If true, dumping the abstract structure as dot graph.")
+
     argparser.add_argument(
         "--case-sensitive", action="store_true",
         help="treat the input PDDL as case sensitive")
