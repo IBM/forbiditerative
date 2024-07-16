@@ -133,6 +133,33 @@ src.render('ASG.gv', view=True)
 }
 ```
 
+### PDG (this modified version, for original see Pochter et al AAAI 2011)
+```
+@InProceedings{shleyfman-et-al-aaai2015,
+  title =        "Heuristics and Symmetries in Classical Planning",
+  author =       "Alexander Shleyfman and Michael Katz and Malte Helmert and Silvan Sievers and Martin Wehrle",
+  booktitle =    "Proceedings of the Twenty-Ninth {AAAI} Conference on
+                  Artificial Intelligence ({AAAI} 2015)",
+  publisher =    "{AAAI} Press",
+  pages =        "3371--3377",
+  year =         "2015"
+}
+```
+
+### ASG
+```
+@InProceedings{sievers-et-al-icaps2019,
+  title =        "Theoretical Foundations for Structural Symmetries of Lifted {PDDL} Tasks",
+  author =       "Silvan Sievers and Gabriele R{\"o}ger and Martin Wehrle and Michael Katz",
+  booktitle =    "Proceedings of the Twenty-Ninth International Conference on
+                  Automated Planning and Scheduling (ICAPS 2019)",
+  publisher =    "{AAAI} Press",
+  pages =        "446--454",
+  year =         "2019"
+}
+```
+
+
 ## Licensing
 
 Forbid-Iterative (FI) Planner is an Automated PDDL based planner that
