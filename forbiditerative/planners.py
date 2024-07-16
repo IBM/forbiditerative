@@ -63,59 +63,48 @@ def plan_unordered_topq(domain_file : Path, problem_file : Path, quality_bound :
         return None
 """
 
-def plan_unordered_topq(domain_file : Path, problem_file : Path, quality_bound : float, number_of_plans_bound : Optional[int] = None, timeout: Optional[int] = None) -> dict:
+def plan_unordered_topq(domain_file : Path, problem_file : Path, quality_bound : float, number_of_plans_bound : Optional[int] = None, timeout: Optional[int] = None, suppress_planner_output : Optional[bool] = True) -> dict:
 
     planner_args = ["--planner", "unordered_topq", "--domain", str(domain_file.absolute()), 
-                "--problem", str(problem_file.absolute()), "--quality-bound", str(quality_bound), 
-                "--symmetries", "--use-local-folder", "--clean-local-folder", "--suppress-planners-output", "--plans-as-json"]
-    if number_of_plans_bound:
-        planner_args.extend(["--number-of-plans", str(number_of_plans_bound)])
-    if timeout:
-        planner_args.extend(["--overall-time-limit", str(timeout)])
-    return run_planner(planner_args)
+                "--problem", str(problem_file.absolute()), "--quality-bound", str(quality_bound)]
+
+    return run_planner(extend_args(planner_args, timeout, suppress_planner_output))
 
 
-def plan_submultisets_topq(domain_file : Path, problem_file : Path, quality_bound : float, number_of_plans_bound : Optional[int] = None, timeout: Optional[int] = None) -> dict:
+def plan_submultisets_topq(domain_file : Path, problem_file : Path, quality_bound : float, number_of_plans_bound : Optional[int] = None, timeout: Optional[int] = None, suppress_planner_output : Optional[bool] = True) -> dict:
 
     planner_args = ["--planner", "submultisets_topq", "--domain", str(domain_file.absolute()), 
-                "--problem", str(problem_file.absolute()), "--quality-bound", str(quality_bound), 
-                "--symmetries", "--use-local-folder", "--clean-local-folder", "--suppress-planners-output", "--plans-as-json"]
+                "--problem", str(problem_file.absolute()), "--quality-bound", str(quality_bound)]
     if number_of_plans_bound:
         planner_args.extend(["--number-of-plans", str(number_of_plans_bound)])
-    if timeout:
-        planner_args.extend(["--overall-time-limit", str(timeout)])
-    return run_planner(planner_args)
+    return run_planner(extend_args(planner_args, timeout, suppress_planner_output))
 
 
-def plan_subsets_topq(domain_file : Path, problem_file : Path, quality_bound : float, number_of_plans_bound : Optional[int] = None, timeout: Optional[int] = None) -> dict:
-
+def plan_subsets_topq(domain_file : Path, problem_file : Path, quality_bound : float, number_of_plans_bound : Optional[int] = None, timeout: Optional[int] = None, suppress_planner_output : Optional[bool] = True) -> dict:
     planner_args = ["--planner", "subsets_topq", "--domain", str(domain_file.absolute()), 
-                "--problem", str(problem_file.absolute()), "--quality-bound", str(quality_bound), 
-                "--symmetries", "--use-local-folder", "--clean-local-folder", "--suppress-planners-output", "--plans-as-json"]
+                "--problem", str(problem_file.absolute()), "--quality-bound", str(quality_bound)]
     if number_of_plans_bound:
         planner_args.extend(["--number-of-plans", str(number_of_plans_bound)])
-    if timeout:
-        planner_args.extend(["--overall-time-limit", str(timeout)])
-    return run_planner(planner_args)
+    return run_planner(extend_args(planner_args, timeout, suppress_planner_output))
 
 
-def plan_topk(domain_file : Path, problem_file : Path, number_of_plans_bound : int, timeout: Optional[int] = None) -> dict:
+def plan_topk(domain_file : Path, problem_file : Path, number_of_plans_bound : int, timeout: Optional[int] = None, suppress_planner_output : Optional[bool] = True) -> dict:
     planner_args = ["--planner", "topk", "--domain", str(domain_file.absolute()), 
-                "--problem", str(problem_file.absolute()), "--number-of-plans", str(number_of_plans_bound), 
-                "--symmetries", "--use-local-folder", "--clean-local-folder", "--suppress-planners-output", "--plans-as-json"]
-    if timeout:
-        planner_args.extend(["--overall-time-limit", str(timeout)])
-    return run_planner(planner_args)
+                "--problem", str(problem_file.absolute()), "--number-of-plans", str(number_of_plans_bound)]
+    return run_planner(extend_args(planner_args, timeout, suppress_planner_output))
     
 
-def plan_diverse_agl(domain_file : Path, problem_file : Path, number_of_plans_bound : int, timeout: Optional[int] = None) -> dict:
-    planner_args = ["--planner", "diverse", "--domain", str(domain_file.absolute()), 
-                "--problem", str(problem_file.absolute()), "--number-of-plans", str(number_of_plans_bound), 
-                "--symmetries", "--use-local-folder", "--clean-local-folder", "--suppress-planners-output", "--plans-as-json"]
+def plan_diverse_agl(domain_file : Path, problem_file : Path, number_of_plans_bound : int, timeout: Optional[int] = None, suppress_planner_output : Optional[bool] = True) -> dict:
+    planner_args = ["--planner", "diverse", "--domain", str(domain_file.absolute()), "--problem", str(problem_file.absolute()), "--number-of-plans", str(number_of_plans_bound)]
+    return run_planner(extend_args(planner_args, timeout, suppress_planner_output))
+
+def extend_args(planner_args, timeout: Optional[int] = None, suppress_planner_output : Optional[bool] = True):
+    planner_args.extend(["--symmetries", "--use-local-folder", "--clean-local-folder", "--plans-as-json"])
+    if suppress_planner_output:
+        planner_args.extend(["--suppress-planners-output"])
     if timeout:
         planner_args.extend(["--overall-time-limit", str(timeout)])
-    return run_planner(planner_args)
-
+    return planner_args
 
 def get_landmarks(domain_file : Path, problem_file : Path, method: LandmarkMethods = default_landmark_method) -> dict:
     """Execute the planner on the task, no search."""
