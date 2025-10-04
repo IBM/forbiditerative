@@ -64,7 +64,24 @@ macro(fast_downward_set_compiler_flags)
         # from cmake. This is the case for most build environments, but we have less
         # control over the way the binary is created.
     else()
-        message(FATAL_ERROR "Unsupported compiler: ${CMAKE_CXX_COMPILER}")
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag( "-std=c++11" CXX11_FOUND )
+        if(CXX11_FOUND)
+             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+        else()
+            message(FATAL_ERROR "${CMAKE_CXX_COMPILER} does not support C++11, please use a different compiler")
+        endif()
+
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Wnon-virtual-dtor")
+
+        ## Configuration-specific flags
+        set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -fomit-frame-pointer")
+        set(CMAKE_CXX_FLAGS_DEBUG "-O3")
+        if(USE_GLIBCXX_DEBUG)
+            set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
+        endif()
+        set(CMAKE_CXX_FLAGS_PROFILE "-O3 -pg")
     endif()
 endmacro()
 

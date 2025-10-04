@@ -2258,8 +2258,11 @@ public:
                   "T must be constructible with Args");
 
     *this = nullopt;
-    this->construct(std::forward<Args>(args)...);
-    return value();
+    // this->construct(std::forward<Args>(args)...);
+		new (static_cast<void*>(this)) optional(in_place, std::forward<Args>(args)...);
+		return **this;
+
+    // return value();
   }
 
   /// Swaps this optional with the other.

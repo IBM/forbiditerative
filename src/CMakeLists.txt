@@ -28,6 +28,7 @@
 # to the cmake call.
 
 # Version 2.8.3 introduces CMakeParseArguments.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 cmake_minimum_required(VERSION 2.8.3)
 
 # Select a default compiler because CMake does not respect the PATH environment variable for some generators,
