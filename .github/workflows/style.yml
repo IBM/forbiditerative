@@ -3,6 +3,9 @@ name: Code style tests
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   style:
     name: Test code style

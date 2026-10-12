@@ -6,6 +6,10 @@ on:
       - "*.*.*"
     branches:
       - actions*
+
+permissions:
+  contents: write  # needed by softprops/action-gh-release to publish release assets
+
 jobs:
   build_linux:
     name: Build wheels on ubuntu-latest ${{ matrix.arch }} ${{ matrix.python }}

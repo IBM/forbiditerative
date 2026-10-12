@@ -164,7 +164,7 @@ def get_changed_pages(old_doc_pages, new_doc_pages, all_titles):
 if __name__ == '__main__':
     args = parse_args()
     if not args.dry_run and PASSWORD is None:
-        logging.critical(f"{ENV_VAR_PASSWORD} not set.")
+        logging.critical("Environment variable for the wiki credentials is not set.")
         sys.exit(1)
     logging.info("building planner...")
     build_planner(args.build)

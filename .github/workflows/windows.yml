@@ -3,6 +3,9 @@ name: Windows
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 env:
   ARCH: "x64"
   CC: cl
