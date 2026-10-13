@@ -17,12 +17,39 @@ def get_base_dir():
     return os.path.abspath(get_script_dir())
 
 def make_call(command, time_limit, local_folder, enable_output=False):
-    if (sys.version_info > (3, 0)):
-        import subprocess
-    else:
-        import subprocess32 as subprocess
+    import subprocess
+    import signal
+
     sys.stdout.flush()
-    po = subprocess.check_output(command, timeout=time_limit, cwd=local_folder)
+    proc = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        cwd=local_folder,
+        start_new_session=True
+    )
+    try:
+        po, _ = proc.communicate(timeout=time_limit)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except OSError:
+            pass
+        po, _ = proc.communicate()
+        raise subprocess.TimeoutExpired(
+            command, time_limit, output=po
+        )
+    except:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except OSError:
+            pass
+        proc.wait()
+        raise
+
+    if proc.returncode != 0:
+        raise subprocess.CalledProcessError(
+            proc.returncode, command, output=po
+        )
 
     if enable_output:
         print(po.decode())
